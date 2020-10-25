@@ -1,18 +1,10 @@
-#include "eips_common.h"
-#include <errno.h>
-#include <fcntl.h>
-#include <signal.h>
-#include <stdbool.h>
+#include <glib-object.h>
 #include <stdio.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <unistd.h>
-
 #include <vips/vips.h>
 
-#include <girepository.h>
-#include <glib-object.h>
+#include "eips_common.h"
+#include "nif_g_object.h"
+#include "nif_g_type.h"
 
 static ERL_NIF_TERM ATOM_TRUE;
 static ERL_NIF_TERM ATOM_FALSE;
@@ -79,51 +71,6 @@ static void g_param_spec_down(ErlNifEnv *env, void *obj, ErlNifPid *pid,
 
 static ErlNifResourceTypeInit g_param_spec_rt_init = {
     g_param_spec_dtor, g_param_spec_stop, g_param_spec_down};
-
-/******* GObject Resource *******/
-typedef struct GObjectResource {
-  GObject *g_object;
-} GObjectResource;
-
-static void g_object_dtor(ErlNifEnv *env, void *obj) {
-  GObjectResource *g_object_resource = (GObjectResource *)obj;
-  g_object_unref(g_object_resource->g_object);
-  debug("GObject g_object_dtor called");
-}
-
-static void g_object_stop(ErlNifEnv *env, void *obj, int fd,
-                          int is_direct_call) {
-  debug("GObject g_object_stop called %d", fd);
-}
-
-static void g_object_down(ErlNifEnv *env, void *obj, ErlNifPid *pid,
-                          ErlNifMonitor *monitor) {
-  debug("GObject g_object_down called");
-}
-
-static ErlNifResourceTypeInit g_object_rt_init = {g_object_dtor, g_object_stop,
-                                                  g_object_down};
-
-/******* GType Resource *******/
-typedef struct GTypeResource {
-  GType g_type;
-} GTypeResource;
-
-static void g_type_dtor(ErlNifEnv *env, void *obj) {
-  debug("GType g_type_dtor called");
-}
-
-static void g_type_stop(ErlNifEnv *env, void *obj, int fd, int is_direct_call) {
-  debug("GType g_type_stop called %d", fd);
-}
-
-static void g_type_down(ErlNifEnv *env, void *obj, ErlNifPid *pid,
-                        ErlNifMonitor *monitor) {
-  debug("GType g_type_down called");
-}
-
-static ErlNifResourceTypeInit g_type_rt_init = {g_type_dtor, g_type_stop,
-                                                g_type_down};
 
 /******* VipsImage Resource *******/
 static void nif_vips_image_dtor(ErlNifEnv *env, void *obj) {
@@ -243,6 +190,20 @@ static ERL_NIF_TERM vips_object_to_erl_term(ErlNifEnv *env,
   return term;
 }
 
+static ERL_NIF_TERM vips_image_to_erl_term(ErlNifEnv *env,
+                                           VipsImage *vips_image) {
+  EipsPriv *data = enif_priv_data(env);
+  VipsObjectResource *vips_object_r;
+
+  vips_object_r = enif_alloc_resource(data->vo_rt, sizeof(VipsObjectResource));
+  vips_object_r->vips_object = (VipsObject *)g_object_ref(vips_image);
+
+  ERL_NIF_TERM term = enif_make_resource(env, vips_object_r);
+  enif_release_resource(vips_object_r);
+
+  return term;
+}
+
 static bool erl_term_to_vips_object(ErlNifEnv *env, ERL_NIF_TERM term,
                                     VipsObject **vips_object) {
   VipsObjectResource *vips_object_r = NULL;
@@ -250,60 +211,6 @@ static bool erl_term_to_vips_object(ErlNifEnv *env, ERL_NIF_TERM term,
 
   if (enif_get_resource(env, term, data->vo_rt, (void **)&vips_object_r)) {
     (*vips_object) = vips_object_r->vips_object;
-    return true;
-  } else {
-    return false;
-  }
-}
-
-/*************** GType ***************/
-static ERL_NIF_TERM g_type_to_erl_term(ErlNifEnv *env, GType g_type) {
-  EipsPriv *data = enif_priv_data(env);
-  GTypeResource *g_type_r =
-      enif_alloc_resource(data->g_type_rt, sizeof(GTypeResource));
-
-  g_type_r->g_type = g_type;
-
-  ERL_NIF_TERM term = enif_make_resource(env, g_type_r);
-  enif_release_resource(g_type_r);
-
-  return term;
-}
-
-static bool erl_term_to_g_type(ErlNifEnv *env, ERL_NIF_TERM term,
-                               GType *g_type) {
-  GTypeResource *g_type_r = NULL;
-  struct EipsPriv *data = enif_priv_data(env);
-
-  if (enif_get_resource(env, term, data->g_type_rt, (void **)&g_type_r)) {
-    (*g_type) = g_type_r->g_type;
-    return true;
-  } else {
-    return false;
-  }
-}
-
-/*************** GObject ***************/
-static ERL_NIF_TERM g_object_to_erl_term(ErlNifEnv *env, GObject *g_object) {
-  EipsPriv *data = enif_priv_data(env);
-  GObjectResource *g_object_r;
-
-  g_object_r = enif_alloc_resource(data->g_object_rt, sizeof(GObjectResource));
-  g_object_r->g_object = g_object_ref(g_object);
-
-  ERL_NIF_TERM term = enif_make_resource(env, g_object_r);
-  enif_release_resource(g_object_r);
-
-  return term;
-}
-
-static bool erl_term_to_g_object(ErlNifEnv *env, ERL_NIF_TERM term,
-                                 GObject **g_object) {
-  GObjectResource *g_object_r = NULL;
-  struct EipsPriv *data = enif_priv_data(env);
-
-  if (enif_get_resource(env, term, data->g_object_rt, (void **)&g_object_r)) {
-    (*g_object) = g_object_r->g_object;
     return true;
   } else {
     return false;
@@ -676,6 +583,22 @@ static ERL_NIF_TERM nif_g_object_to_vips_object(ErlNifEnv *env, int argc,
   return vips_object_to_erl_term(env, VIPS_OBJECT(g_object));
 }
 
+static ERL_NIF_TERM nif_g_object_to_vips_image(ErlNifEnv *env, int argc,
+                                               const ERL_NIF_TERM argv[]) {
+  if (argc != 1) {
+    error("number of arguments must be 1");
+    return enif_make_badarg(env);
+  }
+
+  GObject *g_object;
+  if (!erl_term_to_g_object(env, argv[0], &g_object)) {
+    error("Failed to get GObject");
+    return enif_make_badarg(env);
+  }
+
+  return vips_image_to_erl_term(env, VIPS_IMAGE(g_object));
+}
+
 static ERL_NIF_TERM nif_image_new_from_file(ErlNifEnv *env, int argc,
                                             const ERL_NIF_TERM argv[]) {
   if (argc != 1) {
@@ -698,7 +621,7 @@ static ERL_NIF_TERM nif_image_new_from_file(ErlNifEnv *env, int argc,
                               ERL_NIF_LATIN1));
   }
 
-  return make_ok(env, vips_object_to_erl_term(env, (VipsObject *)image));
+  return make_ok(env, g_object_to_erl_term(env, (GObject *)image));
 }
 
 static ERL_NIF_TERM nif_image_write_to_file(ErlNifEnv *env, int argc,
@@ -903,6 +826,11 @@ static int on_load(ErlNifEnv *env, void **priv, ERL_NIF_TERM load_info) {
   if (!data)
     return 1;
 
+  ATOM_TRUE = enif_make_atom(env, "true");
+  ATOM_FALSE = enif_make_atom(env, "false");
+  ATOM_OK = enif_make_atom(env, "ok");
+  ATOM_ERROR = enif_make_atom(env, "error");
+
   data->vo_rt =
       enif_open_resource_type_x(env, "eips_resource", &vo_rt_init,
                                 ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER, NULL);
@@ -911,22 +839,12 @@ static int on_load(ErlNifEnv *env, void **priv, ERL_NIF_TERM load_info) {
       enif_open_resource_type_x(env, "eips_resource", &g_param_spec_rt_init,
                                 ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER, NULL);
 
-  data->g_type_rt =
-      enif_open_resource_type_x(env, "eips_resource", &g_type_rt_init,
-                                ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER, NULL);
-
-  data->g_object_rt =
-      enif_open_resource_type_x(env, "eips_resource", &g_object_rt_init,
-                                ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER, NULL);
-
   data->nif_vips_image_rt =
       enif_open_resource_type_x(env, "eips_resource", &nif_vips_image_rt_init,
                                 ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER, NULL);
 
-  ATOM_TRUE = enif_make_atom(env, "true");
-  ATOM_FALSE = enif_make_atom(env, "false");
-  ATOM_OK = enif_make_atom(env, "ok");
-  ATOM_ERROR = enif_make_atom(env, "error");
+  nif_g_type_init(env);
+  nif_g_object_init(env);
 
   ATOM_VIPS_ARGUMENT_NONE = enif_make_atom(env, "vips_argument_none");
   ATOM_VIPS_ARGUMENT_REQUIRED = enif_make_atom(env, "vips_argument_required");
@@ -956,6 +874,7 @@ static ErlNifFunc nif_funcs[] = {
      USE_DIRTY_IO},
     {"nif_g_object_to_vips_object", 1, nif_g_object_to_vips_object,
      USE_DIRTY_IO},
+    {"nif_g_object_to_vips_image", 1, nif_g_object_to_vips_image, USE_DIRTY_IO},
     {"nif_create_op", 1, nif_create_op, USE_DIRTY_IO},
     {"nif_get_op_arguments", 1, nif_get_op_arguments, USE_DIRTY_IO},
     {"nif_operation_set_property", 4, nif_operation_set_property, USE_DIRTY_IO},
@@ -965,6 +884,11 @@ static ErlNifFunc nif_funcs[] = {
     {"nif_operation_get_property", 3, nif_operation_get_property, USE_DIRTY_IO},
     {"nif_image_write_to_file", 2, nif_image_write_to_file, USE_DIRTY_IO},
     {"nif_vips_type_find", 1, nif_vips_type_find, USE_DIRTY_IO},
-    {"invert", 2, invert, USE_DIRTY_IO}};
+    {"invert", 2, invert, USE_DIRTY_IO},
+    /*  GObject */
+    {"nif_g_object_type", 1, nif_g_object_type, USE_DIRTY_IO},
+    {"nif_g_object_type_name", 1, nif_g_object_type_name, USE_DIRTY_IO},
+    /*  GType */
+    {"nif_g_type_name", 1, nif_g_type_name, USE_DIRTY_IO}};
 
 ERL_NIF_INIT(Elixir.Eips.Nif, nif_funcs, &on_load, NULL, NULL, &on_unload)

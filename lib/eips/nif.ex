@@ -4,6 +4,7 @@ defmodule Eips.Nif do
 
   def load_nifs do
     nif_path = :filename.join(:code.priv_dir(:eips), "eips")
+    nif_path = :filename.join(:code.priv_dir(:eips), "eips")
     :erlang.load_nif(nif_path, 0)
   end
 
@@ -28,6 +29,8 @@ defmodule Eips.Nif do
 
   def nif_g_object_to_vips_object(_vips_object), do: :erlang.nif_error(:nif_library_not_loaded)
 
+  def nif_g_object_to_vips_image(_vips_object), do: :erlang.nif_error(:nif_library_not_loaded)
+
   def nif_operation_call(_vips_operation), do: :erlang.nif_error(:nif_library_not_loaded)
 
   def nif_operation_get_property(_vips_operation, _name, _g_type),
@@ -40,5 +43,14 @@ defmodule Eips.Nif do
     do: :erlang.nif_error(:nif_library_not_loaded)
 
   def nif_vips_type_find(_nickname),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
+  def nif_g_object_type(_g_object),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
+  def nif_g_object_type_name(_g_object),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
+  def nif_g_type_name(_g_object),
     do: :erlang.nif_error(:nif_library_not_loaded)
 end

@@ -53,7 +53,7 @@ defmodule Eips do
         [{'out', 'VipsImage'}]
       )
 
-    Nif.nif_g_object_to_vips_object(output_g_obj)
+    Nif.nif_g_object_to_vips_image(output_g_obj)
   end
 
   def vips_flip(input_vi) do
@@ -66,7 +66,7 @@ defmodule Eips do
         [{'out', 'VipsImage'}]
       )
 
-    Nif.nif_g_object_to_vips_object(output_g_obj)
+    Nif.nif_g_object_to_vips_image(output_g_obj)
   end
 
   def vips_add(a_vi, b_vi) do
@@ -80,7 +80,7 @@ defmodule Eips do
         [{'out', 'VipsImage'}]
       )
 
-    Nif.nif_g_object_to_vips_object(output_g_obj)
+    Nif.nif_g_object_to_vips_image(output_g_obj)
   end
 
   def run_example(input_a, input_b, output) do

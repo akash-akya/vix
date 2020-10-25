@@ -23,8 +23,7 @@ static int on_load(ErlNifEnv *env, void **priv, ERL_NIF_TERM load_info) {
 
 static void on_unload(ErlNifEnv *env, void *priv) { debug("eips unload"); }
 
-static ErlNifFunc nif_funcs[] = {{"inspect_op", 1, inspect_op, USE_DIRTY_IO},
-                                 {"gintro", 0, gintro, USE_DIRTY_IO},
+static ErlNifFunc nif_funcs[] = {{"gintro", 0, gintro, USE_DIRTY_IO},
                                  {"invert", 2, invert, USE_DIRTY_IO}};
 
 ERL_NIF_INIT(Elixir.Eips.VipsObjectNif, nif_funcs, &on_load, NULL, NULL,

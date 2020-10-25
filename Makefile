@@ -22,9 +22,9 @@ LIBS := $(VIPS) $(GOBJECT) $(GLIB)
 
 all: priv/eips.so
 
-priv/eips.so: c_src/eips.c
+priv/eips.so: c_src/eips.c c_src/nif_g_object.c c_src/nif_g_type.c
 	mkdir -p priv
-	$(CC) -I$(ERL_INTERFACE_INCLUDE_DIR) $(LIBS) $(TARGET_CFLAGS) $(CFLAGS) c_src/eips.c -o priv/eips.so
+	$(CC) -I$(ERL_INTERFACE_INCLUDE_DIR) $(LIBS) $(TARGET_CFLAGS) $(CFLAGS) c_src/eips.c c_src/nif_g_object.c c_src/nif_g_type.c -o priv/eips.so
 
 clean:
-	@rm -rf priv/eips.so
+	@rm -rf priv/*.so
