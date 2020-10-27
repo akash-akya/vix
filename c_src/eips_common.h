@@ -35,4 +35,9 @@
     enif_fprintf(stderr, "\n");                                                \
   } while (0)
 
+extern ERL_NIF_TERM ATOM_TRUE;
+extern ERL_NIF_TERM ATOM_FALSE;
+extern ERL_NIF_TERM ATOM_OK;
+extern ERL_NIF_TERM ATOM_ERROR;
+
 #endif

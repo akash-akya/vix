@@ -1,14 +1,6 @@
 defmodule Eips do
   alias Eips.Nif
 
-  def invert(src, dst) do
-    Nif.invert(to_charlist(src), to_charlist(dst))
-  end
-
-  def gintro, do: Nif.gintro()
-
-  def inspect_op(op), do: Nif.inspect_op(to_charlist(op))
-
   def create_operation(name) do
     Nif.nif_create_op(to_charlist(name))
   end
@@ -44,43 +36,36 @@ defmodule Eips do
   ### TEST
 
   def vips_invert(input_vi) do
-    {:ok, input_g_obj} = Nif.nif_vips_object_to_g_object(input_vi)
-
-    [{'out', 'VipsImage', output_g_obj}] =
+    [{'out', 'VipsImage', output_vi}] =
       run_vips_operation(
         'invert',
-        [{'in', 'VipsImage', input_g_obj}],
+        [{'in', input_vi}],
         [{'out', 'VipsImage'}]
       )
 
-    Nif.nif_g_object_to_vips_image(output_g_obj)
+    output_vi
   end
 
-  def vips_flip(input_vi) do
-    {:ok, input_g_obj} = Nif.nif_vips_object_to_g_object(input_vi)
-
-    [{'out', 'VipsImage', output_g_obj}] =
+  def vips_flip(input_vi, direction) do
+    [{'out', 'VipsImage', output_vi}] =
       run_vips_operation(
         'flip',
-        [{'in', 'VipsImage', input_g_obj}],
+        [{'in', input_vi}, {'direction', direction}],
         [{'out', 'VipsImage'}]
       )
 
-    Nif.nif_g_object_to_vips_image(output_g_obj)
+    output_vi
   end
 
   def vips_add(a_vi, b_vi) do
-    {:ok, a_g_obj} = Nif.nif_vips_object_to_g_object(a_vi)
-    {:ok, b_g_obj} = Nif.nif_vips_object_to_g_object(b_vi)
-
-    [{'out', 'VipsImage', output_g_obj}] =
+    [{'out', 'VipsImage', output_vi}] =
       run_vips_operation(
         'add',
-        [{'left', 'VipsImage', a_g_obj}, {'right', 'VipsImage', b_g_obj}],
+        [{'left', 'VipsImage', a_vi}, {'right', 'VipsImage', b_vi}],
         [{'out', 'VipsImage'}]
       )
 
-    Nif.nif_g_object_to_vips_image(output_g_obj)
+    output_vi
   end
 
   def run_example(input_a, input_b, output) do
@@ -92,7 +77,7 @@ defmodule Eips do
     {:ok, b_vi} = image_from_file(input_b)
 
     output_vi =
-      vips_add(a_vi, b_vi)
+      vips_flip(a_vi, 1)
       |> vips_invert()
 
     write_vips_image(output_vi, output)

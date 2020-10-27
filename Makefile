@@ -19,12 +19,13 @@ GOBJECT := `pkg-config gobject-introspection-1.0 --cflags --libs`
 GLIB := `pkg-config glib-2.0 --cflags --libs`
 
 LIBS := $(VIPS) $(GOBJECT) $(GLIB)
+C_SOURCE := c_src/eips.c c_src/nif_g_object.c c_src/nif_g_type.c c_src/nif_g_param_spec.c c_src/nif_g_value.c
 
 all: priv/eips.so
 
-priv/eips.so: c_src/eips.c c_src/nif_g_object.c c_src/nif_g_type.c
+priv/eips.so: $(C_SOURCE)
 	mkdir -p priv
-	$(CC) -I$(ERL_INTERFACE_INCLUDE_DIR) $(LIBS) $(TARGET_CFLAGS) $(CFLAGS) c_src/eips.c c_src/nif_g_object.c c_src/nif_g_type.c -o priv/eips.so
+	$(CC) -I$(ERL_INTERFACE_INCLUDE_DIR) $(LIBS) $(TARGET_CFLAGS) $(CFLAGS) $(C_SOURCE) -o priv/eips.so
 
 clean:
 	@rm -rf priv/*.so
