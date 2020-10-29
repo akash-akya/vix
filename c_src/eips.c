@@ -3,11 +3,12 @@
 #include <vips/vips.h>
 
 #include "eips_common.h"
+#include "nif_g_boxed.h"
 #include "nif_g_object.h"
 #include "nif_g_param_spec.h"
 #include "nif_g_type.h"
 #include "nif_g_value.h"
-#include "nif_vips_object.h"
+#include "nif_vips_boxed.h"
 
 ERL_NIF_TERM ATOM_TRUE;
 ERL_NIF_TERM ATOM_FALSE;
@@ -512,6 +513,7 @@ static int on_load(ErlNifEnv *env, void **priv, ERL_NIF_TERM load_info) {
   nif_g_type_init(env);
   nif_g_object_init(env);
   nif_g_param_spec_init(env);
+  nif_g_boxed_init(env);
 
   ATOM_VIPS_ARGUMENT_NONE = enif_make_atom(env, "vips_argument_none");
   ATOM_VIPS_ARGUMENT_REQUIRED = enif_make_atom(env, "vips_argument_required");
@@ -555,6 +557,9 @@ static ErlNifFunc nif_funcs[] = {
     {"nif_g_param_spec_type", 1, nif_g_param_spec_type, USE_DIRTY_IO},
     {"nif_g_param_spec_get_name", 1, nif_g_param_spec_get_name, USE_DIRTY_IO},
     {"nif_g_param_spec_value_type", 1, nif_g_param_spec_value_type,
-     USE_DIRTY_IO}};
+     USE_DIRTY_IO},
+    /*  VipsBoxed */
+    {"nif_int_array", 1, nif_int_array, USE_DIRTY_IO},
+    {"nif_double_array", 1, nif_double_array, USE_DIRTY_IO}};
 
 ERL_NIF_INIT(Elixir.Eips.Nif, nif_funcs, &on_load, NULL, NULL, &on_unload)

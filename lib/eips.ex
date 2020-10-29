@@ -68,13 +68,38 @@ defmodule Eips do
     output_vi
   end
 
+  def vips_affine(a_vi, vips_double_array) do
+    [{'out', 'VipsImage', output_vi}] =
+      run_vips_operation(
+        'affine',
+        [{'in', a_vi}, {'matrix', vips_double_array}],
+        [{'out', 'VipsImage'}]
+      )
+
+    output_vi
+  end
+
+  defp to_double(n), do: n * 1.0
+
+  def run_vips_affine(input, int_list, output) do
+    input = to_charlist(input)
+    output = to_charlist(output)
+
+    double_list = Enum.map(int_list, &to_double/1)
+    vips_double_array = Eips.Nif.nif_double_array(double_list)
+
+    {:ok, vi} = image_from_file(input)
+    output_vi = vips_affine(vi, vips_double_array)
+    write_vips_image(output_vi, output)
+  end
+
   def run_example(input_a, input_b, output) do
     input_a = to_charlist(input_a)
     input_b = to_charlist(input_b)
     output = to_charlist(output)
 
     {:ok, a_vi} = image_from_file(input_a)
-    {:ok, b_vi} = image_from_file(input_b)
+    {:ok, _b_vi} = image_from_file(input_b)
 
     output_vi =
       vips_flip(a_vi, 1)
