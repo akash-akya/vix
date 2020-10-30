@@ -7,22 +7,19 @@ defmodule Eips.Nif do
     :erlang.load_nif(nif_path, 0)
   end
 
-  def nif_create_op(_op_name), do: :erlang.nif_error(:nif_library_not_loaded)
-
-  def nif_get_op_arguments(_vips_operation), do: :erlang.nif_error(:nif_library_not_loaded)
-
   def nif_image_new_from_file(_src), do: :erlang.nif_error(:nif_library_not_loaded)
-
-  def nif_operation_call_with_args(_vips_operation_name, _input),
-    do: :erlang.nif_error(:nif_library_not_loaded)
 
   def nif_image_write_to_file(_vips_image, _dst),
     do: :erlang.nif_error(:nif_library_not_loaded)
 
-  def nif_vips_type_find(_nickname),
+  # VipsOperation
+  def nif_vips_operation_call(_vips_operation_name, _input),
     do: :erlang.nif_error(:nif_library_not_loaded)
 
-  def nif_get_enum_value(_g_param_spec, _enum_string),
+  def nif_vips_operation_get_arguments(_operation_name),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
+  def nif_vips_operation_list(),
     do: :erlang.nif_error(:nif_library_not_loaded)
 
   # GObject
