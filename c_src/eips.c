@@ -41,78 +41,56 @@ static ERL_NIF_TERM raise_exception(ErlNifEnv *env, const char *msg) {
   return enif_raise_exception(env, enif_make_string(env, msg, ERL_NIF_LATIN1));
 }
 
-static EipsResult get_operation_properties(ErlNifEnv *env, VipsOperation *op,
-                                           ERL_NIF_TERM list) {
+static EipsResult get_operation_properties(ErlNifEnv *env, VipsOperation *op) {
 
   EipsResult result;
-  unsigned int length = 0;
+  GValue gvalue = {0};
+  GObject *g_object;
 
-  if (!enif_get_list_length(env, list, &length)) {
-    error("Failed to get list length");
+  const char **names;
+  int *flags;
+  int n_args = 0;
+
+  if (vips_object_get_args(VIPS_OBJECT(op), &names, &flags, &n_args)) {
+    error("failed to get args for the operation");
     result.success = false;
     result.term = enif_make_badarg(env);
     return result;
   }
 
-  ERL_NIF_TERM head, erl_terms[length];
-  const ERL_NIF_TERM *tup;
-  int count;
+  debug("arguments: %d", n_args);
 
-  char name[1024];
-  GType g_type;
-  char g_type_nickname[1024];
+  ERL_NIF_TERM list;
+  GParamSpec *pspec;
+  VipsArgumentClass *arg_class;
+  VipsArgumentInstance *arg_instance;
 
-  GValue gvalue = {0};
-  GObject *g_object;
+  list = enif_make_list(env, 0);
 
-  for (unsigned int i = 0; i < length; i++) {
-    if (!enif_get_list_cell(env, list, &head, &list)) {
-      error("Failed to get list");
-      result.success = false;
-      result.term = enif_make_badarg(env);
-      return result;
+  for (int i = 0; i < n_args; i++) {
+    if (flags[i] & VIPS_ARGUMENT_OUTPUT) {
+      debug("output argument: %s", names[i]);
+
+      if (vips_object_get_argument(VIPS_OBJECT(op), names[i], &pspec,
+                                   &arg_class, &arg_instance)) {
+        error("failed to get argument: %s", names[i]);
+        result.success = false;
+        result.term = raise_exception(env, "failed to get argument");
+        return result;
+      }
+
+      g_value_init(&gvalue, G_PARAM_SPEC_VALUE_TYPE(pspec));
+      g_object_get_property(G_OBJECT(op), names[i], &gvalue);
+
+      g_object = g_value_get_object(&gvalue);
+      list =
+          enif_make_list_cell(env, g_object_to_erl_term(env, g_object), list);
+      g_value_unset(&gvalue);
     }
-
-    if (!enif_get_tuple(env, head, &count, &tup)) {
-      error("Failed to get tuple");
-      result.success = false;
-      result.term = enif_make_badarg(env);
-      return result;
-    }
-
-    if (count != 2) {
-      error("Tuple length must be 2");
-      result.success = false;
-      result.term = enif_make_badarg(env);
-      return result;
-    }
-
-    if (enif_get_string(env, tup[0], name, 1024, ERL_NIF_LATIN1) < 0) {
-      error("failed to get param name");
-      result.success = false;
-      result.term = enif_make_badarg(env);
-      return result;
-    }
-
-    if (enif_get_string(env, tup[1], g_type_nickname, 1024, ERL_NIF_LATIN1) <
-        0) {
-      error("failed to get GType nickname argument");
-      result.success = false;
-      result.term = enif_make_badarg(env);
-      return result;
-    }
-    g_type = vips_type_find("VipsObject", g_type_nickname);
-
-    g_value_init(&gvalue, g_type);
-    g_object_get_property(G_OBJECT(op), name, &gvalue);
-
-    g_object = g_value_get_object(&gvalue);
-    erl_terms[i] = g_object_to_erl_term(env, g_object);
-    g_value_unset(&gvalue);
   }
 
   result.success = true;
-  result.term = enif_make_list_from_array(env, erl_terms, length);
+  result.term = list;
 
   return result;
 }
@@ -198,8 +176,8 @@ static ERL_NIF_TERM nif_operation_call_with_args(ErlNifEnv *env, int argc,
   ERL_NIF_TERM result;
   VipsOperation *op = NULL;
 
-  if (argc != 3) {
-    error("number of arguments must be 3");
+  if (argc != 2) {
+    error("number of arguments must be 2");
     result = enif_make_badarg(env);
     goto exit;
   }
@@ -236,7 +214,7 @@ static ERL_NIF_TERM nif_operation_call_with_args(ErlNifEnv *env, int argc,
   g_object_unref(op);
   op = new_op;
 
-  op_result = get_operation_properties(env, op, argv[2]);
+  op_result = get_operation_properties(env, op);
   if (!op_result.success) {
     error("NIF Vips Operation get operation properties failed");
     result = op_result.term;
@@ -542,7 +520,7 @@ static ErlNifFunc nif_funcs[] = {
     {"nif_image_new_from_file", 1, nif_image_new_from_file, USE_DIRTY_IO},
     {"nif_create_op", 1, nif_create_op, USE_DIRTY_IO},
     {"nif_get_op_arguments", 1, nif_get_op_arguments, USE_DIRTY_IO},
-    {"nif_operation_call_with_args", 3, nif_operation_call_with_args,
+    {"nif_operation_call_with_args", 2, nif_operation_call_with_args,
      USE_DIRTY_IO},
     {"nif_image_write_to_file", 2, nif_image_write_to_file, USE_DIRTY_IO},
     {"nif_vips_type_find", 1, nif_vips_type_find, USE_DIRTY_IO},

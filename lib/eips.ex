@@ -20,13 +20,8 @@ defmodule Eips do
     Nif.nif_image_new_from_file(to_charlist(path))
   end
 
-  def run_vips_operation(name, input_params, output_params) do
-    result = Nif.nif_operation_call_with_args(name, input_params, output_params)
-
-    Enum.zip(output_params, result)
-    |> Enum.map(fn {{name, type}, res} ->
-      {name, type, res}
-    end)
+  def run_vips_operation(name, input_params) do
+    Nif.nif_operation_call_with_args(name, input_params)
   end
 
   def write_vips_image(vips_image, path) do
@@ -36,51 +31,47 @@ defmodule Eips do
   ### TEST
 
   def vips_invert(input_vi) do
-    [{'out', 'VipsImage', output_vi}] =
+    [output_vi] =
       run_vips_operation(
         'invert',
-        [{'in', input_vi}],
-        [{'out', 'VipsImage'}]
+        [{'in', input_vi}]
       )
 
     output_vi
   end
 
   def vips_flip(input_vi, direction) do
-    [{'out', 'VipsImage', output_vi}] =
+    [output_vi] =
       run_vips_operation(
         'flip',
-        [{'in', input_vi}, {'direction', direction}],
-        [{'out', 'VipsImage'}]
+        [{'in', input_vi}, {'direction', direction}]
       )
 
     output_vi
   end
 
   def vips_add(a_vi, b_vi) do
-    [{'out', 'VipsImage', output_vi}] =
+    [output_vi] =
       run_vips_operation(
         'add',
-        [{'left', 'VipsImage', a_vi}, {'right', 'VipsImage', b_vi}],
-        [{'out', 'VipsImage'}]
+        [{'left', 'VipsImage', a_vi}, {'right', 'VipsImage', b_vi}]
       )
 
     output_vi
   end
 
   def vips_affine(a_vi, vips_double_array) do
-    [{'out', 'VipsImage', output_vi}] =
+    [output_vi] =
       run_vips_operation(
         'affine',
-        [{'in', a_vi}, {'matrix', vips_double_array}, {'extend', 3}],
-        [{'out', 'VipsImage'}]
+        [{'in', a_vi}, {'matrix', vips_double_array}, {'extend', 3}]
       )
 
     output_vi
   end
 
   def vips_embed(in_img, x, y, width, height, extend) do
-    [{'out', 'VipsImage', out_img}] =
+    [out_img] =
       run_vips_operation(
         'embed',
         [
@@ -90,8 +81,7 @@ defmodule Eips do
           {'width', width},
           {'height', height},
           {'extend', extend}
-        ],
-        [{'out', 'VipsImage'}]
+        ]
       )
 
     out_img
