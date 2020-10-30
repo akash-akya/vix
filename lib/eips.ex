@@ -72,11 +72,29 @@ defmodule Eips do
     [{'out', 'VipsImage', output_vi}] =
       run_vips_operation(
         'affine',
-        [{'in', a_vi}, {'matrix', vips_double_array}],
+        [{'in', a_vi}, {'matrix', vips_double_array}, {'extend', 3}],
         [{'out', 'VipsImage'}]
       )
 
     output_vi
+  end
+
+  def vips_embed(in_img, x, y, width, height, extend) do
+    [{'out', 'VipsImage', out_img}] =
+      run_vips_operation(
+        'embed',
+        [
+          {'in', in_img},
+          {'x', x},
+          {'y', y},
+          {'width', width},
+          {'height', height},
+          {'extend', extend}
+        ],
+        [{'out', 'VipsImage'}]
+      )
+
+    out_img
   end
 
   defp to_double(n), do: n * 1.0
@@ -93,6 +111,15 @@ defmodule Eips do
     write_vips_image(output_vi, output)
   end
 
+  def run_vips_embed(input, output, x, y, width, height, extend \\ :VIPS_EXTEND_MIRROR) do
+    input = to_charlist(input)
+    output = to_charlist(output)
+
+    {:ok, vi} = image_from_file(input)
+    output_vi = vips_embed(vi, x, y, width, height, extend)
+    write_vips_image(output_vi, output)
+  end
+
   def run_example(input_a, input_b, output) do
     input_a = to_charlist(input_a)
     input_b = to_charlist(input_b)
@@ -102,7 +129,7 @@ defmodule Eips do
     {:ok, _b_vi} = image_from_file(input_b)
 
     output_vi =
-      vips_flip(a_vi, 1)
+      vips_flip(a_vi, :VIPS_DIRECTION_HORIZONTAL)
       |> vips_invert()
 
     write_vips_image(output_vi, output)

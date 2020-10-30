@@ -247,8 +247,8 @@ static ERL_NIF_TERM nif_operation_call_with_args(ErlNifEnv *env, int argc,
 
 exit:
   if (op) {
-    /* vips_object_unref_outputs(VIPS_OBJECT(op)); */
-    /* g_object_unref(op); */
+    vips_object_unref_outputs(VIPS_OBJECT(op));
+    g_object_unref(op);
   }
   return result;
 }
