@@ -21,26 +21,31 @@ defmodule Eips.VipsOperationParam do
   end
 
   defp filter_arguments(args, filter_flags) do
-    Enum.filter(args, fn {_name, _pspec, flags} ->
+    Enum.filter(args, fn {_name, _pspec, _priority, flags} ->
       Enum.all?(filter_flags, &Enum.member?(flags, &1))
     end)
   end
 
   def vips_operation_arguments(name) do
-    args = Nif.nif_vips_operation_get_arguments(name)
+    args =
+      Nif.nif_vips_operation_get_arguments(name)
+      |> filter_arguments([:vips_argument_input])
+
+    {required, optional} =
+      Enum.split_with(args, fn {_, _, _, flags} ->
+        :vips_argument_required in flags
+      end)
 
     required =
-      filter_arguments(args, [:vips_argument_input, :vips_argument_required])
-      |> Map.new(fn {name, pspec, _} ->
+      Map.new(required, fn {name, pspec, priority, _} ->
         {List.to_atom(name),
-         {GParamSpec.spec_type_name(pspec), GParamSpec.spec_value_type_name(pspec)}}
+         {priority, GParamSpec.spec_type_name(pspec), GParamSpec.spec_value_type_name(pspec)}}
       end)
 
     optional =
-      filter_arguments(args, [:vips_argument_input, :vips_argument_optional])
-      |> Map.new(fn {name, pspec, _} ->
+      Map.new(optional, fn {name, pspec, priority, _} ->
         {List.to_atom(name),
-         {GParamSpec.spec_type_name(pspec), GParamSpec.spec_value_type_name(pspec)}}
+         {priority, GParamSpec.spec_type_name(pspec), GParamSpec.spec_value_type_name(pspec)}}
       end)
 
     {required, optional}

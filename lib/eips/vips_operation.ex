@@ -17,12 +17,14 @@ defmodule Eips.VipsOperation do
               spec_map = Map.merge(required, optional)
 
               func_args =
-                Enum.map(required, fn {field, _} ->
+                Enum.sort_by(required, fn {_field, {priority, _, _}} -> priority end)
+                |> Enum.map(fn {field, _} ->
                   Macro.var(field, __MODULE__)
                 end)
 
               nif_args =
-                Enum.map(required, fn {field, _} ->
+                Enum.sort_by(required, fn {_field, {priority, _, _}} -> priority end)
+                |> Enum.map(fn {field, _} ->
                   {Atom.to_charlist(field), Macro.var(field, __MODULE__)}
                 end)
 
@@ -44,7 +46,9 @@ defmodule Eips.VipsOperation do
                 nif_args =
                   (unquote(nif_args) ++ nif_optional_args)
                   |> Enum.map(fn {name, value} ->
-                    {param_type_name, value_type_name} =
+                    # IO.inspect([name, value, unquote(Macro.escape(spec_map))])
+
+                    {_priority, param_type_name, value_type_name} =
                       Map.get(unquote(Macro.escape(spec_map)), List.to_atom(name))
 
                     {name, VipsOperationParam.cast(value, param_type_name, value_type_name)}

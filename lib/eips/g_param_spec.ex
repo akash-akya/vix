@@ -31,7 +31,12 @@ defmodule Eips.GParamSpec do
   end
 
   def cast(value, "GParamObject", "VipsImage") do
-    # TODO, check if vips image
+    # TODO: check if vips image
+    value
+  end
+
+  def cast(value, "GParamEnum", _enum_class) do
+    # TODO: validate value
     value
   end
 

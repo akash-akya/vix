@@ -1,12 +1,9 @@
 defmodule Eips do
   alias Eips.Nif
+  alias Eips.VipsOperation, as: Vips
 
   def image_from_file(path) do
     Nif.nif_image_new_from_file(to_charlist(path))
-  end
-
-  def run_vips_operation(name, input_params) do
-    Nif.nif_vips_operation_call(name, input_params)
   end
 
   def write_vips_image(vips_image, path) do
@@ -15,45 +12,17 @@ defmodule Eips do
 
   ### TEST
 
-  def vips_invert(input_vi) do
-    [output_vi] =
-      run_vips_operation(
-        'invert',
-        [{'in', input_vi}]
-      )
+  def vips_affine(a_vi, list), do: Vips.vips_affine(a_vi, list)
 
-    output_vi
-  end
+  def vips_invert(a_vi), do: Vips.vips_invert(a_vi)
 
-  def vips_flip(input_vi, direction) do
-    [output_vi] =
-      run_vips_operation(
-        'flip',
-        [{'in', input_vi}, {'direction', direction}]
-      )
+  def vips_add(left, right), do: Vips.vips_add(left, right)
 
-    output_vi
-  end
-
-  def vips_add(a_vi, b_vi) do
-    [output_vi] =
-      run_vips_operation(
-        'add',
-        [{'left', 'VipsImage', a_vi}, {'right', 'VipsImage', b_vi}]
-      )
-
-    output_vi
-  end
-
-  def vips_affine(a_vi, vips_double_array) do
-    Eips.VipsOperation.vips_affine(a_vi, vips_double_array)
-  end
+  def vips_flip(in_img, direction), do: Vips.vips_flip(in_img, direction)
 
   def vips_embed(in_img, x, y, width, height, optional \\ []) do
-    Eips.VipsOperation.vips_embed(in_img, x, y, width, height, optional)
+    Vips.vips_embed(in_img, x, y, width, height, optional)
   end
-
-  defp to_double(n), do: n * 1.0
 
   def run_vips_affine(input, int_list, output) do
     input = to_charlist(input)
