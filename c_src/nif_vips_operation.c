@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <vips/vips.h>
 
-#include "eips_common.h"
+#include "vix_common.h"
 #include "nif_g_boxed.h"
 #include "nif_g_object.h"
 #include "nif_g_param_spec.h"
@@ -22,10 +22,10 @@ ERL_NIF_TERM ATOM_VIPS_ARGUMENT_OUTPUT;
 ERL_NIF_TERM ATOM_VIPS_ARGUMENT_DEPRECATED;
 ERL_NIF_TERM ATOM_VIPS_ARGUMENT_MODIFY;
 
-typedef struct EipsResult {
+typedef struct VixResult {
   bool success;
   ERL_NIF_TERM term; // error in case of success == false
-} EipsResult;
+} VixResult;
 
 typedef struct NifVipsOperationsList {
   GType *gtype;
@@ -86,9 +86,9 @@ static ERL_NIF_TERM vips_argument_flags_to_erl_terms(ErlNifEnv *env,
   return enif_make_list_from_array(env, erl_terms, len);
 }
 
-static EipsResult get_operation_properties(ErlNifEnv *env, VipsOperation *op) {
+static VixResult get_operation_properties(ErlNifEnv *env, VipsOperation *op) {
 
-  EipsResult result;
+  VixResult result;
   GValue gvalue = {0};
   GObject *g_object;
 
@@ -138,10 +138,10 @@ static EipsResult get_operation_properties(ErlNifEnv *env, VipsOperation *op) {
   return result;
 }
 
-static EipsResult set_operation_properties(ErlNifEnv *env, VipsOperation *op,
+static VixResult set_operation_properties(ErlNifEnv *env, VipsOperation *op,
                                            ERL_NIF_TERM list) {
 
-  EipsResult result;
+  VixResult result;
   unsigned int length = 0;
 
   if (!enif_get_list_length(env, list, &length)) {
@@ -236,7 +236,7 @@ ERL_NIF_TERM nif_vips_operation_call(ErlNifEnv *env, int argc,
 
   debug("created operation");
 
-  EipsResult op_result = set_operation_properties(env, op, argv[1]);
+  VixResult op_result = set_operation_properties(env, op, argv[1]);
   if (!op_result.success) {
     result = op_result.term;
     goto exit;

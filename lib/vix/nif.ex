@@ -1,9 +1,9 @@
-defmodule Eips.Nif do
+defmodule Vix.Nif do
   @moduledoc false
   @on_load :load_nifs
 
   def load_nifs do
-    nif_path = :filename.join(:code.priv_dir(:eips), "eips")
+    nif_path = :filename.join(:code.priv_dir(:vix), "vix")
     :erlang.load_nif(nif_path, 0)
   end
 

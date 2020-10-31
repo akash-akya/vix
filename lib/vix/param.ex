@@ -1,15 +1,15 @@
-defmodule Eips.VipsOperationParam do
-  alias Eips.Nif
-  alias Eips.GParamSpec
+defmodule Vix.Param do
+  alias Vix.Nif
+  alias Vix.GObject.GParamSpec
 
   def cast(value, "GParamBoxed", "VipsArrayInt") do
     Enum.map(value, &cast(&1, "GParamInt", "gint"))
-    |> Eips.Nif.nif_int_array()
+    |> Vix.Nif.nif_int_array()
   end
 
   def cast(value, "GParamBoxed", "VipsArrayDouble") do
     Enum.map(value, &cast(&1, "GParamDouble", "double"))
-    |> Eips.Nif.nif_double_array()
+    |> Vix.Nif.nif_double_array()
   end
 
   def cast(value, spec_type, value_type) do

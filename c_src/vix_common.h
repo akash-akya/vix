@@ -1,5 +1,5 @@
-#ifndef EIPS_COMMON_H
-#define EIPS_COMMON_H
+#ifndef VIX_COMMON_H
+#define VIX_COMMON_H
 
 #ifndef _POSIX_C_SOURCE
 #define _POSIX_C_SOURCE 200809L

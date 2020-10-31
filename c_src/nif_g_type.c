@@ -1,5 +1,5 @@
 #include "nif_g_type.h"
-#include "eips_common.h"
+#include "vix_common.h"
 #include <glib-object.h>
 
 static inline ERL_NIF_TERM make_ok(ErlNifEnv *env, ERL_NIF_TERM term) {

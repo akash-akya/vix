@@ -1,4 +1,4 @@
-#include "eips_common.h"
+#include "vix_common.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
@@ -21,10 +21,10 @@ static int on_load(ErlNifEnv *env, void **priv, ERL_NIF_TERM load_info) {
   return 0;
 }
 
-static void on_unload(ErlNifEnv *env, void *priv) { debug("eips unload"); }
+static void on_unload(ErlNifEnv *env, void *priv) { debug("vix unload"); }
 
 static ErlNifFunc nif_funcs[] = {{"gintro", 0, gintro, USE_DIRTY_IO},
                                  {"invert", 2, invert, USE_DIRTY_IO}};
 
-ERL_NIF_INIT(Elixir.Eips.VipsObjectNif, nif_funcs, &on_load, NULL, NULL,
+ERL_NIF_INIT(Elixir.Vix.VipsObjectNif, nif_funcs, &on_load, NULL, NULL,
              &on_unload)

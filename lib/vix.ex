@@ -1,6 +1,6 @@
-defmodule Eips do
-  alias Eips.Nif
-  alias Eips.VipsOperation, as: Vips
+defmodule Vix do
+  alias Vix.Nif
+  alias Vix.Operation, as: Vips
 
   def image_from_file(path) do
     Nif.nif_image_new_from_file(to_charlist(path))
@@ -29,7 +29,7 @@ defmodule Eips do
     output = to_charlist(output)
 
     # double_list = Enum.map(int_list, &to_double/1)
-    # vips_double_array = Eips.Nif.nif_double_array(double_list)
+    # vips_double_array = Vix.Nif.nif_double_array(double_list)
 
     {:ok, vi} = image_from_file(input)
     [output_vi] = vips_affine(vi, int_list)

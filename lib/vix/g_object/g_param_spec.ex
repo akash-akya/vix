@@ -1,5 +1,5 @@
-defmodule Eips.GParamSpec do
-  alias Eips.Nif
+defmodule Vix.GObject.GParamSpec do
+  alias Vix.Nif
 
   def cast(value, "GParamInt", "gint") do
     case value do

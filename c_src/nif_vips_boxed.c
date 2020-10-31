@@ -1,5 +1,5 @@
 #include "nif_vips_boxed.h"
-#include "eips_common.h"
+#include "vix_common.h"
 #include "nif_g_boxed.h"
 #include <stdbool.h>
 #include <vips/vips.h>

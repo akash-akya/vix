@@ -1,5 +1,5 @@
 #include "nif_g_value.h"
-#include "eips_common.h"
+#include "vix_common.h"
 #include "nif_g_boxed.h"
 #include "nif_g_object.h"
 #include "nif_g_type.h"

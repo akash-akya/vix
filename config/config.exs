@@ -10,11 +10,11 @@ use Mix.Config
 
 # You can configure your application as:
 #
-#     config :eips, key: :value
+#     config :vix, key: :value
 #
 # and access this configuration in your application as:
 #
-#     Application.get_env(:eips, :key)
+#     Application.get_env(:vix, :key)
 #
 # You can also configure a third-party app:
 #
