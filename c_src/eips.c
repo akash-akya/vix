@@ -115,6 +115,9 @@ static ErlNifFunc nif_funcs[] = {
     {"nif_g_param_spec_get_name", 1, nif_g_param_spec_get_name, USE_DIRTY_IO},
     {"nif_g_param_spec_value_type", 1, nif_g_param_spec_value_type,
      USE_DIRTY_IO},
+    {"nif_g_param_spec_type_name", 1, nif_g_param_spec_type_name, USE_DIRTY_IO},
+    {"nif_g_param_spec_value_type_name", 1, nif_g_param_spec_value_type_name,
+     USE_DIRTY_IO},
     /*  VipsBoxed */
     {"nif_int_array", 1, nif_int_array, USE_DIRTY_IO},
     {"nif_double_array", 1, nif_double_array, USE_DIRTY_IO}};

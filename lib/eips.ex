@@ -59,11 +59,11 @@ defmodule Eips do
     input = to_charlist(input)
     output = to_charlist(output)
 
-    double_list = Enum.map(int_list, &to_double/1)
-    vips_double_array = Eips.Nif.nif_double_array(double_list)
+    # double_list = Enum.map(int_list, &to_double/1)
+    # vips_double_array = Eips.Nif.nif_double_array(double_list)
 
     {:ok, vi} = image_from_file(input)
-    [output_vi] = vips_affine(vi, vips_double_array)
+    [output_vi] = vips_affine(vi, int_list)
     write_vips_image(output_vi, output)
   end
 

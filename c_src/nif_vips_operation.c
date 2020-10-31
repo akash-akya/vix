@@ -302,31 +302,26 @@ ERL_NIF_TERM nif_vips_operation_get_arguments(ErlNifEnv *env, int argc,
         enif_make_string(env, "failed to get VipsObject args", ERL_NIF_LATIN1));
   }
 
-  ERL_NIF_TERM erl_terms[n_args];
-  ERL_NIF_TERM erl_flags, erl_name, erl_arg;
-
-  /* GParamSpec *pspec; */
-  /* VipsArgumentClass *arg_class; */
-  /* VipsArgumentInstance *arg_instance; */
+  ERL_NIF_TERM terms[n_args];
+  ERL_NIF_TERM erl_flags, name;
+  GParamSpec *pspec;
+  VipsArgumentClass *arg_class;
+  VipsArgumentInstance *arg_instance;
 
   for (int i = 0; i < n_args; i++) {
-    erl_name = enif_make_string(env, names[i], ERL_NIF_LATIN1);
+    name = enif_make_string(env, names[i], ERL_NIF_LATIN1);
     erl_flags = vips_argument_flags_to_erl_terms(env, flags[i]);
-    /* erl_flag = enif_make_int(env, flags[i]); */
 
-    /* if (vips_object_get_argument(VIPS_OBJECT(op), arg_name, &pspec,
-     * &arg_class, */
-    /*                              &arg_instance)) { */
-    /*   error("Failed to get vips argument"); */
-    /*   return raise_exception(env, "failed to get vips argument"); */
-    /* } */
+    if (vips_object_get_argument(VIPS_OBJECT(op), names[i], &pspec, &arg_class,
+                                 &arg_instance)) {
+      error("Failed to get vips argument");
+      return raise_exception(env, "Failed to get vips argument");
+    }
 
-    /* g_type_name() */
-
-    erl_terms[i] = enif_make_tuple2(env, erl_name, erl_flags);
+    terms[i] = enif_make_tuple3(env, name, g_param_spec_to_erl_term(env, pspec), erl_flags);
   }
 
-  return enif_make_list_from_array(env, erl_terms, n_args);
+  return enif_make_list_from_array(env, terms, n_args);
 }
 
 static void *list_class(GType type, void *user_data) {

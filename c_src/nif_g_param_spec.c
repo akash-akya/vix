@@ -74,6 +74,40 @@ ERL_NIF_TERM nif_g_param_spec_get_name(ErlNifEnv *env, int argc,
   return enif_make_string(env, g_param_spec_get_name(pspec), ERL_NIF_LATIN1);
 }
 
+ERL_NIF_TERM nif_g_param_spec_type_name(ErlNifEnv *env, int argc,
+                                        const ERL_NIF_TERM argv[]) {
+  if (argc != 1) {
+    error("number of arguments must be 1");
+    return enif_make_badarg(env);
+  }
+
+  GParamSpec *pspec;
+  if (!erl_term_to_g_param_spec(env, argv[0], &pspec)) {
+    error("Failed to get GParamSpec");
+    return enif_make_badarg(env);
+  }
+
+  GType gtype = G_PARAM_SPEC_TYPE(pspec);
+  return enif_make_string(env, g_type_name(gtype), ERL_NIF_LATIN1);
+}
+
+ERL_NIF_TERM nif_g_param_spec_value_type_name(ErlNifEnv *env, int argc,
+                                              const ERL_NIF_TERM argv[]) {
+  if (argc != 1) {
+    error("number of arguments must be 1");
+    return enif_make_badarg(env);
+  }
+
+  GParamSpec *pspec;
+  if (!erl_term_to_g_param_spec(env, argv[0], &pspec)) {
+    error("Failed to get GParamSpec");
+    return enif_make_badarg(env);
+  }
+
+  GType gtype = G_PARAM_SPEC_VALUE_TYPE(pspec);
+  return enif_make_string(env, g_type_name(gtype), ERL_NIF_LATIN1);
+}
+
 /******* GParamSpec Resource *******/
 static void g_param_spec_dtor(ErlNifEnv *env, void *obj) {
   debug("GParamSpec g_param_spec_dtor called");

@@ -46,6 +46,12 @@ defmodule Eips.Nif do
   def nif_g_param_spec_get_name(_g_param_spec),
     do: :erlang.nif_error(:nif_library_not_loaded)
 
+  def nif_g_param_spec_type_name(_g_param_spec),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
+  def nif_g_param_spec_value_type_name(_g_param_spec),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
   # VipsBoxed
   def nif_int_array(_int_list),
     do: :erlang.nif_error(:nif_library_not_loaded)
