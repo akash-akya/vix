@@ -22,36 +22,6 @@ defmodule Vix.Nif do
   def nif_vips_operation_list(),
     do: :erlang.nif_error(:nif_library_not_loaded)
 
-  # GObject
-  def nif_g_object_type(_g_object),
-    do: :erlang.nif_error(:nif_library_not_loaded)
-
-  def nif_g_object_type_name(_g_object),
-    do: :erlang.nif_error(:nif_library_not_loaded)
-
-  # GType
-  def nif_g_type_name(_g_object),
-    do: :erlang.nif_error(:nif_library_not_loaded)
-
-  def nif_g_type_from_name(_g_object),
-    do: :erlang.nif_error(:nif_library_not_loaded)
-
-  # GParamSpec
-  def nif_g_param_spec_type(_g_param_spec),
-    do: :erlang.nif_error(:nif_library_not_loaded)
-
-  def nif_g_param_spec_value_type(_g_param_spec),
-    do: :erlang.nif_error(:nif_library_not_loaded)
-
-  def nif_g_param_spec_get_name(_g_param_spec),
-    do: :erlang.nif_error(:nif_library_not_loaded)
-
-  def nif_g_param_spec_type_name(_g_param_spec),
-    do: :erlang.nif_error(:nif_library_not_loaded)
-
-  def nif_g_param_spec_value_type_name(_g_param_spec),
-    do: :erlang.nif_error(:nif_library_not_loaded)
-
   # VipsBoxed
   def nif_int_array(_int_list),
     do: :erlang.nif_error(:nif_library_not_loaded)

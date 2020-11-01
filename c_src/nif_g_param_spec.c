@@ -1,5 +1,4 @@
 #include "nif_g_param_spec.h"
-#include "nif_g_type.h"
 #include "vix_common.h"
 #include <float.h>
 #include <glib-object.h>
@@ -14,7 +13,6 @@ static double clamp_double(double value) {
     return value;
 }
 
-/******* Public *******/
 ERL_NIF_TERM g_param_spec_to_erl_term(ErlNifEnv *env, GParamSpec *pspec) {
   GParamSpecResource *pspec_r =
       enif_alloc_resource(G_PARAM_SPEC_RT, sizeof(GParamSpecResource));
@@ -35,88 +33,6 @@ bool erl_term_to_g_param_spec(ErlNifEnv *env, ERL_NIF_TERM term,
   } else {
     return false;
   }
-}
-
-ERL_NIF_TERM nif_g_param_spec_type(ErlNifEnv *env, int argc,
-                                   const ERL_NIF_TERM argv[]) {
-  if (argc != 1) {
-    error("number of arguments must be 1");
-    return enif_make_badarg(env);
-  }
-
-  GParamSpec *pspec;
-  if (!erl_term_to_g_param_spec(env, argv[0], &pspec)) {
-    error("Failed to get GParamSpec");
-    return enif_make_badarg(env);
-  }
-
-  return g_type_to_erl_term(env, G_PARAM_SPEC_TYPE(pspec));
-}
-
-ERL_NIF_TERM nif_g_param_spec_value_type(ErlNifEnv *env, int argc,
-                                         const ERL_NIF_TERM argv[]) {
-  if (argc != 1) {
-    error("number of arguments must be 1");
-    return enif_make_badarg(env);
-  }
-
-  GParamSpec *pspec;
-  if (!erl_term_to_g_param_spec(env, argv[0], &pspec)) {
-    error("Failed to get GParamSpec");
-    return enif_make_badarg(env);
-  }
-
-  return g_type_to_erl_term(env, G_PARAM_SPEC_VALUE_TYPE(pspec));
-}
-
-ERL_NIF_TERM nif_g_param_spec_get_name(ErlNifEnv *env, int argc,
-                                       const ERL_NIF_TERM argv[]) {
-  if (argc != 1) {
-    error("number of arguments must be 1");
-    return enif_make_badarg(env);
-  }
-
-  GParamSpec *pspec;
-  if (!erl_term_to_g_param_spec(env, argv[0], &pspec)) {
-    error("Failed to get GParamSpec");
-    return enif_make_badarg(env);
-  }
-
-  return enif_make_string(env, g_param_spec_get_name(pspec), ERL_NIF_LATIN1);
-}
-
-ERL_NIF_TERM nif_g_param_spec_type_name(ErlNifEnv *env, int argc,
-                                        const ERL_NIF_TERM argv[]) {
-  if (argc != 1) {
-    error("number of arguments must be 1");
-    return enif_make_badarg(env);
-  }
-
-  GParamSpec *pspec;
-  if (!erl_term_to_g_param_spec(env, argv[0], &pspec)) {
-    error("Failed to get GParamSpec");
-    return enif_make_badarg(env);
-  }
-
-  GType gtype = G_PARAM_SPEC_TYPE(pspec);
-  return enif_make_string(env, g_type_name(gtype), ERL_NIF_LATIN1);
-}
-
-ERL_NIF_TERM nif_g_param_spec_value_type_name(ErlNifEnv *env, int argc,
-                                              const ERL_NIF_TERM argv[]) {
-  if (argc != 1) {
-    error("number of arguments must be 1");
-    return enif_make_badarg(env);
-  }
-
-  GParamSpec *pspec;
-  if (!erl_term_to_g_param_spec(env, argv[0], &pspec)) {
-    error("Failed to get GParamSpec");
-    return enif_make_badarg(env);
-  }
-
-  GType gtype = G_PARAM_SPEC_VALUE_TYPE(pspec);
-  return enif_make_string(env, g_type_name(gtype), ERL_NIF_LATIN1);
 }
 
 ERL_NIF_TERM g_param_spec_details(ErlNifEnv *env, GParamSpec *pspec) {

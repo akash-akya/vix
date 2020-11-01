@@ -2,14 +2,13 @@
 #include <stdio.h>
 #include <vips/vips.h>
 
-#include "vix_common.h"
 #include "nif_g_boxed.h"
 #include "nif_g_object.h"
 #include "nif_g_param_spec.h"
-#include "nif_g_type.h"
 #include "nif_g_value.h"
 #include "nif_vips_boxed.h"
 #include "nif_vips_operation.h"
+#include "vix_common.h"
 
 ERL_NIF_TERM ATOM_OK;
 
@@ -79,13 +78,13 @@ static ERL_NIF_TERM nif_image_write_to_file(ErlNifEnv *env, int argc,
 static int on_load(ErlNifEnv *env, void **priv, ERL_NIF_TERM load_info) {
   ATOM_OK = enif_make_atom(env, "ok");
 
-  nif_g_type_init(env);
   nif_g_object_init(env);
   nif_g_param_spec_init(env);
   nif_g_boxed_init(env);
+
   nif_vips_operation_init(env);
 
-  if (VIPS_INIT(""))
+  if (VIPS_INIT("vix"))
     return 1;
 
   return 0;
@@ -104,20 +103,6 @@ static ErlNifFunc nif_funcs[] = {
     {"nif_vips_operation_get_arguments", 1, nif_vips_operation_get_arguments,
      USE_DIRTY_IO},
     {"nif_vips_operation_list", 0, nif_vips_operation_list, USE_DIRTY_IO},
-    /*  GObject */
-    {"nif_g_object_type", 1, nif_g_object_type, USE_DIRTY_IO},
-    {"nif_g_object_type_name", 1, nif_g_object_type_name, USE_DIRTY_IO},
-    /*  GType */
-    {"nif_g_type_name", 1, nif_g_type_name, USE_DIRTY_IO},
-    {"nif_g_type_from_name", 1, nif_g_type_from_name, USE_DIRTY_IO},
-    /*  GParamSpec */
-    {"nif_g_param_spec_type", 1, nif_g_param_spec_type, USE_DIRTY_IO},
-    {"nif_g_param_spec_get_name", 1, nif_g_param_spec_get_name, USE_DIRTY_IO},
-    {"nif_g_param_spec_value_type", 1, nif_g_param_spec_value_type,
-     USE_DIRTY_IO},
-    {"nif_g_param_spec_type_name", 1, nif_g_param_spec_type_name, USE_DIRTY_IO},
-    {"nif_g_param_spec_value_type_name", 1, nif_g_param_spec_value_type_name,
-     USE_DIRTY_IO},
     /*  VipsBoxed */
     {"nif_int_array", 1, nif_int_array, USE_DIRTY_IO},
     {"nif_double_array", 1, nif_double_array, USE_DIRTY_IO}};

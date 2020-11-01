@@ -5,7 +5,6 @@
 #include "nif_g_boxed.h"
 #include "nif_g_object.h"
 #include "nif_g_param_spec.h"
-#include "nif_g_type.h"
 #include "nif_g_value.h"
 #include "nif_vips_boxed.h"
 #include "nif_vips_operation.h"
@@ -24,7 +23,7 @@ ERL_NIF_TERM ATOM_VIPS_ARGUMENT_MODIFY;
 
 typedef struct VixResult {
   bool success;
-  ERL_NIF_TERM term; // error in case of success == false
+  ERL_NIF_TERM term; // error term if success == false
 } VixResult;
 
 typedef struct NifVipsOperationsList {
