@@ -7,7 +7,7 @@ defmodule Vix.GObject.GParamSpec do
   def cast(value, %__MODULE__{spec_type: "GParamInt", value_type: "gint"} = param_spec) do
     case value do
       value when is_integer(value) ->
-        check_number_limits!(value, param_spec)
+        validate_number_limits!(value, param_spec)
         value
 
       value ->
@@ -26,7 +26,7 @@ defmodule Vix.GObject.GParamSpec do
             value
           end
 
-        check_number_limits!(value, param_spec)
+        validate_number_limits!(value, param_spec)
         value
 
       value ->
@@ -38,7 +38,7 @@ defmodule Vix.GObject.GParamSpec do
   def cast(value, %__MODULE__{spec_type: "GParamUInt64", value_type: "guint64"} = param_spec) do
     case value do
       value when is_integer(value) and value >= 0 ->
-        check_number_limits!(value, param_spec)
+        validate_number_limits!(value, param_spec)
         value
 
       value ->
@@ -63,14 +63,14 @@ defmodule Vix.GObject.GParamSpec do
     value
   end
 
-  def cast(value, %__MODULE__{spec_type: "GParamEnum"}) do
-    # TODO: validate value
+  def cast(value, %__MODULE__{spec_type: "GParamEnum"} = param_spec) do
+    validate_enum!(value, param_spec)
     value
   end
 
-  defp check_number_limits!(value, %{data: nil}), do: :ok
+  defp validate_number_limits!(value, %{data: nil}), do: :ok
 
-  defp check_number_limits!(value, %{data: {min, max, default}} = param_spec) do
+  defp validate_number_limits!(value, %{data: {min, max, default}} = param_spec) do
     if max && value > max do
       raise ArgumentError, "#{param_spec.param_name} must be <= #{max}"
     end
@@ -80,5 +80,18 @@ defmodule Vix.GObject.GParamSpec do
     end
 
     :ok
+  end
+
+  defp validate_enum!(value, %__MODULE__{data: {enums, _}} = param_spec) do
+    enum_names = Enum.map(enums, fn {name, _} -> name end)
+
+    if value in enum_names do
+      :ok
+    else
+      raise ArgumentError,
+            "#{param_spec.param_name} must be one of #{inspect(enum_names)}. Given: #{
+              inspect(value)
+            }"
+    end
   end
 end

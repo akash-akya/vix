@@ -28,20 +28,17 @@ defmodule Vix do
     input = to_charlist(input)
     output = to_charlist(output)
 
-    # double_list = Enum.map(int_list, &to_double/1)
-    # vips_double_array = Vix.Nif.nif_double_array(double_list)
-
     {:ok, vi} = image_from_file(input)
     [output_vi] = vips_affine(vi, int_list)
     write_vips_image(output_vi, output)
   end
 
-  def run_vips_embed(input, output, x, y, width, height) do
+  def run_vips_embed(input, output, x, y, width, height, optional \\ []) do
     input = to_charlist(input)
     output = to_charlist(output)
 
     {:ok, vi} = image_from_file(input)
-    [output_vi] = vips_embed(vi, x, y, width, height, extend: :VIPS_EXTEND_COPY)
+    [output_vi] = vips_embed(vi, x, y, width, height, optional)
     write_vips_image(output_vi, output)
   end
 
@@ -53,9 +50,8 @@ defmodule Vix do
     {:ok, a_vi} = image_from_file(input_a)
     {:ok, _b_vi} = image_from_file(input_b)
 
-    output_vi =
-      vips_flip(a_vi, :VIPS_DIRECTION_HORIZONTAL)
-      |> vips_invert()
+    [output_vi] = vips_flip(a_vi, :VIPS_DIRECTION_VERTICAL)
+    [output_vi] = vips_invert(output_vi)
 
     write_vips_image(output_vi, output)
   end
