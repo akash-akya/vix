@@ -1,7 +1,7 @@
 #include "nif_g_value.h"
-#include "vix_common.h"
 #include "nif_g_boxed.h"
 #include "nif_g_object.h"
+#include "vix_common.h"
 #include <glib-object.h>
 
 static GValueResult set_enum(ErlNifEnv *env, GParamSpec *pspec,
@@ -26,6 +26,56 @@ static GValueResult set_enum(ErlNifEnv *env, GParamSpec *pspec,
   }
 
   g_value_set_enum(gvalue, g_enum_value->value);
+  return res;
+}
+
+static GValueResult set_flags(ErlNifEnv *env, GParamSpec *pspec,
+                              ERL_NIF_TERM list, GValue *gvalue) {
+  GValueResult res = {true, 0};
+  char flag_string[512];
+
+  ERL_NIF_TERM head;
+  unsigned int length;
+
+  GParamSpecFlags *pspec_flags;
+  GFlagsValue *g_flags_value;
+
+  if (enif_get_list_length(env, list, &length)) {
+    error("Failed to get list length");
+    res.is_success = false;
+    return res;
+  }
+
+  int flag = 0;
+
+  for (unsigned int i = 0; i < length; i++) {
+    if (!enif_get_list_cell(env, list, &head, &list)) {
+      error("Failed to get list entry");
+      res.is_success = false;
+      return res;
+    }
+
+    if (enif_get_atom(env, head, (char *)&flag_string, 512, ERL_NIF_LATIN1) <
+        1) {
+      error("failed to get flag atom");
+      res.is_success = false;
+      return res;
+    }
+
+    pspec_flags = G_PARAM_SPEC_FLAGS(pspec);
+    g_flags_value =
+        g_flags_get_value_by_name(pspec_flags->flags_class, flag_string);
+
+    if (!g_flags_value) {
+      error("Could not find enum value");
+      res.is_success = false;
+      return res;
+    }
+
+    flag = flag | g_flags_value->value;
+  }
+
+  g_value_set_flags(gvalue, flag);
   return res;
 }
 
@@ -85,7 +135,7 @@ static GValueResult set_uint(ErlNifEnv *env, ERL_NIF_TERM term,
 }
 
 static GValueResult set_int64(ErlNifEnv *env, ERL_NIF_TERM term,
-                             GValue *gvalue) {
+                              GValue *gvalue) {
   long int64_value;
   GValueResult res = {true, 0};
 
@@ -199,6 +249,8 @@ GValueResult set_g_value_from_erl_term(ErlNifEnv *env, GParamSpec *pspec,
     res = set_boxed(env, term, gvalue);
   } else if (G_IS_PARAM_SPEC_OBJECT(pspec)) {
     res = set_g_object(env, term, gvalue);
+  } else if (G_IS_PARAM_SPEC_FLAGS(pspec)) {
+    res = set_flags(env, pspec, term, gvalue);
   } else {
     error("Invalid pspec");
     res.is_success = false;

@@ -1,7 +1,4 @@
 defmodule Vix.GObject.GParamSpec do
-  alias Vix.Nif
-  alias __MODULE__
-
   defstruct [:param_name, :spec_type, :value_type, :data, :priority, :flags]
 
   def cast(value, %__MODULE__{spec_type: "GParamInt", value_type: "gint"} = param_spec) do
@@ -68,9 +65,14 @@ defmodule Vix.GObject.GParamSpec do
     value
   end
 
-  defp validate_number_limits!(value, %{data: nil}), do: :ok
+  def cast(value, %__MODULE__{spec_type: "GParamFlags"} = param_spec) do
+    validate_flags!(value, param_spec)
+    value
+  end
 
-  defp validate_number_limits!(value, %{data: {min, max, default}} = param_spec) do
+  defp validate_number_limits!(_value, %{data: nil}), do: :ok
+
+  defp validate_number_limits!(value, %{data: {min, max, _default}} = param_spec) do
     if max && value > max do
       raise ArgumentError, "#{param_spec.param_name} must be <= #{max}"
     end
@@ -92,6 +94,17 @@ defmodule Vix.GObject.GParamSpec do
             "#{param_spec.param_name} must be one of #{inspect(enum_names)}. Given: #{
               inspect(value)
             }"
+    end
+  end
+
+  defp validate_flags!(value, %__MODULE__{data: {flags, _}} = param_spec) do
+    flag_names = Enum.map(flags, fn {name, _} -> name end)
+
+    if value in flag_names do
+      :ok
+    else
+      raise ArgumentError,
+            "#{param_spec.param_name} must be in #{inspect(flag_names)}. Given: #{inspect(value)}"
     end
   end
 end

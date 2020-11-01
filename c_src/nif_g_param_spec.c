@@ -46,16 +46,17 @@ ERL_NIF_TERM g_param_spec_details(ErlNifEnv *env, GParamSpec *pspec) {
 
   if (G_IS_PARAM_SPEC_ENUM(pspec)) {
     GParamSpecEnum *pspec_enum = G_PARAM_SPEC_ENUM(pspec);
-    int i;
-    ERL_NIF_TERM list, tup, enum_value_name, enum_value;
+    ERL_NIF_TERM list, tuple, enum_value_name, enum_value;
+    unsigned int i;
+
     list = enif_make_list(env, 0);
 
     for (i = 0; i < pspec_enum->enum_class->n_values - 1; i++) {
       enum_value_name =
           enif_make_atom(env, pspec_enum->enum_class->values[i].value_name);
       enum_value = enif_make_int(env, pspec_enum->enum_class->values[i].value);
-      tup = enif_make_tuple2(env, enum_value_name, enum_value);
-      list = enif_make_list_cell(env, tup, list);
+      tuple = enif_make_tuple2(env, enum_value_name, enum_value);
+      list = enif_make_list_cell(env, tuple, list);
     }
 
     term = enif_make_tuple2(env, list,
@@ -104,9 +105,29 @@ ERL_NIF_TERM g_param_spec_details(ErlNifEnv *env, GParamSpec *pspec) {
     term = enif_make_atom(env, "nil");
   } else if (G_IS_PARAM_SPEC_OBJECT(pspec)) {
     term = enif_make_atom(env, "nil");
+  } else if (G_IS_PARAM_SPEC_FLAGS(pspec)) {
+    GParamSpecFlags *pspec_flags = G_PARAM_SPEC_FLAGS(pspec);
+    ERL_NIF_TERM list, tuple, flag_name, flag_value;
+    unsigned int i;
+
+    list = enif_make_list(env, 0);
+
+    for (i = 0; i < pspec_flags->flags_class->n_values - 1; i++) {
+      flag_name =
+          enif_make_atom(env, pspec_flags->flags_class->values[i].value_name);
+      flag_value = enif_make_int(env, pspec_flags->flags_class->values[i].value);
+
+      tuple = enif_make_tuple2(env, flag_name, flag_value);
+      list = enif_make_list_cell(env, tuple, list);
+    }
+
+    term = enif_make_tuple2(env, list,
+                            enif_make_int(env, pspec_flags->default_value));
+
   } else {
-    debug("Unknown param spec");
-    term = enif_make_atom(env, "nil");
+    error("Unknown GParamSpec: %s",
+          g_type_name(G_PARAM_SPEC_VALUE_TYPE(pspec)));
+    return enif_make_badarg(env);
   }
 
   return enif_make_tuple3(env, spec_type, value_type, term);
