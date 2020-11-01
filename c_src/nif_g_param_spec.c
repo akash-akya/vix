@@ -1,5 +1,5 @@
 #include "nif_g_param_spec.h"
-#include "vix_common.h"
+#include "vix_utils.h"
 #include <float.h>
 #include <glib-object.h>
 #include <math.h>

@@ -33,6 +33,15 @@ defmodule Vix do
     write_vips_image(output_vi, output)
   end
 
+  def run_vips_gravity(input, output, direction, width, height, optional \\ []) do
+    input = to_charlist(input)
+    output = to_charlist(output)
+
+    {:ok, vi} = image_from_file(input)
+    [output_vi] = Vips.vips_gravity(vi, direction, width, height, optional)
+    write_vips_image(output_vi, output)
+  end
+
   def run_vips_embed(input, output, x, y, width, height, optional \\ []) do
     input = to_charlist(input)
     output = to_charlist(output)

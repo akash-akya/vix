@@ -1,7 +1,7 @@
 #include "nif_g_value.h"
 #include "nif_g_boxed.h"
 #include "nif_g_object.h"
-#include "vix_common.h"
+#include "vix_utils.h"
 #include <glib-object.h>
 
 static GValueResult set_enum(ErlNifEnv *env, GParamSpec *pspec,

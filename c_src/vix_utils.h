@@ -1,11 +1,12 @@
-#ifndef VIX_COMMON_H
-#define VIX_COMMON_H
+#ifndef VIX_UTILS_H
+#define VIX_UTILS_H
 
 #ifndef _POSIX_C_SOURCE
 #define _POSIX_C_SOURCE 200809L
 #endif
 
 #include "erl_nif.h"
+#include <stdbool.h>
 
 #ifdef ERTS_DIRTY_SCHEDULERS
 #define USE_DIRTY_IO ERL_NIF_DIRTY_JOB_IO_BOUND
@@ -36,5 +37,16 @@
   } while (0)
 
 extern ERL_NIF_TERM ATOM_OK;
+
+typedef struct VixResult {
+  bool success;
+  ERL_NIF_TERM term; // error term if success == false
+} VixResult;
+
+ERL_NIF_TERM raise_exception(ErlNifEnv *env, const char *msg);
+
+ERL_NIF_TERM make_ok(ErlNifEnv *env, ERL_NIF_TERM term);
+
+void vix_utils_init(ErlNifEnv *env);
 
 #endif

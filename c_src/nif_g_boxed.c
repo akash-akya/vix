@@ -1,5 +1,5 @@
 #include "nif_g_boxed.h"
-#include "vix_common.h"
+#include "vix_utils.h"
 #include "nif_g_object.h"
 #include <glib-object.h>
 

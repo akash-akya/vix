@@ -2,13 +2,13 @@
 #include <stdio.h>
 #include <vips/vips.h>
 
+#include "vix_utils.h"
 #include "nif_g_boxed.h"
 #include "nif_g_object.h"
 #include "nif_g_param_spec.h"
 #include "nif_g_value.h"
 #include "nif_vips_boxed.h"
 #include "nif_vips_operation.h"
-#include "vix_common.h"
 
 /* VipsArgumentFlags */
 ERL_NIF_TERM ATOM_VIPS_ARGUMENT_NONE;
@@ -21,19 +21,10 @@ ERL_NIF_TERM ATOM_VIPS_ARGUMENT_OUTPUT;
 ERL_NIF_TERM ATOM_VIPS_ARGUMENT_DEPRECATED;
 ERL_NIF_TERM ATOM_VIPS_ARGUMENT_MODIFY;
 
-typedef struct VixResult {
-  bool success;
-  ERL_NIF_TERM term; // error term if success == false
-} VixResult;
-
 typedef struct NifVipsOperationsList {
   GType *gtype;
   unsigned int count;
 } NifVipsOperationsList;
-
-static ERL_NIF_TERM raise_exception(ErlNifEnv *env, const char *msg) {
-  return enif_raise_exception(env, enif_make_string(env, msg, ERL_NIF_LATIN1));
-}
 
 #define VIPS_ARGUMENT_COUNT 8
 
