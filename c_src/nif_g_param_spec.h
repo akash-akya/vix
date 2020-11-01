@@ -35,6 +35,8 @@ ERL_NIF_TERM nif_g_param_spec_type_name(ErlNifEnv *env, int argc,
 ERL_NIF_TERM nif_g_param_spec_value_type_name(ErlNifEnv *env, int argc,
                                               const ERL_NIF_TERM argv[]);
 
+ERL_NIF_TERM g_param_spec_details(ErlNifEnv *env, GParamSpec *pspec);
+
 int nif_g_param_spec_init(ErlNifEnv *env);
 
 #endif

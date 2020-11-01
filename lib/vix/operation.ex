@@ -11,20 +11,26 @@ defmodule Vix.Operation do
     desc = to_string(desc)
     op_usage = to_string(op_usage)
 
-    {required, optional} = Param.vips_operation_arguments(to_charlist(name))
+    args = Param.vips_operation_arguments(to_charlist(name))
 
-    spec_map = Map.merge(required, optional)
+    {required, _optional} =
+      args
+      |> Enum.split_with(fn {_, %{flags: flags}} ->
+        :vips_argument_required in flags
+      end)
 
     func_args =
-      Enum.sort_by(required, fn {_field, {priority, _, _}} -> priority end)
-      |> Enum.map(fn {field, _} ->
-        Macro.var(field, __MODULE__)
+      required
+      |> Enum.sort_by(fn {_, param} -> param.priority end)
+      |> Enum.map(fn {field_name, _} ->
+        Macro.var(field_name, __MODULE__)
       end)
 
     nif_args =
-      Enum.sort_by(required, fn {_field, {priority, _, _}} -> priority end)
-      |> Enum.map(fn {field, _} ->
-        {Atom.to_charlist(field), Macro.var(field, __MODULE__)}
+      required
+      |> Enum.sort_by(fn {_, param} -> param.priority end)
+      |> Enum.map(fn {field_name, _} ->
+        {Atom.to_charlist(field_name), Macro.var(field_name, __MODULE__)}
       end)
 
     # FIXME: using code block to preserve `op_usage` formatting. or
@@ -46,11 +52,8 @@ defmodule Vix.Operation do
         (unquote(nif_args) ++ nif_optional_args)
         |> Enum.map(fn {name, value} ->
           # IO.inspect([name, value, unquote(Macro.escape(spec_map))])
-
-          {_priority, param_type_name, value_type_name} =
-            Map.get(unquote(Macro.escape(spec_map)), List.to_atom(name))
-
-          {name, Param.cast(value, param_type_name, value_type_name)}
+          param_spec = Map.get(unquote(Macro.escape(args)), List.to_atom(name))
+          {name, Param.cast(value, param_spec)}
         end)
 
       Vix.Nif.nif_vips_operation_call(

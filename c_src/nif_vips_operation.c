@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <vips/vips.h>
 
-#include "vix_common.h"
 #include "nif_g_boxed.h"
 #include "nif_g_object.h"
 #include "nif_g_param_spec.h"
@@ -10,6 +9,7 @@
 #include "nif_g_value.h"
 #include "nif_vips_boxed.h"
 #include "nif_vips_operation.h"
+#include "vix_common.h"
 
 /* VipsArgumentFlags */
 ERL_NIF_TERM ATOM_VIPS_ARGUMENT_NONE;
@@ -139,7 +139,7 @@ static VixResult get_operation_properties(ErlNifEnv *env, VipsOperation *op) {
 }
 
 static VixResult set_operation_properties(ErlNifEnv *env, VipsOperation *op,
-                                           ERL_NIF_TERM list) {
+                                          ERL_NIF_TERM list) {
 
   VixResult result;
   unsigned int length = 0;
@@ -278,6 +278,7 @@ exit:
 ERL_NIF_TERM nif_vips_operation_get_arguments(ErlNifEnv *env, int argc,
                                               const ERL_NIF_TERM argv[]) {
   if (argc != 1) {
+    error("number of arguments must be 1");
     return enif_make_badarg(env);
   }
 
@@ -295,7 +296,7 @@ ERL_NIF_TERM nif_vips_operation_get_arguments(ErlNifEnv *env, int argc,
   int *flags;
   int n_args = 0;
 
-  if (vips_object_get_args(VIPS_OBJECT(op), &names, &flags, &n_args)) {
+  if (vips_object_get_args(VIPS_OBJECT(op), &names, &flags, &n_args) != 0) {
     error("failed to get args for the operation");
     return enif_raise_exception(
         env,
@@ -319,9 +320,12 @@ ERL_NIF_TERM nif_vips_operation_get_arguments(ErlNifEnv *env, int argc,
       return raise_exception(env, "Failed to get vips argument");
     }
 
-    terms[i] = enif_make_tuple4(env, name, g_param_spec_to_erl_term(env, pspec),
+    terms[i] = enif_make_tuple4(env, name, g_param_spec_details(env, pspec),
                                 priority, erl_flags);
   }
+
+  g_free(names);
+  g_free(flags);
 
   return enif_make_list_from_array(env, terms, n_args);
 }
