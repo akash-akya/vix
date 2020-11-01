@@ -4,20 +4,35 @@
 
 #include "vix_utils.h"
 
+#include "nif_g_boxed.h"
 #include "nif_g_object.h"
 #include "nif_g_param_spec.h"
-#include "nif_g_boxed.h"
 #include "nif_vips_boxed.h"
-#include "nif_vips_operation.h"
 #include "nif_vips_image.h"
+#include "nif_vips_operation.h"
 
 static int on_load(ErlNifEnv *env, void **priv, ERL_NIF_TERM load_info) {
-  vix_utils_init(env);
-  nif_g_object_init(env);
-  nif_g_param_spec_init(env);
-  nif_g_boxed_init(env);
+  ERL_NIF_TERM res;
 
-  nif_vips_operation_init(env);
+  res = vix_utils_init(env);
+  if (enif_is_exception(env, res))
+    return res;
+
+  res = nif_g_object_init(env);
+  if (enif_is_exception(env, res))
+    return res;
+
+  res = nif_g_param_spec_init(env);
+  if (enif_is_exception(env, res))
+    return res;
+
+  res = nif_g_boxed_init(env);
+  if (enif_is_exception(env, res))
+    return res;
+
+  res = nif_vips_operation_init(env);
+  if (enif_is_exception(env, res))
+    return res;
 
   if (VIPS_INIT("vix"))
     return 1;
@@ -31,6 +46,7 @@ static void on_unload(ErlNifEnv *env, void *priv) {
 }
 
 static ErlNifFunc nif_funcs[] = {
+    /*  VipsImage */
     {"nif_image_new_from_file", 1, nif_image_new_from_file, USE_DIRTY_IO},
     {"nif_image_write_to_file", 2, nif_image_write_to_file, USE_DIRTY_IO},
     /*  VipsOperation */

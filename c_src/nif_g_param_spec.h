@@ -22,6 +22,6 @@ bool erl_term_to_g_param_spec(ErlNifEnv *env, ERL_NIF_TERM term,
 
 ERL_NIF_TERM g_param_spec_details(ErlNifEnv *env, GParamSpec *pspec);
 
-int nif_g_param_spec_init(ErlNifEnv *env);
+ERL_NIF_TERM nif_g_param_spec_init(ErlNifEnv *env);
 
 #endif

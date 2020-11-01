@@ -189,10 +189,13 @@ static void g_param_spec_down(ErlNifEnv *env, void *obj, ErlNifPid *pid,
 static ErlNifResourceTypeInit g_param_spec_rt_init = {
     g_param_spec_dtor, g_param_spec_stop, g_param_spec_down};
 
-int nif_g_param_spec_init(ErlNifEnv *env) {
-
+ERL_NIF_TERM nif_g_param_spec_init(ErlNifEnv *env) {
   G_PARAM_SPEC_RT = enif_open_resource_type_x(
       env, "g_param_spec_resource", &g_param_spec_rt_init,
       ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER, NULL);
-  return 0;
+
+  if (!G_PARAM_SPEC_RT)
+    return raise_exception(env, "Failed to open g_param_spec_resource");
+
+  return ATOM_OK;
 }

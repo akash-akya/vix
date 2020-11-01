@@ -18,6 +18,6 @@ typedef struct GBoxedResource {
 
 bool erl_term_to_g_boxed(ErlNifEnv *env, ERL_NIF_TERM term, gpointer *ptr);
 
-int nif_g_boxed_init(ErlNifEnv *env);
+ERL_NIF_TERM nif_g_boxed_init(ErlNifEnv *env);
 
 #endif

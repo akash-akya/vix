@@ -1,6 +1,6 @@
 #include "nif_vips_boxed.h"
-#include "vix_utils.h"
 #include "nif_g_boxed.h"
+#include "vix_utils.h"
 #include <stdbool.h>
 #include <vips/vips.h>
 
@@ -31,9 +31,9 @@ static VipsArrayInt *erl_list_to_vips_int_array(ErlNifEnv *env,
 }
 
 static VipsArrayDouble *erl_list_to_vips_double_array(ErlNifEnv *env,
-                                                    ERL_NIF_TERM list,
-                                                    unsigned int length,
-                                                    double *array) {
+                                                      ERL_NIF_TERM list,
+                                                      unsigned int length,
+                                                      double *array) {
   ERL_NIF_TERM head, tail;
   double value;
 
@@ -59,10 +59,7 @@ static VipsArrayDouble *erl_list_to_vips_double_array(ErlNifEnv *env,
 ERL_NIF_TERM nif_int_array(ErlNifEnv *env, int argc,
                            const ERL_NIF_TERM argv[]) {
 
-  if (argc != 1) {
-    error("number of arguments must be 1");
-    return enif_make_badarg(env);
-  }
+  assert_argc(argc, 1);
 
   GBoxedResource *g_boxed_r =
       enif_alloc_resource(G_BOXED_RT, sizeof(GBoxedResource));
@@ -88,11 +85,7 @@ ERL_NIF_TERM nif_int_array(ErlNifEnv *env, int argc,
 
 ERL_NIF_TERM nif_double_array(ErlNifEnv *env, int argc,
                               const ERL_NIF_TERM argv[]) {
-
-  if (argc != 1) {
-    error("number of arguments must be 1");
-    return enif_make_badarg(env);
-  }
+  assert_argc(argc, 1);
 
   GBoxedResource *g_boxed_r =
       enif_alloc_resource(G_BOXED_RT, sizeof(GBoxedResource));

@@ -19,6 +19,8 @@
 #ifdef DEBUG
 #define debug(...)                                                             \
   do {                                                                         \
+    enif_fprintf(stderr, "%s:%d\t(fn \"%s\")  - ", __FILE__, __LINE__,         \
+                 __func__);                                                    \
     enif_fprintf(stderr, __VA_ARGS__);                                         \
     enif_fprintf(stderr, "\n");                                                \
   } while (0)
@@ -32,11 +34,25 @@
 
 #define error(...)                                                             \
   do {                                                                         \
+    enif_fprintf(stderr, "%s:%d\t(fn: \"%s\")  - ", __FILE__, __LINE__,        \
+                 __func__);                                                    \
     enif_fprintf(stderr, __VA_ARGS__);                                         \
     enif_fprintf(stderr, "\n");                                                \
   } while (0)
 
+#define assert_argc(argc, count)                                               \
+  if (argc != count) {                                                         \
+    error("number of arguments must be %d", count);                            \
+    return enif_make_badarg(env);                                              \
+  }
+
+#define return_if_exception(env, exception)                                    \
+  if (enif_is_exception(env, exception)) {                                     \
+    return exception;                                                          \
+  }
+
 extern ERL_NIF_TERM ATOM_OK;
+extern ERL_NIF_TERM ATOM_ERROR;
 
 typedef struct VixResult {
   bool success;
@@ -45,8 +61,12 @@ typedef struct VixResult {
 
 ERL_NIF_TERM raise_exception(ErlNifEnv *env, const char *msg);
 
+ERL_NIF_TERM raise_badarg(ErlNifEnv *env, const char *reason);
+
 ERL_NIF_TERM make_ok(ErlNifEnv *env, ERL_NIF_TERM term);
 
-void vix_utils_init(ErlNifEnv *env);
+ERL_NIF_TERM make_error(ErlNifEnv *env, const char *reason);
+
+ERL_NIF_TERM vix_utils_init(ErlNifEnv *env);
 
 #endif

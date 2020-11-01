@@ -2,13 +2,13 @@
 #include <stdio.h>
 #include <vips/vips.h>
 
-#include "vix_utils.h"
 #include "nif_g_boxed.h"
 #include "nif_g_object.h"
 #include "nif_g_param_spec.h"
 #include "nif_g_value.h"
 #include "nif_vips_boxed.h"
 #include "nif_vips_operation.h"
+#include "vix_utils.h"
 
 /* VipsArgumentFlags */
 ERL_NIF_TERM ATOM_VIPS_ARGUMENT_NONE;
@@ -25,8 +25,6 @@ typedef struct NifVipsOperationsList {
   GType *gtype;
   unsigned int count;
 } NifVipsOperationsList;
-
-#define VIPS_ARGUMENT_COUNT 8
 
 static ERL_NIF_TERM vips_argument_flags_to_erl_terms(ErlNifEnv *env,
                                                      int flags) {
@@ -209,11 +207,7 @@ ERL_NIF_TERM nif_vips_operation_call(ErlNifEnv *env, int argc,
   ERL_NIF_TERM result;
   VipsOperation *op = NULL;
 
-  if (argc != 2) {
-    error("number of arguments must be 2");
-    result = enif_make_badarg(env);
-    goto exit;
-  }
+  assert_argc(argc, 2);
 
   char op_name[200] = {'\0'};
   if (enif_get_string(env, argv[0], op_name, 200, ERL_NIF_LATIN1) < 1) {
@@ -267,10 +261,8 @@ exit:
 
 ERL_NIF_TERM nif_vips_operation_get_arguments(ErlNifEnv *env, int argc,
                                               const ERL_NIF_TERM argv[]) {
-  if (argc != 1) {
-    error("number of arguments must be 1");
-    return enif_make_badarg(env);
-  }
+
+  assert_argc(argc, 1);
 
   VipsOperation *op;
   char op_name[200] = {'\0'};
@@ -341,10 +333,8 @@ static void *list_class(GType type, void *user_data) {
 
 ERL_NIF_TERM nif_vips_operation_list(ErlNifEnv *env, int argc,
                                      const ERL_NIF_TERM argv[]) {
-  if (argc != 0) {
-    error("Number of arguments must be 0");
-    return enif_make_badarg(env);
-  }
+
+  assert_argc(argc, 0);
 
   GType _gtype[1024], gtype;
   NifVipsOperationsList list;
@@ -387,7 +377,7 @@ ERL_NIF_TERM nif_vips_operation_list(ErlNifEnv *env, int argc,
   return erl_term;
 }
 
-int nif_vips_operation_init(ErlNifEnv *env) {
+ERL_NIF_TERM nif_vips_operation_init(ErlNifEnv *env) {
   ATOM_VIPS_ARGUMENT_NONE = enif_make_atom(env, "vips_argument_none");
   ATOM_VIPS_ARGUMENT_REQUIRED = enif_make_atom(env, "vips_argument_required");
   ATOM_VIPS_ARGUMENT_CONSTRUCT = enif_make_atom(env, "vips_argument_construct");
@@ -400,5 +390,8 @@ int nif_vips_operation_init(ErlNifEnv *env) {
       enif_make_atom(env, "vips_argument_deprecated");
   ATOM_VIPS_ARGUMENT_MODIFY = enif_make_atom(env, "vips_argument_modify");
 
-  return 0;
+  if (!G_BOXED_RT)
+    return raise_exception(env, "Failed to open g_boxed_resource");
+
+  return ATOM_OK;
 }
