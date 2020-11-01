@@ -2,8 +2,6 @@ defmodule Vix.Param do
   alias Vix.Nif
   alias Vix.GObject.GParamSpec
 
-  defstruct [:param_name, :spec_type, :value_type, :data, :priority, :flags]
-
   def cast(value, %GParamSpec{spec_type: "GParamBoxed", value_type: "VipsArrayInt"} = param) do
     Enum.map(
       value,

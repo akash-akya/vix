@@ -324,8 +324,8 @@ ERL_NIF_TERM nif_vips_operation_get_arguments(ErlNifEnv *env, int argc,
                                 priority, erl_flags);
   }
 
-  g_free(names);
-  g_free(flags);
+  /* g_free(names); */
+  /* g_free(flags); */
 
   return enif_make_list_from_array(env, terms, n_args);
 }

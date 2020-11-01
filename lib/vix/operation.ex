@@ -51,7 +51,6 @@ defmodule Vix.Operation do
       nif_args =
         (unquote(nif_args) ++ nif_optional_args)
         |> Enum.map(fn {name, value} ->
-          # IO.inspect([name, value, unquote(Macro.escape(spec_map))])
           param_spec = Map.get(unquote(Macro.escape(args)), List.to_atom(name))
           {name, Param.cast(value, param_spec)}
         end)
