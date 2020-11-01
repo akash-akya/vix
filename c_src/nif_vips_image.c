@@ -43,3 +43,33 @@ ERL_NIF_TERM nif_image_write_to_file(ErlNifEnv *env, int argc,
 
   return ATOM_OK;
 }
+
+ERL_NIF_TERM nif_image_new(ErlNifEnv *env, int argc,
+                           const ERL_NIF_TERM argv[]) {
+  assert_argc(argc, 0);
+
+  VipsImage *image = vips_image_new();
+
+  if (!image)
+    return make_error(env, "Failed create VipsImage");
+
+  return make_ok(env, g_object_to_erl_term(env, (GObject *)image));
+}
+
+ERL_NIF_TERM nif_image_new_temp_file(ErlNifEnv *env, int argc,
+                                     const ERL_NIF_TERM argv[]) {
+  assert_argc(argc, 1);
+
+  char format[100];
+  VipsImage *image;
+
+  if (enif_get_string(env, argv[0], format, MAX_PATH_LEN, ERL_NIF_LATIN1) < 0)
+    return raise_badarg(env, "Failed to get format");
+
+  image = vips_image_new_temp_file(format);
+
+  if (!image)
+    return make_error(env, "Failed create VipsImage");
+
+  return make_ok(env, g_object_to_erl_term(env, (GObject *)image));
+}

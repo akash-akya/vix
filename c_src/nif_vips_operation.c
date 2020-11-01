@@ -377,6 +377,86 @@ ERL_NIF_TERM nif_vips_operation_list(ErlNifEnv *env, int argc,
   return erl_term;
 }
 
+ERL_NIF_TERM nif_vips_cache_set_max(ErlNifEnv *env, int argc,
+                                    const ERL_NIF_TERM argv[]) {
+  assert_argc(argc, 1);
+
+  int max_op;
+
+  if (!enif_get_int(env, argv[0], &max_op)) {
+    return raise_badarg(env, "Failed to integer value");
+  }
+
+  vips_cache_set_max(max_op);
+  return ATOM_OK;
+}
+
+ERL_NIF_TERM nif_vips_cache_get_max(ErlNifEnv *env, int argc,
+                                    const ERL_NIF_TERM argv[]) {
+  assert_argc(argc, 0);
+  return make_ok(env, enif_make_int(env, vips_cache_get_max()));
+}
+
+ERL_NIF_TERM nif_vips_concurrency_set(ErlNifEnv *env, int argc,
+                                      const ERL_NIF_TERM argv[]) {
+  assert_argc(argc, 1);
+
+  int concurrency;
+
+  if (!enif_get_int(env, argv[0], &concurrency)) {
+    return raise_badarg(env, "Failed to integer value");
+  }
+
+  vips_concurrency_set(concurrency);
+  return ATOM_OK;
+}
+
+ERL_NIF_TERM nif_vips_concurrency_get(ErlNifEnv *env, int argc,
+                                      const ERL_NIF_TERM argv[]) {
+  assert_argc(argc, 0);
+  return make_ok(env, enif_make_int(env, vips_concurrency_get()));
+}
+
+ERL_NIF_TERM nif_vips_cache_set_max_files(ErlNifEnv *env, int argc,
+                                          const ERL_NIF_TERM argv[]) {
+  assert_argc(argc, 1);
+
+  int max_files;
+
+  if (!enif_get_int(env, argv[0], &max_files)) {
+    return raise_badarg(env, "Failed to integer value");
+  }
+
+  vips_cache_set_max_files(max_files);
+  return ATOM_OK;
+}
+
+ERL_NIF_TERM nif_vips_cache_get_max_files(ErlNifEnv *env, int argc,
+                                          const ERL_NIF_TERM argv[]) {
+  assert_argc(argc, 0);
+  return make_ok(env, enif_make_int(env, vips_cache_get_max_files()));
+}
+
+ERL_NIF_TERM nif_vips_cache_set_max_mem(ErlNifEnv *env, int argc,
+                                        const ERL_NIF_TERM argv[]) {
+  assert_argc(argc, 1);
+
+  unsigned long max_mem;
+
+  if (!enif_get_uint64(env, argv[0], &max_mem)) {
+    return raise_badarg(env, "Failed to integer value");
+  }
+
+  vips_cache_set_max_mem(max_mem);
+  return ATOM_OK;
+}
+
+ERL_NIF_TERM nif_vips_cache_get_max_mem(ErlNifEnv *env, int argc,
+                                        const ERL_NIF_TERM argv[]) {
+  assert_argc(argc, 0);
+  return make_ok(env, enif_make_uint64(env, vips_cache_get_max_mem()));
+}
+
 ERL_NIF_TERM nif_vips_operation_init(ErlNifEnv *env) {
   ATOM_VIPS_ARGUMENT_NONE = enif_make_atom(env, "vips_argument_none");
   ATOM_VIPS_ARGUMENT_REQUIRED = enif_make_atom(env, "vips_argument_required");
