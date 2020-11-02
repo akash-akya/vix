@@ -40,11 +40,6 @@ static int on_load(ErlNifEnv *env, void **priv, ERL_NIF_TERM load_info) {
   return 0;
 }
 
-static void on_unload(ErlNifEnv *env, void *priv) {
-  vips_shutdown();
-  debug("vix unload");
-}
-
 static ErlNifFunc nif_funcs[] = {
     /*  VipsImage */
     {"nif_image_new_from_file", 1, nif_image_new_from_file, USE_DIRTY_IO},
@@ -72,4 +67,4 @@ static ErlNifFunc nif_funcs[] = {
     {"nif_int_array", 1, nif_int_array, USE_DIRTY_IO},
     {"nif_double_array", 1, nif_double_array, USE_DIRTY_IO}};
 
-ERL_NIF_INIT(Elixir.Vix.Nif, nif_funcs, &on_load, NULL, NULL, &on_unload)
+ERL_NIF_INIT(Elixir.Vix.Nif, nif_funcs, &on_load, NULL, NULL, NULL)

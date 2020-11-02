@@ -19,8 +19,11 @@ ERL_NIF_TERM nif_image_new_from_file(ErlNifEnv *env, int argc,
 
   image = vips_image_new_from_file(src, NULL);
 
-  if (!image)
+  if (!image) {
+    error("Failed to read image. error: %s", vips_error_buffer());
+    vips_error_clear();
     return make_error(env, "Failed to read image");
+  }
 
   return make_ok(env, g_object_to_erl_term(env, (GObject *)image));
 }
@@ -38,8 +41,11 @@ ERL_NIF_TERM nif_image_write_to_file(ErlNifEnv *env, int argc,
   if (enif_get_string(env, argv[1], dst, MAX_PATH_LEN, ERL_NIF_LATIN1) < 0)
     return make_error(env, "Failed to get destination path");
 
-  if (vips_image_write_to_file(image, dst, NULL))
+  if (vips_image_write_to_file(image, dst, NULL)) {
+    error("Failed to write VipsImage. error: %s", vips_error_buffer());
+    vips_error_clear();
     return make_error(env, "Failed to write VipsImage");
+  }
 
   return ATOM_OK;
 }
@@ -50,8 +56,11 @@ ERL_NIF_TERM nif_image_new(ErlNifEnv *env, int argc,
 
   VipsImage *image = vips_image_new();
 
-  if (!image)
+  if (!image) {
+    error("Failed to create VipsImage. error: %s", vips_error_buffer());
+    vips_error_clear();
     return make_error(env, "Failed create VipsImage");
+  }
 
   return make_ok(env, g_object_to_erl_term(env, (GObject *)image));
 }
@@ -68,8 +77,11 @@ ERL_NIF_TERM nif_image_new_temp_file(ErlNifEnv *env, int argc,
 
   image = vips_image_new_temp_file(format);
 
-  if (!image)
+  if (!image) {
+    error("Failed to create VipsImage. error: %s", vips_error_buffer());
+    vips_error_clear();
     return make_error(env, "Failed create VipsImage");
+  }
 
   return make_ok(env, g_object_to_erl_term(env, (GObject *)image));
 }

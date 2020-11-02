@@ -85,13 +85,12 @@ static VixResult get_operation_properties(ErlNifEnv *env, VipsOperation *op) {
   int n_args = 0;
 
   if (vips_object_get_args(VIPS_OBJECT(op), &names, &flags, &n_args)) {
-    error("failed to get args for the operation");
+    error("failed to get args. error: %s", vips_error_buffer());
+    vips_error_clear();
     result.success = false;
     result.term = enif_make_badarg(env);
     return result;
   }
-
-  debug("arguments: %d", n_args);
 
   ERL_NIF_TERM list;
   GParamSpec *pspec;
@@ -230,14 +229,13 @@ ERL_NIF_TERM nif_vips_operation_call(ErlNifEnv *env, int argc,
 
   VipsOperation *new_op;
   if (!(new_op = vips_cache_operation_build(op))) {
-    error("Failed to call vips operation: %s", vips_error_buffer());
-    result = enif_raise_exception(
-        env,
-        enif_make_string(env, "Failed to call VipsOperation", ERL_NIF_LATIN1));
+    error("failed to build operation, error: %s", vips_error_buffer());
+    vips_error_clear();
+    result = raise_exception(env, "failed to build operation");
     goto exit;
   }
 
-  debug("run operation");
+  debug("ran operation");
 
   g_object_unref(op);
   op = new_op;
@@ -265,31 +263,26 @@ ERL_NIF_TERM nif_vips_operation_get_arguments(ErlNifEnv *env, int argc,
   assert_argc(argc, 1);
 
   VipsOperation *op;
-  char op_name[200] = {'\0'};
-
-  if (enif_get_string(env, argv[0], op_name, 200, ERL_NIF_LATIN1) < 1) {
-    error("operation name must be a valid string");
-    return enif_make_badarg(env);
-  }
-
-  op = vips_operation_new(op_name);
-
+  char op_name[200] = {0};
   const char **names;
   int *flags;
   int n_args = 0;
-
-  if (vips_object_get_args(VIPS_OBJECT(op), &names, &flags, &n_args) != 0) {
-    error("failed to get args for the operation");
-    return enif_raise_exception(
-        env,
-        enif_make_string(env, "failed to get VipsObject args", ERL_NIF_LATIN1));
-  }
-
   ERL_NIF_TERM terms[n_args];
   ERL_NIF_TERM erl_flags, name, priority;
   GParamSpec *pspec;
   VipsArgumentClass *arg_class;
   VipsArgumentInstance *arg_instance;
+
+  if (enif_get_string(env, argv[0], op_name, 200, ERL_NIF_LATIN1) < 1)
+    return raise_badarg(env, "operation name must be a valid string");
+
+  op = vips_operation_new(op_name);
+
+  if (vips_object_get_args(VIPS_OBJECT(op), &names, &flags, &n_args) != 0) {
+    error("failed to get VipsObject arguments. error: %s", vips_error_buffer());
+    vips_error_clear();
+    return raise_exception(env, "failed to get VipsObject arguments");
+  }
 
   for (int i = 0; i < n_args; i++) {
     name = enif_make_string(env, names[i], ERL_NIF_LATIN1);
@@ -298,8 +291,10 @@ ERL_NIF_TERM nif_vips_operation_get_arguments(ErlNifEnv *env, int argc,
 
     if (vips_object_get_argument(VIPS_OBJECT(op), names[i], &pspec, &arg_class,
                                  &arg_instance)) {
-      error("Failed to get vips argument");
-      return raise_exception(env, "Failed to get vips argument");
+      error("failed to get VipsObject argument. error: %s",
+            vips_error_buffer());
+      vips_error_clear();
+      return raise_exception(env, "failed to get VipsObject argument");
     }
 
     terms[i] = enif_make_tuple4(env, name, g_param_spec_details(env, pspec),
