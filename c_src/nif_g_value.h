@@ -9,12 +9,7 @@
 #include <glib-object.h>
 #include <stdbool.h>
 
-typedef struct GValueResult {
-  bool is_success;
-  ERL_NIF_TERM term;
-} GValueResult;
-
-GValueResult set_g_value_from_erl_term(ErlNifEnv *env, GParamSpec *pspec,
+ERL_NIF_TERM set_g_value_from_erl_term(ErlNifEnv *env, GParamSpec *pspec,
                                        ERL_NIF_TERM term, GValue *gvalue);
 
 #endif

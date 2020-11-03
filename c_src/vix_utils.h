@@ -54,11 +54,6 @@
 extern ERL_NIF_TERM ATOM_OK;
 extern ERL_NIF_TERM ATOM_ERROR;
 
-typedef struct VixResult {
-  bool success;
-  ERL_NIF_TERM term; // error term if success == false
-} VixResult;
-
 ERL_NIF_TERM raise_exception(ErlNifEnv *env, const char *msg);
 
 ERL_NIF_TERM raise_badarg(ErlNifEnv *env, const char *reason);

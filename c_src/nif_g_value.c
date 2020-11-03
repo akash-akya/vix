@@ -4,15 +4,13 @@
 #include "vix_utils.h"
 #include <glib-object.h>
 
-static GValueResult set_enum(ErlNifEnv *env, GParamSpec *pspec,
+static ERL_NIF_TERM set_enum(ErlNifEnv *env, GParamSpec *pspec,
                              ERL_NIF_TERM term, GValue *gvalue) {
-  GValueResult res = {true, 0};
   char enum_string[512];
 
   if (enif_get_atom(env, term, (char *)&enum_string, 512, ERL_NIF_LATIN1) < 1) {
     error("failed to get enum atom");
-    res.is_success = false;
-    return res;
+    return raise_exception(env, "failed to get enum atom");
   }
 
   GParamSpecEnum *pspec_enum = G_PARAM_SPEC_ENUM(pspec);
@@ -21,17 +19,15 @@ static GValueResult set_enum(ErlNifEnv *env, GParamSpec *pspec,
 
   if (!g_enum_value) {
     error("Could not find enum value");
-    res.is_success = false;
-    return res;
+    return raise_exception(env, "Could not find enum value");
   }
 
   g_value_set_enum(gvalue, g_enum_value->value);
-  return res;
+  return ATOM_OK;
 }
 
-static GValueResult set_flags(ErlNifEnv *env, GParamSpec *pspec,
+static ERL_NIF_TERM set_flags(ErlNifEnv *env, GParamSpec *pspec,
                               ERL_NIF_TERM list, GValue *gvalue) {
-  GValueResult res = {true, 0};
   char flag_string[512];
 
   ERL_NIF_TERM head;
@@ -42,8 +38,7 @@ static GValueResult set_flags(ErlNifEnv *env, GParamSpec *pspec,
 
   if (enif_get_list_length(env, list, &length)) {
     error("Failed to get list length");
-    res.is_success = false;
-    return res;
+    return raise_exception(env, "Failed to get list length");
   }
 
   int flag = 0;
@@ -51,15 +46,13 @@ static GValueResult set_flags(ErlNifEnv *env, GParamSpec *pspec,
   for (unsigned int i = 0; i < length; i++) {
     if (!enif_get_list_cell(env, list, &head, &list)) {
       error("Failed to get list entry");
-      res.is_success = false;
-      return res;
+      return raise_exception(env, "Failed to get list entry");
     }
 
     if (enif_get_atom(env, head, (char *)&flag_string, 512, ERL_NIF_LATIN1) <
         1) {
       error("failed to get flag atom");
-      res.is_success = false;
-      return res;
+      return raise_exception(env, "failed to get flag atom");
     }
 
     pspec_flags = G_PARAM_SPEC_FLAGS(pspec);
@@ -68,27 +61,24 @@ static GValueResult set_flags(ErlNifEnv *env, GParamSpec *pspec,
 
     if (!g_flags_value) {
       error("Could not find enum value");
-      res.is_success = false;
-      return res;
+      return raise_exception(env, "Could not find enum value");
     }
 
     flag = flag | g_flags_value->value;
   }
 
   g_value_set_flags(gvalue, flag);
-  return res;
+  return ATOM_OK;
 }
 
-static GValueResult set_boolean(ErlNifEnv *env, ERL_NIF_TERM term,
+static ERL_NIF_TERM set_boolean(ErlNifEnv *env, ERL_NIF_TERM term,
                                 GValue *gvalue) {
   char atom[10] = {0};
-  GValueResult res = {true, 0};
   bool boolean_value;
 
   if (enif_get_atom(env, term, atom, 9, ERL_NIF_LATIN1) < 1) {
     error("failed to get atom");
-    res.is_success = false;
-    return res;
+    return raise_exception(env, "failed to get atom");
   }
 
   if (strcmp(atom, "true") == 0) {
@@ -97,164 +87,145 @@ static GValueResult set_boolean(ErlNifEnv *env, ERL_NIF_TERM term,
     boolean_value = false;
   } else {
     error("invalid atom value, value must be :true or :false");
-    res.is_success = false;
-    return res;
+    return raise_exception(env,
+                           "invalid atom value, value must be :true or :false");
   }
 
   g_value_set_boolean(gvalue, boolean_value);
-  return res;
+  return ATOM_OK;
 }
 
-static GValueResult set_int(ErlNifEnv *env, ERL_NIF_TERM term, GValue *gvalue) {
+static ERL_NIF_TERM set_int(ErlNifEnv *env, ERL_NIF_TERM term, GValue *gvalue) {
   int int_value;
-  GValueResult res = {true, 0};
 
   if (!enif_get_int(env, term, &int_value)) {
     error("failed to get int from erl term");
-    res.is_success = false;
-    return res;
+    return raise_exception(env, "failed to get int from erl term");
   }
 
   g_value_set_int(gvalue, int_value);
-  return res;
+  return ATOM_OK;
 }
 
-static GValueResult set_uint(ErlNifEnv *env, ERL_NIF_TERM term,
+static ERL_NIF_TERM set_uint(ErlNifEnv *env, ERL_NIF_TERM term,
                              GValue *gvalue) {
   unsigned int uint_value;
-  GValueResult res = {true, 0};
 
   if (!enif_get_uint(env, term, &uint_value)) {
     error("failed to get uint from erl term");
-    res.is_success = false;
-    return res;
+    return raise_exception(env, "failed to get uint from erl term");
   }
 
   g_value_set_uint(gvalue, uint_value);
-  return res;
+  return ATOM_OK;
 }
 
-static GValueResult set_int64(ErlNifEnv *env, ERL_NIF_TERM term,
+static ERL_NIF_TERM set_int64(ErlNifEnv *env, ERL_NIF_TERM term,
                               GValue *gvalue) {
   long int64_value;
-  GValueResult res = {true, 0};
 
   if (!enif_get_int64(env, term, &int64_value)) {
     error("failed to get int64 from erl term");
-    res.is_success = false;
-    return res;
+    return raise_exception(env, "failed to get int64 from erl term");
   }
 
   g_value_set_int64(gvalue, int64_value);
-  return res;
+  return ATOM_OK;
 }
 
-static GValueResult set_string(ErlNifEnv *env, ERL_NIF_TERM term,
+static ERL_NIF_TERM set_string(ErlNifEnv *env, ERL_NIF_TERM term,
                                GValue *gvalue) {
-  GValueResult res = {true, 0};
   char value[512];
 
   if (enif_get_string(env, term, (char *)&value, 511, ERL_NIF_LATIN1) < 0) {
     error("failed to get string from erl term");
-    res.is_success = false;
-    return res;
+    return raise_exception(env, "failed to get string from erl term");
   }
 
   g_value_set_string(gvalue, value);
-  return res;
+  return ATOM_OK;
 }
 
-static GValueResult set_uint64(ErlNifEnv *env, ERL_NIF_TERM term,
+static ERL_NIF_TERM set_uint64(ErlNifEnv *env, ERL_NIF_TERM term,
                                GValue *gvalue) {
   unsigned long uint64_value;
-  GValueResult res = {true, 0};
 
   if (!enif_get_uint64(env, term, &uint64_value)) {
     error("failed to get uint64 from erl term");
-    res.is_success = false;
-    return res;
+    return raise_exception(env, "failed to get uint64 from erl term");
   }
 
   g_value_set_uint64(gvalue, uint64_value);
-  return res;
+  return ATOM_OK;
 }
 
-static GValueResult set_double(ErlNifEnv *env, ERL_NIF_TERM term,
+static ERL_NIF_TERM set_double(ErlNifEnv *env, ERL_NIF_TERM term,
                                GValue *gvalue) {
   double double_value;
-  GValueResult res = {true, 0};
 
   if (!enif_get_double(env, term, &double_value)) {
     error("failed to get double from erl term");
-    res.is_success = false;
-    return res;
+    return raise_exception(env, "failed to get double from erl term");
   }
 
   g_value_set_double(gvalue, double_value);
-  return res;
+  return ATOM_OK;
 }
 
-static GValueResult set_boxed(ErlNifEnv *env, ERL_NIF_TERM term,
+static ERL_NIF_TERM set_boxed(ErlNifEnv *env, ERL_NIF_TERM term,
                               GValue *gvalue) {
-  GValueResult res = {true, 0};
   gpointer ptr = NULL;
 
   if (!erl_term_to_g_boxed(env, term, &ptr)) {
     error("failed to get boxed pointer from erl term");
-    res.is_success = false;
-    return res;
+    return raise_exception(env, "failed to get boxed pointer from erl term");
   }
 
   g_value_set_boxed(gvalue, ptr);
-  return res;
+  return ATOM_OK;
 }
 
-static GValueResult set_g_object(ErlNifEnv *env, ERL_NIF_TERM term,
+static ERL_NIF_TERM set_g_object(ErlNifEnv *env, ERL_NIF_TERM term,
                                  GValue *gvalue) {
   GObject *g_object;
-  GValueResult res = {true, 0};
 
   if (!erl_term_to_g_object(env, term, &g_object)) {
     error("failed to get GObject argument");
-    res.is_success = false;
-    return res;
+    return raise_exception(env, "failed to get GObject argument");
   }
 
   g_value_set_object(gvalue, g_object);
-  return res;
+  return ATOM_OK;
 }
 
-GValueResult set_g_value_from_erl_term(ErlNifEnv *env, GParamSpec *pspec,
+ERL_NIF_TERM set_g_value_from_erl_term(ErlNifEnv *env, GParamSpec *pspec,
                                        ERL_NIF_TERM term, GValue *gvalue) {
   g_value_init(gvalue, G_PARAM_SPEC_VALUE_TYPE(pspec));
-  GValueResult res;
 
   if (G_IS_PARAM_SPEC_ENUM(pspec)) {
-    res = set_enum(env, pspec, term, gvalue);
+    return set_enum(env, pspec, term, gvalue);
   } else if (G_IS_PARAM_SPEC_BOOLEAN(pspec)) {
-    res = set_boolean(env, term, gvalue);
+    return set_boolean(env, term, gvalue);
   } else if (G_IS_PARAM_SPEC_UINT64(pspec)) {
-    res = set_uint64(env, term, gvalue);
+    return set_uint64(env, term, gvalue);
   } else if (G_IS_PARAM_SPEC_DOUBLE(pspec)) {
-    res = set_double(env, term, gvalue);
+    return set_double(env, term, gvalue);
   } else if (G_IS_PARAM_SPEC_INT(pspec)) {
-    res = set_int(env, term, gvalue);
+    return set_int(env, term, gvalue);
   } else if (G_IS_PARAM_SPEC_UINT(pspec)) {
-    res = set_uint(env, term, gvalue);
+    return set_uint(env, term, gvalue);
   } else if (G_IS_PARAM_SPEC_INT64(pspec)) {
-    res = set_int64(env, term, gvalue);
+    return set_int64(env, term, gvalue);
   } else if (G_IS_PARAM_SPEC_STRING(pspec)) {
-    res = set_string(env, term, gvalue);
+    return set_string(env, term, gvalue);
   } else if (G_IS_PARAM_SPEC_BOXED(pspec)) {
-    res = set_boxed(env, term, gvalue);
+    return set_boxed(env, term, gvalue);
   } else if (G_IS_PARAM_SPEC_OBJECT(pspec)) {
-    res = set_g_object(env, term, gvalue);
+    return set_g_object(env, term, gvalue);
   } else if (G_IS_PARAM_SPEC_FLAGS(pspec)) {
-    res = set_flags(env, pspec, term, gvalue);
+    return set_flags(env, pspec, term, gvalue);
   } else {
-    error("Invalid pspec");
-    res.is_success = false;
+    error("Unknown pspec");
+    return raise_exception(env, "Unknown pspec");
   }
-
-  return res;
 }

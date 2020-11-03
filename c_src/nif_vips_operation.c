@@ -74,9 +74,9 @@ static ERL_NIF_TERM vips_argument_flags_to_erl_terms(ErlNifEnv *env,
   return enif_make_list_from_array(env, erl_terms, len);
 }
 
-static VixResult get_operation_properties(ErlNifEnv *env, VipsOperation *op) {
+static ERL_NIF_TERM get_operation_properties(ErlNifEnv *env,
+                                             VipsOperation *op) {
 
-  VixResult result;
   GValue gvalue = {0};
   GObject *g_object;
 
@@ -87,9 +87,7 @@ static VixResult get_operation_properties(ErlNifEnv *env, VipsOperation *op) {
   if (vips_object_get_args(VIPS_OBJECT(op), &names, &flags, &n_args)) {
     error("failed to get args. error: %s", vips_error_buffer());
     vips_error_clear();
-    result.success = false;
-    result.term = enif_make_badarg(env);
-    return result;
+    return enif_make_badarg(env);
   }
 
   ERL_NIF_TERM list;
@@ -104,9 +102,7 @@ static VixResult get_operation_properties(ErlNifEnv *env, VipsOperation *op) {
       if (vips_object_get_argument(VIPS_OBJECT(op), names[i], &pspec,
                                    &arg_class, &arg_instance)) {
         error("failed to get argument: %s", names[i]);
-        result.success = false;
-        result.term = raise_exception(env, "failed to get argument");
-        return result;
+        return raise_exception(env, "failed to get argument");
       }
 
       g_value_init(&gvalue, G_PARAM_SPEC_VALUE_TYPE(pspec));
@@ -119,23 +115,16 @@ static VixResult get_operation_properties(ErlNifEnv *env, VipsOperation *op) {
     }
   }
 
-  result.success = true;
-  result.term = list;
-
-  return result;
+  return list;
 }
 
-static VixResult set_operation_properties(ErlNifEnv *env, VipsOperation *op,
-                                          ERL_NIF_TERM list) {
-
-  VixResult result;
+static ERL_NIF_TERM set_operation_properties(ErlNifEnv *env, VipsOperation *op,
+                                             ERL_NIF_TERM list) {
   unsigned int length = 0;
 
   if (!enif_get_list_length(env, list, &length)) {
     error("Failed to get list length");
-    result.success = false;
-    result.term = enif_make_badarg(env);
-    return result;
+    return enif_make_badarg(env);
   }
 
   ERL_NIF_TERM head;
@@ -152,53 +141,39 @@ static VixResult set_operation_properties(ErlNifEnv *env, VipsOperation *op,
   for (unsigned int i = 0; i < length; i++) {
     if (!enif_get_list_cell(env, list, &head, &list)) {
       error("Failed to get list");
-      result.success = false;
-      result.term = enif_make_badarg(env);
-      return result;
+      return enif_make_badarg(env);
     }
 
     if (!enif_get_tuple(env, head, &count, &tup)) {
       error("Failed to get tuple");
-      result.success = false;
-      result.term = enif_make_badarg(env);
-      return result;
+      return enif_make_badarg(env);
     }
 
     if (count != 2) {
       error("Tuple length must be 2");
-      result.success = false;
-      result.term = enif_make_badarg(env);
-      return result;
+      return enif_make_badarg(env);
     }
 
     if (enif_get_string(env, tup[0], name, 1024, ERL_NIF_LATIN1) < 0) {
       error("failed to get param name");
-      result.success = false;
-      result.term = enif_make_badarg(env);
-      return result;
+      return enif_make_badarg(env);
     }
 
     if (vips_object_get_argument(VIPS_OBJECT(op), name, &pspec, &arg_class,
                                  &arg_instance)) {
       error("failed to get argument: %s", name);
-      result.success = false;
-      result.term = raise_exception(env, "failed to get argument");
-      return result;
+      return raise_exception(env, "failed to get argument");
     }
 
-    GValueResult res = set_g_value_from_erl_term(env, pspec, tup[1], &gvalue);
-    if (!res.is_success) {
-      result.success = false;
-      result.term = res.term;
-      return result;
-    }
+    ERL_NIF_TERM res = set_g_value_from_erl_term(env, pspec, tup[1], &gvalue);
+    if (enif_is_exception(env, res))
+      return res;
 
     g_object_set_property(G_OBJECT(op), name, &gvalue);
     g_value_unset(&gvalue);
   }
 
-  result.success = true;
-  return result;
+  return ATOM_OK;
 }
 
 ERL_NIF_TERM nif_vips_operation_call(ErlNifEnv *env, int argc,
@@ -219,9 +194,9 @@ ERL_NIF_TERM nif_vips_operation_call(ErlNifEnv *env, int argc,
 
   debug("created operation");
 
-  VixResult op_result = set_operation_properties(env, op, argv[1]);
-  if (!op_result.success) {
-    result = op_result.term;
+  result = set_operation_properties(env, op, argv[1]);
+  if (enif_is_exception(env, result)) {
+    error("failed to set input properties");
     goto exit;
   }
 
@@ -240,14 +215,12 @@ ERL_NIF_TERM nif_vips_operation_call(ErlNifEnv *env, int argc,
   g_object_unref(op);
   op = new_op;
 
-  op_result = get_operation_properties(env, op);
-  if (!op_result.success) {
-    error("NIF Vips Operation get operation properties failed");
-    result = op_result.term;
+  result = get_operation_properties(env, op);
+  if (enif_is_exception(env, result)) {
+    error("failed to get output properties");
     goto exit;
   }
   debug("got operation properties");
-  result = op_result.term;
 
 exit:
   if (op) {
