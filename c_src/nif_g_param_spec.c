@@ -89,7 +89,6 @@ static ERL_NIF_TERM string_details(ErlNifEnv *env, GParamSpec *pspec) {
 }
 
 static ERL_NIF_TERM flag_details(ErlNifEnv *env, GParamSpec *pspec) {
-
   GParamSpecFlags *pspec_flags = G_PARAM_SPEC_FLAGS(pspec);
   ERL_NIF_TERM list, tuple, flag_name, flag_value;
   unsigned int i;

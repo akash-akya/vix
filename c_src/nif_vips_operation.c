@@ -28,50 +28,35 @@ typedef struct NifVipsOperationsList {
 
 static ERL_NIF_TERM vips_argument_flags_to_erl_terms(ErlNifEnv *env,
                                                      int flags) {
-  ERL_NIF_TERM erl_terms[8];
-  int len = 0;
+  ERL_NIF_TERM list;
 
-  if (flags & VIPS_ARGUMENT_REQUIRED) {
-    erl_terms[len] = ATOM_VIPS_ARGUMENT_REQUIRED;
-    len++;
-  }
+  list = enif_make_list(env, 0);
 
-  if (flags & VIPS_ARGUMENT_CONSTRUCT) {
-    erl_terms[len] = ATOM_VIPS_ARGUMENT_CONSTRUCT;
-    len++;
-  }
+  if (flags & VIPS_ARGUMENT_REQUIRED)
+    list = enif_make_list_cell(env, ATOM_VIPS_ARGUMENT_REQUIRED, list);
 
-  if (flags & VIPS_ARGUMENT_SET_ONCE) {
-    erl_terms[len] = ATOM_VIPS_ARGUMENT_SET_ONCE;
-    len++;
-  }
+  if (flags & VIPS_ARGUMENT_CONSTRUCT)
+    list = enif_make_list_cell(env, ATOM_VIPS_ARGUMENT_CONSTRUCT, list);
 
-  if (flags & VIPS_ARGUMENT_SET_ALWAYS) {
-    erl_terms[len] = ATOM_VIPS_ARGUMENT_SET_ALWAYS;
-    len++;
-  }
+  if (flags & VIPS_ARGUMENT_SET_ONCE)
+    list = enif_make_list_cell(env, ATOM_VIPS_ARGUMENT_SET_ONCE, list);
 
-  if (flags & VIPS_ARGUMENT_INPUT) {
-    erl_terms[len] = ATOM_VIPS_ARGUMENT_INPUT;
-    len++;
-  }
+  if (flags & VIPS_ARGUMENT_SET_ALWAYS)
+    list = enif_make_list_cell(env, ATOM_VIPS_ARGUMENT_SET_ALWAYS, list);
 
-  if (flags & VIPS_ARGUMENT_OUTPUT) {
-    erl_terms[len] = ATOM_VIPS_ARGUMENT_OUTPUT;
-    len++;
-  }
+  if (flags & VIPS_ARGUMENT_INPUT)
+    list = enif_make_list_cell(env, ATOM_VIPS_ARGUMENT_INPUT, list);
 
-  if (flags & VIPS_ARGUMENT_DEPRECATED) {
-    erl_terms[len] = ATOM_VIPS_ARGUMENT_DEPRECATED;
-    len++;
-  }
+  if (flags & VIPS_ARGUMENT_OUTPUT)
+    list = enif_make_list_cell(env, ATOM_VIPS_ARGUMENT_OUTPUT, list);
 
-  if (flags & VIPS_ARGUMENT_MODIFY) {
-    erl_terms[len] = ATOM_VIPS_ARGUMENT_MODIFY;
-    len++;
-  }
+  if (flags & VIPS_ARGUMENT_DEPRECATED)
+    list = enif_make_list_cell(env, ATOM_VIPS_ARGUMENT_DEPRECATED, list);
 
-  return enif_make_list_from_array(env, erl_terms, len);
+  if (flags & VIPS_ARGUMENT_MODIFY)
+    list = enif_make_list_cell(env, ATOM_VIPS_ARGUMENT_MODIFY, list);
+
+  return list;
 }
 
 static ERL_NIF_TERM get_operation_properties(ErlNifEnv *env,
@@ -240,8 +225,7 @@ ERL_NIF_TERM nif_vips_operation_get_arguments(ErlNifEnv *env, int argc,
   const char **names;
   int *flags;
   int n_args = 0;
-  ERL_NIF_TERM terms[n_args];
-  ERL_NIF_TERM erl_flags, name, priority;
+  ERL_NIF_TERM list, erl_flags, name, priority, tup, term;
   GParamSpec *pspec;
   VipsArgumentClass *arg_class;
   VipsArgumentInstance *arg_instance;
@@ -257,10 +241,11 @@ ERL_NIF_TERM nif_vips_operation_get_arguments(ErlNifEnv *env, int argc,
     return raise_exception(env, "failed to get VipsObject arguments");
   }
 
+  list = enif_make_list(env, 0);
+
   for (int i = 0; i < n_args; i++) {
     name = enif_make_string(env, names[i], ERL_NIF_LATIN1);
     erl_flags = vips_argument_flags_to_erl_terms(env, flags[i]);
-    priority = enif_make_int(env, arg_class->priority);
 
     if (vips_object_get_argument(VIPS_OBJECT(op), names[i], &pspec, &arg_class,
                                  &arg_instance)) {
@@ -270,18 +255,24 @@ ERL_NIF_TERM nif_vips_operation_get_arguments(ErlNifEnv *env, int argc,
       return raise_exception(env, "failed to get VipsObject argument");
     }
 
-    terms[i] = enif_make_tuple4(env, name, g_param_spec_details(env, pspec),
-                                priority, erl_flags);
+    priority = enif_make_int(env, arg_class->priority);
+    tup = enif_make_tuple4(env, name, g_param_spec_details(env, pspec),
+                           priority, erl_flags);
+    list = enif_make_list_cell(env, tup, list);
   }
 
-  /* g_free(names); */
-  /* g_free(flags); */
+  vips_object_unref_outputs(VIPS_OBJECT(op));
+  g_object_unref(op);
 
-  return enif_make_list_from_array(env, terms, n_args);
+  return list;
 }
 
 static void *list_class(GType type, void *user_data) {
-  VipsObjectClass *class = VIPS_OBJECT_CLASS(g_type_class_ref(type));
+  gpointer g_class;
+  VipsObjectClass *class;
+
+  g_class = g_type_class_ref(type);
+  class = VIPS_OBJECT_CLASS(g_class);
 
   if (class->deprecated)
     return (NULL);
@@ -295,6 +286,8 @@ static void *list_class(GType type, void *user_data) {
 
   list->gtype[list->count] = type;
   list->count = list->count + 1;
+
+  g_type_class_unref(g_class);
 
   return (NULL);
 }

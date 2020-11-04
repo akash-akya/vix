@@ -14,6 +14,9 @@
 static int on_load(ErlNifEnv *env, void **priv, ERL_NIF_TERM load_info) {
   ERL_NIF_TERM res;
 
+  if (VIPS_INIT("vix"))
+    return 1;
+
   res = vix_utils_init(env);
   if (enif_is_exception(env, res))
     return res;
@@ -33,9 +36,6 @@ static int on_load(ErlNifEnv *env, void **priv, ERL_NIF_TERM load_info) {
   res = nif_vips_operation_init(env);
   if (enif_is_exception(env, res))
     return res;
-
-  if (VIPS_INIT("vix"))
-    return 1;
 
   return 0;
 }
