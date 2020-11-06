@@ -1,5 +1,5 @@
 defmodule Vix.GObject.GParamSpec do
-  defstruct [:param_name, :spec_type, :value_type, :data, :priority, :flags]
+  defstruct [:param_name, :desc, :spec_type, :value_type, :data, :priority, :flags]
 
   def cast(value, %__MODULE__{spec_type: "GParamInt", value_type: "gint"} = param_spec) do
     case value do
@@ -68,6 +68,25 @@ defmodule Vix.GObject.GParamSpec do
   def cast(value, %__MODULE__{spec_type: "GParamFlags"} = param_spec) do
     validate_flags!(value, param_spec)
     value
+  end
+
+  def type(param_type, value_type) do
+    case {param_type, value_type} do
+      {"GParamBoolean", _} -> {:boolean, [], []}
+      {"GParamUInt64", _} -> {:non_neg_integer, [], []}
+      {"GParamDouble", _} -> {:float, [], []}
+      {"GParamInt", _} -> {:integer, [], []}
+      {"GParamEnum", _} -> {:atom, [], []}
+      {"GParamObject", "VipsImage"} -> {:reference, [], []}
+      {"GParamObject", "VipsSource"} -> {:reference, [], []}
+      {"GParamObject", "VipsTarget"} -> {:reference, [], []}
+      {"GParamBoxed", "VipsArrayDouble"} -> {:list, [], [{:float, [], []}]}
+      {"GParamBoxed", "VipsArrayInt"} -> {:list, [], [{:integer, [], []}]}
+      {"GParamBoxed", "VipsArrayImage"} -> {:list, [], [{:reference, [], []}]}
+      {"GParamBoxed", "VipsBlob"} -> {:reference, [], []}
+      {"GParamString", "gchararray"} -> {:binary, [], []}
+      {"GParamFlags", _} -> {:list, [], [{:atom, [], []}]}
+    end
   end
 
   defp validate_number_limits!(_value, %{data: nil}), do: :ok

@@ -1,6 +1,7 @@
 defmodule Vix.Operation do
   alias Vix.Nif
   alias Vix.Param
+  alias Vix.GObject.GParamSpec
 
   Nif.nif_vips_operation_list()
   |> Enum.uniq_by(fn {name, _, _} -> name end)
@@ -13,7 +14,7 @@ defmodule Vix.Operation do
 
     args = Param.vips_operation_arguments(to_charlist(name))
 
-    {required, _optional} =
+    {required, optional} =
       args
       |> Enum.split_with(fn {_, %{flags: flags}} ->
         :vips_argument_required in flags
@@ -26,6 +27,19 @@ defmodule Vix.Operation do
         Macro.var(field_name, __MODULE__)
       end)
 
+    doc_required_args =
+      required
+      |> Enum.sort_by(fn {_, param} -> param.priority end)
+      |> Enum.map_join("\n", fn {name, param} ->
+        "  * #{name} - #{param.desc}"
+      end)
+
+    doc_optional_args =
+      optional
+      |> Enum.map_join("\n", fn {name, param} ->
+        "  * #{name} - #{param.desc}"
+      end)
+
     nif_args =
       required
       |> Enum.sort_by(fn {_, param} -> param.priority end)
@@ -33,15 +47,25 @@ defmodule Vix.Operation do
         {Atom.to_charlist(field_name), Macro.var(field_name, __MODULE__)}
       end)
 
-    # FIXME: using code block to preserve `op_usage` formatting. or
-    # construct documentation from the GParamSpec
     @doc """
     #{desc}
 
-    ```text
-    #{op_usage}
-    ```
+    ## Arguments
+    #{doc_required_args}
+
+    ## Optional
+    #{doc_optional_args}
     """
+    @spec unquote(func_name)(
+            unquote_splicing(
+              Enum.map(required, fn {name, param} ->
+                quote do
+                  unquote(GParamSpec.type(param.spec_type, param.value_type))
+                end
+              end)
+            ),
+            keyword()
+          ) :: [reference()]
     def unquote(func_name)(unquote_splicing(func_args), optional \\ []) do
       nif_optional_args =
         Enum.map(optional, fn {name, value} ->

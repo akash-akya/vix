@@ -225,7 +225,7 @@ ERL_NIF_TERM nif_vips_operation_get_arguments(ErlNifEnv *env, int argc,
   const char **names;
   int *flags;
   int n_args = 0;
-  ERL_NIF_TERM list, erl_flags, name, priority, tup, term;
+  ERL_NIF_TERM list, erl_flags, name, priority, tup;
   GParamSpec *pspec;
   VipsArgumentClass *arg_class;
   VipsArgumentInstance *arg_instance;

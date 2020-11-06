@@ -131,13 +131,16 @@ bool erl_term_to_g_param_spec(ErlNifEnv *env, ERL_NIF_TERM term,
 }
 
 ERL_NIF_TERM g_param_spec_details(ErlNifEnv *env, GParamSpec *pspec) {
-  ERL_NIF_TERM term, value_type, spec_type;
+  ERL_NIF_TERM term, value_type, spec_type, desc;
 
   spec_type = enif_make_string(env, g_type_name(G_PARAM_SPEC_TYPE(pspec)),
                                ERL_NIF_LATIN1);
 
   value_type = enif_make_string(
       env, g_type_name(G_PARAM_SPEC_VALUE_TYPE(pspec)), ERL_NIF_LATIN1);
+
+  desc =
+      enif_make_string(env, g_param_spec_get_blurb(pspec), ERL_NIF_LATIN1);
 
   if (G_IS_PARAM_SPEC_ENUM(pspec)) {
     term = enum_details(env, pspec);
@@ -167,7 +170,7 @@ ERL_NIF_TERM g_param_spec_details(ErlNifEnv *env, GParamSpec *pspec) {
     return enif_make_badarg(env);
   }
 
-  return enif_make_tuple3(env, spec_type, value_type, term);
+  return enif_make_tuple4(env, desc, spec_type, value_type, term);
 }
 
 /******* GParamSpec Resource *******/
