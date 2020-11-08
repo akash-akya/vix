@@ -39,12 +39,8 @@ bool erl_term_to_g_object(ErlNifEnv *env, ERL_NIF_TERM term,
                           GObject **g_object) {
   GObjectResource *g_object_r = NULL;
   if (enif_get_resource(env, term, G_OBJECT_RT, (void **)&g_object_r)) {
-    /* if (g_object_r->class == nif_g_class) { */
     (*g_object) = g_object_r->g_object;
     return true;
-    /* } else { */
-    /*   error("NifGObjectClass does not match with the resource"); */
-    /* } */
   }
   return false;
 }
