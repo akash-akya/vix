@@ -6,7 +6,7 @@ defmodule Vix.Operation do
   Nif.nif_vips_operation_list()
   |> Enum.uniq_by(fn {name, _, _} -> name end)
   |> Enum.map(fn {name, desc, op_usage} ->
-    func_name = "vips_#{name}" |> String.to_atom()
+    func_name = List.to_atom(name)
 
     name = List.to_atom(name)
     desc = to_string(desc)

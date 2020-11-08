@@ -4,16 +4,16 @@ defmodule Vix do
 
   ### TEST
 
-  def vips_affine(a_vi, list), do: Vips.vips_affine(a_vi, list)
+  def vips_affine(a_vi, list), do: Vips.affine(a_vi, list)
 
-  def vips_invert(a_vi), do: Vips.vips_invert(a_vi)
+  def vips_invert(a_vi), do: Vips.invert(a_vi)
 
-  def vips_add(left, right), do: Vips.vips_add(left, right)
+  def vips_add(left, right), do: Vips.add(left, right)
 
-  def vips_flip(in_img, direction), do: Vips.vips_flip(in_img, direction)
+  def vips_flip(in_img, direction), do: Vips.flip(in_img, direction)
 
   def vips_embed(in_img, x, y, width, height, optional \\ []) do
-    Vips.vips_embed(in_img, x, y, width, height, optional)
+    Vips.embed(in_img, x, y, width, height, optional)
   end
 
   def run_vips_affine(input, int_list, output) do
@@ -30,7 +30,7 @@ defmodule Vix do
     output = to_charlist(output)
 
     {:ok, vi} = Image.new_from_file(input)
-    [output_vi] = Vips.vips_gravity(vi, direction, width, height, optional)
+    [output_vi] = Vips.gravity(vi, direction, width, height, optional)
     Image.write_to_file(output_vi, output)
   end
 
