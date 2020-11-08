@@ -1,14 +1,6 @@
 defmodule Vix do
-  alias Vix.Nif
   alias Vix.Operation, as: Vips
-
-  def image_from_file(path) do
-    Nif.nif_image_new_from_file(to_charlist(path))
-  end
-
-  def write_vips_image(vips_image, path) do
-    Nif.nif_image_write_to_file(vips_image, path)
-  end
+  alias Vix.Image
 
   ### TEST
 
@@ -28,27 +20,27 @@ defmodule Vix do
     input = to_charlist(input)
     output = to_charlist(output)
 
-    {:ok, vi} = image_from_file(input)
+    {:ok, vi} = Image.new_from_file(input)
     [output_vi] = vips_affine(vi, int_list)
-    write_vips_image(output_vi, output)
+    Image.write_to_file(output_vi, output)
   end
 
   def run_vips_gravity(input, output, direction, width, height, optional \\ []) do
     input = to_charlist(input)
     output = to_charlist(output)
 
-    {:ok, vi} = image_from_file(input)
+    {:ok, vi} = Image.new_from_file(input)
     [output_vi] = Vips.vips_gravity(vi, direction, width, height, optional)
-    write_vips_image(output_vi, output)
+    Image.write_to_file(output_vi, output)
   end
 
   def run_vips_embed(input, output, x, y, width, height, optional \\ []) do
     input = to_charlist(input)
     output = to_charlist(output)
 
-    {:ok, vi} = image_from_file(input)
+    {:ok, vi} = Image.new_from_file(input)
     [output_vi] = vips_embed(vi, x, y, width, height, optional)
-    write_vips_image(output_vi, output)
+    Image.write_to_file(output_vi, output)
   end
 
   def run_example(input_a, input_b, output) do
@@ -56,12 +48,12 @@ defmodule Vix do
     input_b = to_charlist(input_b)
     output = to_charlist(output)
 
-    {:ok, a_vi} = image_from_file(input_a)
-    {:ok, _b_vi} = image_from_file(input_b)
+    {:ok, a_vi} = Image.new_from_file(input_a)
+    {:ok, _b_vi} = Image.new_from_file(input_b)
 
     [output_vi] = vips_flip(a_vi, :VIPS_DIRECTION_VERTICAL)
     [output_vi] = vips_invert(output_vi)
 
-    write_vips_image(output_vi, output)
+    Image.write_to_file(output_vi, output)
   end
 end
