@@ -8,7 +8,7 @@
 #include "nif_g_value.h"
 #include "nif_vips_boxed.h"
 #include "nif_vips_operation.h"
-#include "vix_utils.h"
+#include "utils.h"
 
 /* VipsArgumentFlags */
 ERL_NIF_TERM ATOM_VIPS_ARGUMENT_NONE;

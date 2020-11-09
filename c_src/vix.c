@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <vips/vips.h>
 
-#include "vix_utils.h"
+#include "utils.h"
 
 #include "nif_g_boxed.h"
 #include "nif_g_object.h"
@@ -17,7 +17,7 @@ static int on_load(ErlNifEnv *env, void **priv, ERL_NIF_TERM load_info) {
   if (VIPS_INIT("vix"))
     return 1;
 
-  res = vix_utils_init(env);
+  res = utils_init(env);
   if (enif_is_exception(env, res))
     return res;
 

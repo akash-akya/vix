@@ -18,7 +18,7 @@ GLIB := `pkg-config glib-2.0 --cflags --libs`
 VIPS := `pkg-config vips --cflags --libs`
 
 LIBS := $(GLIB) $(VIPS)
-C_SOURCE := c_src/vix_utils.c c_src/nif_g_object.c c_src/nif_g_param_spec.c c_src/nif_g_value.c c_src/nif_g_boxed.c c_src/nif_vips_boxed.c c_src/nif_vips_image.c c_src/nif_vips_operation.c c_src/vix.c
+C_SOURCE := c_src/*.c
 
 all: priv/vix.so
 

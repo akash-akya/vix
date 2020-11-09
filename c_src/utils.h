@@ -1,5 +1,5 @@
-#ifndef VIX_UTILS_H
-#define VIX_UTILS_H
+#ifndef UTILS_H
+#define UTILS_H
 
 #ifndef _POSIX_C_SOURCE
 #define _POSIX_C_SOURCE 200809L
@@ -64,6 +64,6 @@ ERL_NIF_TERM make_ok(ErlNifEnv *env, ERL_NIF_TERM term);
 
 ERL_NIF_TERM make_error(ErlNifEnv *env, const char *reason);
 
-ERL_NIF_TERM vix_utils_init(ErlNifEnv *env);
+ERL_NIF_TERM utils_init(ErlNifEnv *env);
 
 #endif

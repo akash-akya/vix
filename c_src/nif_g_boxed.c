@@ -1,6 +1,6 @@
 #include "nif_g_boxed.h"
 #include "nif_g_object.h"
-#include "vix_utils.h"
+#include "utils.h"
 #include <glib-object.h>
 
 static void nif_g_boxed_dtor(ErlNifEnv *env, void *obj) {

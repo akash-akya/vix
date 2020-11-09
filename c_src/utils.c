@@ -1,4 +1,4 @@
-#include "vix_utils.h"
+#include "utils.h"
 #include <glib-object.h>
 #include <stdbool.h>
 
@@ -23,7 +23,7 @@ ERL_NIF_TERM raise_badarg(ErlNifEnv *env, const char *reason) {
   return enif_make_badarg(env);
 }
 
-ERL_NIF_TERM vix_utils_init(ErlNifEnv *env) {
+ERL_NIF_TERM utils_init(ErlNifEnv *env) {
   ATOM_OK = enif_make_atom(env, "ok");
   ATOM_ERROR = enif_make_atom(env, "error");
   return ATOM_OK;

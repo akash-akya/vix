@@ -3,7 +3,7 @@
 
 #include "nif_g_object.h"
 #include "nif_vips_image.h"
-#include "vix_utils.h"
+#include "utils.h"
 
 const int MAX_PATH_LEN = 1024;
 
