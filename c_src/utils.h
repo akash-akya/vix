@@ -1,10 +1,6 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#ifndef _POSIX_C_SOURCE
-#define _POSIX_C_SOURCE 200809L
-#endif
-
 #include "erl_nif.h"
 #include <stdbool.h>
 

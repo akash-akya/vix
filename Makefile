@@ -4,7 +4,7 @@ calling_from_make:
 UNAME := $(shell uname)
 
 # CFLAGS ?= -pthread -Wall -Werror -Wno-unused-parameter -pedantic -std=c11 -O2
-CFLAGS ?= -pthread -Wall -Wno-unused-parameter -pedantic -std=c11 -O2
+CFLAGS ?= -pthread -Wall -Wno-unused-parameter -pedantic -std=c11 -O2 -D_POSIX_C_SOURCE=200809L
 
 ifeq ($(UNAME), Darwin)
 	TARGET_CFLAGS ?= -fPIC -undefined dynamic_lookup -dynamiclib -Wextra
@@ -18,7 +18,7 @@ GLIB := `pkg-config glib-2.0 --cflags --libs`
 VIPS := `pkg-config vips --cflags --libs`
 
 LIBS := $(GLIB) $(VIPS)
-C_SOURCE := c_src/*.c
+C_SOURCE := c_src/g_object/*.c c_src/*.c
 
 all: priv/vix.so
 

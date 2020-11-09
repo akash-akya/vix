@@ -4,12 +4,12 @@
 
 #include "utils.h"
 
-#include "nif_g_boxed.h"
-#include "nif_g_object.h"
-#include "nif_g_param_spec.h"
-#include "nif_vips_boxed.h"
-#include "nif_vips_image.h"
-#include "nif_vips_operation.h"
+#include "g_object/g_boxed.h"
+#include "g_object/g_object.h"
+#include "g_object/g_param_spec.h"
+#include "vips_boxed.h"
+#include "vips_image.h"
+#include "vips_operation.h"
 
 static int on_load(ErlNifEnv *env, void **priv, ERL_NIF_TERM load_info) {
   ERL_NIF_TERM res;

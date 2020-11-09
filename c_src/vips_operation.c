@@ -2,12 +2,12 @@
 #include <stdio.h>
 #include <vips/vips.h>
 
-#include "nif_g_boxed.h"
-#include "nif_g_object.h"
-#include "nif_g_param_spec.h"
-#include "nif_g_value.h"
-#include "nif_vips_boxed.h"
-#include "nif_vips_operation.h"
+#include "g_object/g_boxed.h"
+#include "g_object/g_object.h"
+#include "g_object/g_param_spec.h"
+#include "g_object/g_value.h"
+#include "vips_boxed.h"
+#include "vips_operation.h"
 #include "utils.h"
 
 /* VipsArgumentFlags */

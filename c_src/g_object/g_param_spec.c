@@ -1,8 +1,10 @@
-#include "nif_g_param_spec.h"
-#include "utils.h"
 #include <float.h>
 #include <glib-object.h>
 #include <math.h>
+
+#include "../utils.h"
+
+#include "g_param_spec.h"
 
 static double clamp_double(double value) {
   if (value == INFINITY)

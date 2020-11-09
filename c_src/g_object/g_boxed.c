@@ -1,7 +1,9 @@
-#include "nif_g_boxed.h"
-#include "nif_g_object.h"
-#include "utils.h"
 #include <glib-object.h>
+
+#include "../utils.h"
+
+#include "g_boxed.h"
+#include "g_object.h"
 
 static void nif_g_boxed_dtor(ErlNifEnv *env, void *obj) {
   GBoxedResource *g_boxed_r = (GBoxedResource *)obj;

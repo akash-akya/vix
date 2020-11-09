@@ -1,8 +1,8 @@
 #include <glib-object.h>
 #include <vips/vips.h>
 
-#include "nif_g_object.h"
-#include "nif_vips_image.h"
+#include "g_object/g_object.h"
+#include "vips_image.h"
 #include "utils.h"
 
 const int MAX_PATH_LEN = 1024;

@@ -1,8 +1,10 @@
-#include "nif_g_value.h"
-#include "nif_g_boxed.h"
-#include "nif_g_object.h"
-#include "utils.h"
 #include <glib-object.h>
+
+#include "../utils.h"
+
+#include "g_value.h"
+#include "g_boxed.h"
+#include "g_object.h"
 
 static ERL_NIF_TERM set_enum(ErlNifEnv *env, GParamSpec *pspec,
                              ERL_NIF_TERM term, GValue *gvalue) {

@@ -1,5 +1,5 @@
-#ifndef NIF_G_BOXED_H
-#define NIF_G_BOXED_H
+#ifndef VIX_G_BOXED_H
+#define VIX_G_BOXED_H
 
 #ifndef _POSIX_C_SOURCE
 #define _POSIX_C_SOURCE 200809L

@@ -1,6 +1,8 @@
-#include "nif_g_object.h"
-#include "utils.h"
 #include <glib-object.h>
+
+#include "../utils.h"
+
+#include "g_object.h"
 
 static void nif_g_object_dtor(ErlNifEnv *env, void *obj) {
   GObjectResource *g_object_r = (GObjectResource *)obj;
