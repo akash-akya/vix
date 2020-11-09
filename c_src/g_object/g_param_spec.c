@@ -141,8 +141,7 @@ ERL_NIF_TERM g_param_spec_details(ErlNifEnv *env, GParamSpec *pspec) {
   value_type = enif_make_string(
       env, g_type_name(G_PARAM_SPEC_VALUE_TYPE(pspec)), ERL_NIF_LATIN1);
 
-  desc =
-      enif_make_string(env, g_param_spec_get_blurb(pspec), ERL_NIF_LATIN1);
+  desc = enif_make_string(env, g_param_spec_get_blurb(pspec), ERL_NIF_LATIN1);
 
   if (G_IS_PARAM_SPEC_ENUM(pspec)) {
     term = enum_details(env, pspec);

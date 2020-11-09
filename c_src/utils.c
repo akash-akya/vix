@@ -10,7 +10,8 @@ ERL_NIF_TERM make_ok(ErlNifEnv *env, ERL_NIF_TERM term) {
 }
 
 ERL_NIF_TERM make_error(ErlNifEnv *env, const char *reason) {
-  return enif_make_tuple2(env, ATOM_ERROR, enif_make_string(env, reason, ERL_NIF_LATIN1));
+  return enif_make_tuple2(env, ATOM_ERROR,
+                          enif_make_string(env, reason, ERL_NIF_LATIN1));
 }
 
 ERL_NIF_TERM raise_exception(ErlNifEnv *env, const char *msg) {

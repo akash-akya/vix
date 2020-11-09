@@ -1,10 +1,6 @@
 #ifndef VIX_G_BOXED_H
 #define VIX_G_BOXED_H
 
-#ifndef _POSIX_C_SOURCE
-#define _POSIX_C_SOURCE 200809L
-#endif
-
 #include "erl_nif.h"
 #include <glib-object.h>
 #include <stdbool.h>

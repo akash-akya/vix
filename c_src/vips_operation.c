@@ -6,25 +6,24 @@
 #include "g_object/g_object.h"
 #include "g_object/g_param_spec.h"
 #include "g_object/g_value.h"
+#include "utils.h"
 #include "vips_boxed.h"
 #include "vips_operation.h"
-#include "utils.h"
 
-/* VipsArgumentFlags */
-ERL_NIF_TERM ATOM_VIPS_ARGUMENT_NONE;
-ERL_NIF_TERM ATOM_VIPS_ARGUMENT_REQUIRED;
-ERL_NIF_TERM ATOM_VIPS_ARGUMENT_CONSTRUCT;
-ERL_NIF_TERM ATOM_VIPS_ARGUMENT_SET_ONCE;
-ERL_NIF_TERM ATOM_VIPS_ARGUMENT_SET_ALWAYS;
-ERL_NIF_TERM ATOM_VIPS_ARGUMENT_INPUT;
-ERL_NIF_TERM ATOM_VIPS_ARGUMENT_OUTPUT;
-ERL_NIF_TERM ATOM_VIPS_ARGUMENT_DEPRECATED;
-ERL_NIF_TERM ATOM_VIPS_ARGUMENT_MODIFY;
+static ERL_NIF_TERM ATOM_VIPS_ARGUMENT_NONE;
+static ERL_NIF_TERM ATOM_VIPS_ARGUMENT_REQUIRED;
+static ERL_NIF_TERM ATOM_VIPS_ARGUMENT_CONSTRUCT;
+static ERL_NIF_TERM ATOM_VIPS_ARGUMENT_SET_ONCE;
+static ERL_NIF_TERM ATOM_VIPS_ARGUMENT_SET_ALWAYS;
+static ERL_NIF_TERM ATOM_VIPS_ARGUMENT_INPUT;
+static ERL_NIF_TERM ATOM_VIPS_ARGUMENT_OUTPUT;
+static ERL_NIF_TERM ATOM_VIPS_ARGUMENT_DEPRECATED;
+static ERL_NIF_TERM ATOM_VIPS_ARGUMENT_MODIFY;
 
-typedef struct NifVipsOperationsList {
+typedef struct VipsOperationsList {
   GType *gtype;
   unsigned int count;
-} NifVipsOperationsList;
+} VipsOperationsList;
 
 static ERL_NIF_TERM vips_argument_flags_to_erl_terms(ErlNifEnv *env,
                                                      int flags) {
@@ -282,7 +281,7 @@ static void *list_class(GType type, void *user_data) {
   if (G_TYPE_IS_ABSTRACT(type))
     return (NULL);
 
-  NifVipsOperationsList *list = (NifVipsOperationsList *)user_data;
+  VipsOperationsList *list = (VipsOperationsList *)user_data;
 
   list->gtype[list->count] = type;
   list->count = list->count + 1;
@@ -298,7 +297,7 @@ ERL_NIF_TERM nif_vips_operation_list(ErlNifEnv *env, int argc,
   assert_argc(argc, 0);
 
   GType _gtype[1024], gtype;
-  NifVipsOperationsList list;
+  VipsOperationsList list;
   ERL_NIF_TERM erl_term, description, nickname, op_usage;
   gpointer g_class;
   VipsOperationClass *op_class;

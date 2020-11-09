@@ -1,10 +1,6 @@
 #ifndef VIX_VIPS_OPERATION_H
 #define VIX_VIPS_OPERATION_H
 
-#ifndef _POSIX_C_SOURCE
-#define _POSIX_C_SOURCE 200809L
-#endif
-
 #include "erl_nif.h"
 
 ERL_NIF_TERM nif_vips_operation_call(ErlNifEnv *env, int argc,

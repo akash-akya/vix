@@ -50,6 +50,7 @@
   }
 
 extern ERL_NIF_TERM ATOM_OK;
+
 extern ERL_NIF_TERM ATOM_ERROR;
 
 ERL_NIF_TERM raise_exception(ErlNifEnv *env, const char *msg);

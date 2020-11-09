@@ -2,9 +2,9 @@
 
 #include "../utils.h"
 
-#include "g_value.h"
 #include "g_boxed.h"
 #include "g_object.h"
+#include "g_value.h"
 
 static ERL_NIF_TERM set_enum(ErlNifEnv *env, GParamSpec *pspec,
                              ERL_NIF_TERM term, GValue *gvalue) {
