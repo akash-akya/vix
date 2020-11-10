@@ -1,6 +1,7 @@
 defmodule Vix.Operation do
   alias Vix.Nif
   alias Vix.Param
+  alias Vix.Type
   alias Vix.GObject.GParamSpec
 
   Nif.nif_vips_operation_list()
@@ -10,7 +11,7 @@ defmodule Vix.Operation do
 
     name = List.to_atom(name)
     desc = to_string(desc)
-    op_usage = to_string(op_usage)
+    # op_usage = to_string(op_usage)
 
     args = Param.vips_operation_arguments(to_charlist(name))
 
@@ -58,9 +59,9 @@ defmodule Vix.Operation do
     """
     @spec unquote(func_name)(
             unquote_splicing(
-              Enum.map(required, fn {name, param} ->
+              Enum.map(required, fn {_name, param} ->
                 quote do
-                  unquote(GParamSpec.type(param.spec_type, param.value_type))
+                  unquote(Type.typespec(param))
                 end
               end)
             ),
@@ -76,7 +77,7 @@ defmodule Vix.Operation do
         (unquote(nif_args) ++ nif_optional_args)
         |> Enum.map(fn {name, value} ->
           param_spec = Map.get(unquote(Macro.escape(args)), List.to_atom(name))
-          {name, Param.cast(value, param_spec)}
+          {name, Type.new(value, param_spec)}
         end)
 
       Vix.Nif.nif_vips_operation_call(
