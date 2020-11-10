@@ -11,6 +11,13 @@ defmodule Vix.GObject.String do
   def value_type, do: "gchararray"
 
   @impl Type
+  def typespec do
+    quote do
+      charlist()
+    end
+  end
+
+  @impl Type
   def new(value, _data) do
     case value do
       value when is_binary(value) -> to_charlist(value)

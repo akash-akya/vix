@@ -6,6 +6,8 @@ defmodule Vix.Type do
 
   @callback value_type() :: String.t()
 
+  @callback typespec() :: term()
+
   @callback new(term, GParamSpec.t()) :: term()
 
   def value_type(pspec) do
@@ -17,9 +19,7 @@ defmodule Vix.Type do
   end
 
   def typespec(pspec) do
-    quote do
-      unquote(impl(pspec)).t
-    end
+    impl(pspec).typespec()
   end
 
   def new(value, pspec) do
@@ -36,7 +36,7 @@ defmodule Vix.Type do
       {"GParamObject", "VipsSource"} -> Vips.Source
       {"GParamObject", "VipsTarget"} -> Vips.Target
       {_, "gint"} -> GObject.Int
-      {_, "guint64"} -> GObject.Int
+      {_, "guint64"} -> GObject.UInt64
       {_, "gdouble"} -> GObject.Double
       {_, "gboolean"} -> GObject.Boolean
       {_, "gchararray"} -> GObject.String

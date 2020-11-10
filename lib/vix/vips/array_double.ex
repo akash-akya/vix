@@ -11,6 +11,13 @@ defmodule Vix.Vips.ArrayDouble do
   def value_type, do: "VipsArrayDouble"
 
   @impl Type
+  def typespec do
+    quote do
+      list(float())
+    end
+  end
+
+  @impl Type
   def new(value, data) do
     value
     |> Enum.map(&Vix.GObject.Double.new(&1, data))

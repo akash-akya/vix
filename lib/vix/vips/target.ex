@@ -11,5 +11,12 @@ defmodule Vix.Vips.Target do
   def value_type, do: "VipsTarget"
 
   @impl Type
+  def typespec do
+    quote do
+      unquote(__MODULE__).t()
+    end
+  end
+
+  @impl Type
   def new(_value, _data), do: raise("VipsTarget is not implemented yet")
 end

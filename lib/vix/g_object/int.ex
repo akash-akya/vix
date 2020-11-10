@@ -2,13 +2,19 @@ defmodule Vix.GObject.Int do
   alias Vix.Type
 
   @behaviour Type
-  @opaque t() :: integer()
 
   @impl Type
   def spec_type, do: "GParamInt"
 
   @impl Type
   def value_type, do: "gint"
+
+  @impl Type
+  def typespec do
+    quote do
+      integer()
+    end
+  end
 
   @impl Type
   def new(value, data) do

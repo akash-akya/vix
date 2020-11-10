@@ -11,6 +11,13 @@ defmodule Vix.Vips.ArrayImage do
   def value_type, do: "VipsArrayImage"
 
   @impl Type
+  def typespec do
+    quote do
+      list(unquote(Vix.Vips.Image.typespec()))
+    end
+  end
+
+  @impl Type
   def new(_value, _data) do
     raise "VipsArrayImage is not implemented yet"
   end

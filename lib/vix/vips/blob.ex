@@ -11,5 +11,12 @@ defmodule Vix.Vips.Blob do
   def value_type, do: "VipsBlob"
 
   @impl Type
+  def typespec do
+    quote do
+      unquote(__MODULE__).t()
+    end
+  end
+
+  @impl Type
   def new(_value, _data), do: raise("VipsBlob is not implemented yet")
 end

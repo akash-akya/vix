@@ -11,6 +11,13 @@ defmodule Vix.GObject.Double do
   def value_type, do: "double"
 
   @impl Type
+  def typespec do
+    quote do
+      float()
+    end
+  end
+
+  @impl Type
   def new(value, data) do
     case value do
       value when is_number(value) ->

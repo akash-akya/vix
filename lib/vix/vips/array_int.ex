@@ -11,6 +11,13 @@ defmodule Vix.Vips.ArrayInt do
   def value_type, do: "VipsArrayInt"
 
   @impl Type
+  def typespec do
+    quote do
+      list(integer())
+    end
+  end
+
+  @impl Type
   def new(value, data) do
     value
     |> Enum.map(&Vix.GObject.Int.new(&1, data))

@@ -11,6 +11,13 @@ defmodule Vix.GObject.Enum do
   def value_type, do: raise("Error")
 
   @impl Type
+  def typespec do
+    quote do
+      atom()
+    end
+  end
+
+  @impl Type
   def new(value, data) do
     validate_enum!(value, data)
     value

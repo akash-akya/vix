@@ -1,6 +1,6 @@
 defmodule Vix do
   alias Vix.Operation, as: Vips
-  alias Vix.Image
+  alias Vix.Vips.Image
 
   ### TEST
 
@@ -30,8 +30,9 @@ defmodule Vix do
     output = to_charlist(output)
 
     {:ok, vi} = Image.new_from_file(input)
-    [output_vi] = Vips.gravity(vi, direction, width, height, optional)
-    Image.write_to_file(output_vi, output)
+
+    Vips.gravity(vi, direction, width, height, optional)
+    |> Image.write_to_file(output)
   end
 
   def run_vips_embed(input, output, x, y, width, height, optional \\ []) do

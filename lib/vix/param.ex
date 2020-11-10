@@ -17,7 +17,5 @@ defmodule Vix.Param do
         flags: flags
       }
     end)
-    |> Enum.filter(fn %{flags: flags} -> :vips_argument_input in flags end)
-    |> Map.new(fn %{param_name: name} = param -> {name, param} end)
   end
 end
