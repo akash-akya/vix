@@ -20,10 +20,10 @@ static ERL_NIF_TERM ATOM_VIPS_ARGUMENT_OUTPUT;
 static ERL_NIF_TERM ATOM_VIPS_ARGUMENT_DEPRECATED;
 static ERL_NIF_TERM ATOM_VIPS_ARGUMENT_MODIFY;
 
-typedef struct VipsOperationsList {
+typedef struct GTypeList {
   GType *gtype;
   unsigned int count;
-} VipsOperationsList;
+} GTypeList;
 
 static ERL_NIF_TERM vips_argument_flags_to_erl_terms(ErlNifEnv *env,
                                                      int flags) {
@@ -281,7 +281,7 @@ static void *list_class(GType type, void *user_data) {
   if (G_TYPE_IS_ABSTRACT(type))
     return (NULL);
 
-  VipsOperationsList *list = (VipsOperationsList *)user_data;
+  GTypeList *list = (GTypeList *)user_data;
 
   list->gtype[list->count] = type;
   list->count = list->count + 1;
@@ -297,7 +297,7 @@ ERL_NIF_TERM nif_vips_operation_list(ErlNifEnv *env, int argc,
   assert_argc(argc, 0);
 
   GType _gtype[1024], gtype;
-  VipsOperationsList list;
+  GTypeList list;
   ERL_NIF_TERM erl_term, description, nickname, op_usage;
   gpointer g_class;
   VipsOperationClass *op_class;
@@ -335,6 +335,72 @@ ERL_NIF_TERM nif_vips_operation_list(ErlNifEnv *env, int argc,
   }
 
   return erl_term;
+}
+
+static void *list_enum_class(GType gtype, void *user_data) {
+  gpointer g_class;
+  const gchar *name;
+  GTypeList *list;
+
+  name = g_type_name(gtype);
+
+  if (strncmp("Vips", name, 4) != 0)
+    return (NULL);
+
+  g_class = g_type_class_ref(gtype);
+
+  list = (GTypeList *)user_data;
+
+  list->gtype[list->count] = gtype;
+  list->count = list->count + 1;
+
+  g_type_class_unref(g_class);
+
+  return (NULL);
+}
+
+ERL_NIF_TERM nif_vips_enum_list(ErlNifEnv *env, int argc,
+                                const ERL_NIF_TERM argv[]) {
+
+  assert_argc(argc, 0);
+
+  GType _gtype[1024], gtype;
+  GTypeList enum_list;
+  gpointer g_class;
+  GEnumClass *enum_class;
+  ERL_NIF_TERM enum_values, tuple, enum_str, enum_int, enums, name;
+
+  enum_list.gtype = (GType *)&_gtype;
+  enum_list.count = 0;
+
+  vips_type_map_all(G_TYPE_ENUM, list_enum_class, &enum_list);
+
+  enums = enif_make_list(env, 0);
+
+  for (unsigned int i = 0; i < enum_list.count; i++) {
+    gtype = enum_list.gtype[i];
+
+    g_class = g_type_class_ref(gtype);
+    enum_class = G_ENUM_CLASS(g_class);
+
+    enum_values = enif_make_list(env, 0);
+
+    for (unsigned int j = 0; j < enum_class->n_values - 1; j++) {
+      enum_str = enif_make_atom(env, enum_class->values[j].value_name);
+      enum_int = enif_make_int(env, enum_class->values[j].value);
+
+      tuple = enif_make_tuple2(env, enum_str, enum_int);
+      enum_values = enif_make_list_cell(env, tuple, enum_values);
+    }
+
+    name = enif_make_string(env, g_type_name(gtype), ERL_NIF_LATIN1);
+    enums = enif_make_list_cell(env, enif_make_tuple2(env, name, enum_values),
+                                enums);
+
+    g_type_class_unref(g_class);
+  }
+
+  return enums;
 }
 
 ERL_NIF_TERM nif_vips_cache_set_max(ErlNifEnv *env, int argc,

@@ -28,6 +28,9 @@ defmodule Vix.Nif do
   def nif_vips_operation_list(),
     do: :erlang.nif_error(:nif_library_not_loaded)
 
+  def nif_vips_enum_list(),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
   def nif_vips_cache_set_max(_max),
     do: :erlang.nif_error(:nif_library_not_loaded)
 

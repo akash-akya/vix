@@ -17,6 +17,7 @@ defmodule Vix do
   end
 
   def run_vips_affine(input, int_list, output) do
+    Vix.Vips.Enum.VipsExtend.cast(:VIPS_EXTEND_MIRROR)
     input = to_charlist(input)
     output = to_charlist(output)
 

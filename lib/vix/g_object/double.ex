@@ -22,7 +22,7 @@ defmodule Vix.GObject.Double do
     case value do
       value when is_number(value) ->
         value =
-          if is_float(value) do
+          if !is_float(value) do
             value * 1.0
           else
             value
