@@ -224,7 +224,7 @@ ERL_NIF_TERM nif_vips_operation_get_arguments(ErlNifEnv *env, int argc,
   const char **names;
   int *flags;
   int n_args = 0;
-  ERL_NIF_TERM list, erl_flags, name, priority, tup;
+  ERL_NIF_TERM list, erl_flags, name, priority, tup, description;
   GParamSpec *pspec;
   VipsArgumentClass *arg_class;
   VipsArgumentInstance *arg_instance;
@@ -239,6 +239,9 @@ ERL_NIF_TERM nif_vips_operation_get_arguments(ErlNifEnv *env, int argc,
     vips_error_clear();
     return raise_exception(env, "failed to get VipsObject arguments");
   }
+
+  description = enif_make_string(
+      env, vips_object_get_description(VIPS_OBJECT(op)), ERL_NIF_LATIN1);
 
   list = enif_make_list(env, 0);
 
@@ -263,7 +266,7 @@ ERL_NIF_TERM nif_vips_operation_get_arguments(ErlNifEnv *env, int argc,
   vips_object_unref_outputs(VIPS_OBJECT(op));
   g_object_unref(op);
 
-  return list;
+  return enif_make_tuple2(env, description, list);
 }
 
 static void *list_class(GType type, void *user_data) {
@@ -298,12 +301,8 @@ ERL_NIF_TERM nif_vips_operation_list(ErlNifEnv *env, int argc,
 
   GType _gtype[1024], gtype;
   GTypeList list;
-  ERL_NIF_TERM erl_term, description, nickname, op_usage;
+  ERL_NIF_TERM erl_term, name;
   gpointer g_class;
-  VipsOperationClass *op_class;
-
-  char str[4096];
-  VipsBuf buf = VIPS_BUF_STATIC(str);
 
   list.gtype = (GType *)&_gtype;
   list.count = 0;
@@ -316,20 +315,10 @@ ERL_NIF_TERM nif_vips_operation_list(ErlNifEnv *env, int argc,
     gtype = list.gtype[i];
     g_class = g_type_class_ref(gtype);
 
-    vips_buf_rewind(&buf);
-    vips_object_summary_class(VIPS_OBJECT_CLASS(g_class), &buf);
-    description = enif_make_string(env, vips_buf_all(&buf), ERL_NIF_LATIN1);
+    name = enif_make_string(env, vips_nickname_find(list.gtype[i]),
+                            ERL_NIF_LATIN1);
 
-    vips_buf_rewind(&buf);
-    op_class = VIPS_OPERATION_CLASS(g_class);
-    op_class->usage(op_class, &buf);
-    op_usage = enif_make_string(env, vips_buf_all(&buf), ERL_NIF_LATIN1);
-
-    nickname = enif_make_string(env, vips_nickname_find(list.gtype[i]),
-                                ERL_NIF_LATIN1);
-
-    erl_term = enif_make_list_cell(
-        env, enif_make_tuple3(env, nickname, description, op_usage), erl_term);
+    erl_term = enif_make_list_cell(env, name, erl_term);
 
     g_type_class_unref(g_class);
   }

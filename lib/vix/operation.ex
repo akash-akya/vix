@@ -4,13 +4,12 @@ defmodule Vix.Operation do
   alias Vix.Type
 
   Nif.nif_vips_operation_list()
-  |> Enum.uniq_by(fn {name, _, _} -> name end)
-  |> Enum.map(fn {name, desc, _op_usage} ->
+  |> Enum.uniq()
+  |> Enum.map(fn name ->
     func_name = to_string(name) |> String.downcase() |> String.to_atom()
     name = List.to_atom(name)
-    desc = to_string(desc)
 
-    args = Param.vips_operation_arguments(to_charlist(name))
+    {desc, args} = Param.vips_operation_arguments(to_charlist(name))
 
     {input, rest} =
       Enum.split_with(args, fn %{flags: flags} ->
