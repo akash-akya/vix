@@ -6,70 +6,30 @@
 #include "g_object.h"
 #include "g_value.h"
 
-static ERL_NIF_TERM set_enum(ErlNifEnv *env, GParamSpec *pspec,
-                             ERL_NIF_TERM term, GValue *gvalue) {
-  char enum_string[512];
+static ERL_NIF_TERM set_enum(ErlNifEnv *env, ERL_NIF_TERM term,
+                             GValue *gvalue) {
 
-  if (enif_get_atom(env, term, (char *)&enum_string, 512, ERL_NIF_LATIN1) < 1) {
-    error("failed to get enum atom");
-    return raise_exception(env, "failed to get enum atom");
+  int value;
+
+  if (!enif_get_int(env, term, &value)) {
+    error("failed to get enum int value from erl term");
+    return raise_exception(env, "failed to get enum int value from erl term");
   }
 
-  GParamSpecEnum *pspec_enum = G_PARAM_SPEC_ENUM(pspec);
-  GEnumValue *g_enum_value =
-      g_enum_get_value_by_name(pspec_enum->enum_class, enum_string);
-
-  if (!g_enum_value) {
-    error("Could not find enum value");
-    return raise_exception(env, "Could not find enum value");
-  }
-
-  g_value_set_enum(gvalue, g_enum_value->value);
+  g_value_set_enum(gvalue, value);
   return ATOM_OK;
 }
 
-static ERL_NIF_TERM set_flags(ErlNifEnv *env, GParamSpec *pspec,
-                              ERL_NIF_TERM list, GValue *gvalue) {
-  char flag_string[512];
+static ERL_NIF_TERM set_flags(ErlNifEnv *env, ERL_NIF_TERM term, GValue *gvalue) {
 
-  ERL_NIF_TERM head;
-  unsigned int length;
+  int value;
 
-  GParamSpecFlags *pspec_flags;
-  GFlagsValue *g_flags_value;
-
-  if (enif_get_list_length(env, list, &length)) {
-    error("Failed to get list length");
-    return raise_exception(env, "Failed to get list length");
+  if (!enif_get_int(env, term, &value)) {
+    error("failed to get flag int value from erl term");
+    return raise_exception(env, "failed to get flag int value from erl term");
   }
 
-  int flag = 0;
-
-  for (unsigned int i = 0; i < length; i++) {
-    if (!enif_get_list_cell(env, list, &head, &list)) {
-      error("Failed to get list entry");
-      return raise_exception(env, "Failed to get list entry");
-    }
-
-    if (enif_get_atom(env, head, (char *)&flag_string, 512, ERL_NIF_LATIN1) <
-        1) {
-      error("failed to get flag atom");
-      return raise_exception(env, "failed to get flag atom");
-    }
-
-    pspec_flags = G_PARAM_SPEC_FLAGS(pspec);
-    g_flags_value =
-        g_flags_get_value_by_name(pspec_flags->flags_class, flag_string);
-
-    if (!g_flags_value) {
-      error("Could not find enum value");
-      return raise_exception(env, "Could not find enum value");
-    }
-
-    flag = flag | g_flags_value->value;
-  }
-
-  g_value_set_flags(gvalue, flag);
+  g_value_set_flags(gvalue, value);
   return ATOM_OK;
 }
 
@@ -205,7 +165,7 @@ ERL_NIF_TERM set_g_value_from_erl_term(ErlNifEnv *env, GParamSpec *pspec,
   g_value_init(gvalue, G_PARAM_SPEC_VALUE_TYPE(pspec));
 
   if (G_IS_PARAM_SPEC_ENUM(pspec)) {
-    return set_enum(env, pspec, term, gvalue);
+    return set_enum(env, term, gvalue);
   } else if (G_IS_PARAM_SPEC_BOOLEAN(pspec)) {
     return set_boolean(env, term, gvalue);
   } else if (G_IS_PARAM_SPEC_UINT64(pspec)) {
@@ -225,7 +185,7 @@ ERL_NIF_TERM set_g_value_from_erl_term(ErlNifEnv *env, GParamSpec *pspec,
   } else if (G_IS_PARAM_SPEC_OBJECT(pspec)) {
     return set_g_object(env, term, gvalue);
   } else if (G_IS_PARAM_SPEC_FLAGS(pspec)) {
-    return set_flags(env, pspec, term, gvalue);
+    return set_flags(env, term, gvalue);
   } else {
     error("Unknown pspec");
     return raise_exception(env, "Unknown pspec");

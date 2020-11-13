@@ -53,6 +53,7 @@ static ErlNifFunc nif_funcs[] = {
      USE_DIRTY_IO},
     {"nif_vips_operation_list", 0, nif_vips_operation_list, USE_DIRTY_IO},
     {"nif_vips_enum_list", 0, nif_vips_enum_list, USE_DIRTY_IO},
+    {"nif_vips_flag_list", 0, nif_vips_flag_list, USE_DIRTY_IO},
     {"nif_vips_cache_set_max", 1, nif_vips_cache_set_max, USE_DIRTY_CPU},
     {"nif_vips_cache_get_max", 0, nif_vips_cache_get_max, USE_DIRTY_CPU},
     {"nif_vips_concurrency_set", 1, nif_vips_concurrency_set, USE_DIRTY_CPU},

@@ -15,6 +15,9 @@ ERL_NIF_TERM nif_vips_operation_list(ErlNifEnv *env, int argc,
 ERL_NIF_TERM nif_vips_enum_list(ErlNifEnv *env, int argc,
                                 const ERL_NIF_TERM argv[]);
 
+ERL_NIF_TERM nif_vips_flag_list(ErlNifEnv *env, int argc,
+                                const ERL_NIF_TERM argv[]);
+
 ERL_NIF_TERM nif_vips_cache_set_max(ErlNifEnv *env, int argc,
                                     const ERL_NIF_TERM argv[]);
 

@@ -40,8 +40,8 @@ defmodule Vix.Type do
       {_, "gdouble"} -> GObject.Double
       {_, "gboolean"} -> GObject.Boolean
       {_, "gchararray"} -> GObject.String
-      {"GParamEnum", _} -> GObject.Enum
-      {"GParamFlags", _} -> GObject.Flags
+      {"GParamEnum", enum_type} -> Module.concat(Vix.Vips.Enum, String.to_atom(enum_type))
+      {"GParamFlags", flag_type} -> Module.concat(Vix.Vips.Flag, String.to_atom(flag_type))
     end
   end
 end

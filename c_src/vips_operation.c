@@ -403,6 +403,71 @@ ERL_NIF_TERM nif_vips_enum_list(ErlNifEnv *env, int argc,
   return enums;
 }
 
+static void *list_flag_class(GType gtype, void *user_data) {
+  gpointer g_class;
+  const gchar *name;
+  GTypeList *list;
+
+  name = g_type_name(gtype);
+
+  if (strncmp("Vips", name, 4) != 0)
+    return (NULL);
+
+  g_class = g_type_class_ref(gtype);
+
+  list = (GTypeList *)user_data;
+
+  list->gtype[list->count] = gtype;
+  list->count = list->count + 1;
+
+  g_type_class_unref(g_class);
+
+  return (NULL);
+}
+
+ERL_NIF_TERM nif_vips_flag_list(ErlNifEnv *env, int argc,
+                                const ERL_NIF_TERM argv[]) {
+
+  assert_argc(argc, 0);
+
+  GType _gtype[1024], gtype;
+  GTypeList flag_list;
+  gpointer g_class;
+  GFlagsClass *flag_class;
+  ERL_NIF_TERM flag_values, tuple, flag_str, flag_int, flags, name;
+
+  flag_list.gtype = (GType *)&_gtype;
+  flag_list.count = 0;
+
+  vips_type_map_all(G_TYPE_FLAGS, list_flag_class, &flag_list);
+  flags = enif_make_list(env, 0);
+
+  for (unsigned int i = 0; i < flag_list.count; i++) {
+    gtype = flag_list.gtype[i];
+
+    g_class = g_type_class_ref(gtype);
+    flag_class = G_FLAGS_CLASS(g_class);
+
+    flag_values = enif_make_list(env, 0);
+
+    for (unsigned int j = 0; j < flag_class->n_values - 1; j++) {
+      flag_str = enif_make_atom(env, flag_class->values[j].value_name);
+      flag_int = enif_make_int(env, flag_class->values[j].value);
+
+      tuple = enif_make_tuple2(env, flag_str, flag_int);
+      flag_values = enif_make_list_cell(env, tuple, flag_values);
+    }
+
+    name = enif_make_string(env, g_type_name(gtype), ERL_NIF_LATIN1);
+    flags = enif_make_list_cell(env, enif_make_tuple2(env, name, flag_values),
+                                flags);
+
+    g_type_class_unref(g_class);
+  }
+
+  return flags;
+}
+
 ERL_NIF_TERM nif_vips_cache_set_max(ErlNifEnv *env, int argc,
                                     const ERL_NIF_TERM argv[]) {
   assert_argc(argc, 1);

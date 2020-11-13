@@ -2,11 +2,10 @@ defmodule Vix.Operation do
   alias Vix.Nif
   alias Vix.Param
   alias Vix.Type
-  alias Vix.GObject.GParamSpec
 
   Nif.nif_vips_operation_list()
   |> Enum.uniq_by(fn {name, _, _} -> name end)
-  |> Enum.map(fn {name, desc, op_usage} ->
+  |> Enum.map(fn {name, desc, _op_usage} ->
     func_name = to_string(name) |> String.downcase() |> String.to_atom()
     name = List.to_atom(name)
     desc = to_string(desc)
