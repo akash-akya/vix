@@ -39,7 +39,7 @@ defmodule Vix.Operation do
 
     doc_optional_args =
       Enum.map_join(optional, "\n", fn pspec ->
-        "  * #{pspec.param_name} - #{pspec.desc}"
+        "  * #{pspec.param_name} - #{pspec.desc} (#{pspec.value_type})"
       end)
 
     nif_args =
