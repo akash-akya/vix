@@ -67,6 +67,7 @@ static ErlNifFunc nif_funcs[] = {
 
     /*  VipsBoxed */
     {"nif_int_array", 1, nif_int_array, USE_DIRTY_CPU},
+    {"nif_image_array", 1, nif_image_array, USE_DIRTY_CPU},
     {"nif_double_array", 1, nif_double_array, USE_DIRTY_CPU}};
 
 ERL_NIF_INIT(Elixir.Vix.Nif, nif_funcs, &on_load, NULL, NULL, NULL)

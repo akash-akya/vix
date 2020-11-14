@@ -18,7 +18,9 @@ defmodule Vix.Vips.ArrayImage do
   end
 
   @impl Type
-  def new(_value, _data) do
-    raise "VipsArrayImage is not implemented yet"
+  def new(value, data) do
+    value
+    |> Enum.map(&Vix.Vips.Image.new(&1, data))
+    |> Vix.Nif.nif_image_array()
   end
 end

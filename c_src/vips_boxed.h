@@ -8,4 +8,7 @@ ERL_NIF_TERM nif_int_array(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 ERL_NIF_TERM nif_double_array(ErlNifEnv *env, int argc,
                               const ERL_NIF_TERM argv[]);
 
+ERL_NIF_TERM nif_image_array(ErlNifEnv *env, int argc,
+                             const ERL_NIF_TERM argv[]);
+
 #endif
