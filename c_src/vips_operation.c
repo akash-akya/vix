@@ -283,6 +283,8 @@ static void *list_class(GType type, void *user_data) {
     return (NULL);
   if (G_TYPE_IS_ABSTRACT(type))
     return (NULL);
+  if (G_TYPE_CHECK_CLASS_TYPE(class, VIPS_TYPE_FOREIGN))
+    return (NULL);
 
   GTypeList *list = (GTypeList *)user_data;
 
@@ -307,7 +309,7 @@ ERL_NIF_TERM nif_vips_operation_list(ErlNifEnv *env, int argc,
   list.gtype = (GType *)&_gtype;
   list.count = 0;
 
-  vips_type_map_all(g_type_from_name("VipsOperation"), list_class, &list);
+  vips_type_map_all(VIPS_TYPE_OPERATION, list_class, &list);
 
   erl_term = enif_make_list(env, 0);
 
