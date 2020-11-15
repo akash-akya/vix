@@ -28,20 +28,47 @@ defmodule Vix.Type do
 
   defp impl(pspec) do
     case {pspec.spec_type, pspec.value_type} do
-      {_, "VipsArrayInt"} -> Vips.ArrayInt
-      {_, "VipsArrayDouble"} -> Vips.ArrayDouble
-      {_, "VipsArrayImage"} -> Vips.ArrayImage
-      {"GParamBoxed", "VipsBlob"} -> Vips.Blob
-      {"GParamObject", "VipsImage"} -> Vips.Image
-      {"GParamObject", "VipsSource"} -> Vips.Source
-      {"GParamObject", "VipsTarget"} -> Vips.Target
-      {_, "gint"} -> GObject.Int
-      {_, "guint64"} -> GObject.UInt64
-      {_, "gdouble"} -> GObject.Double
-      {_, "gboolean"} -> GObject.Boolean
-      {_, "gchararray"} -> GObject.String
-      {"GParamEnum", enum_type} -> Module.concat(Vix.Vips.Enum, String.to_atom(enum_type))
-      {"GParamFlags", flag_type} -> Module.concat(Vix.Vips.Flag, String.to_atom(flag_type))
+      {_, "VipsArrayInt"} ->
+        Vips.ArrayInt
+
+      {_, "VipsArrayDouble"} ->
+        Vips.ArrayDouble
+
+      {_, "VipsArrayImage"} ->
+        Vips.ArrayImage
+
+      {"GParamBoxed", "VipsBlob"} ->
+        Vips.Blob
+
+      {"GParamObject", "VipsImage"} ->
+        Vips.Image
+
+      {"GParamObject", "VipsSource"} ->
+        Vips.Source
+
+      {"GParamObject", "VipsTarget"} ->
+        Vips.Target
+
+      {_, "gint"} ->
+        GObject.Int
+
+      {_, "guint64"} ->
+        GObject.UInt64
+
+      {_, "gdouble"} ->
+        GObject.Double
+
+      {_, "gboolean"} ->
+        GObject.Boolean
+
+      {_, "gchararray"} ->
+        GObject.String
+
+      {"GParamEnum", enum_type} ->
+        Module.concat(Vix.Vips.Enum, String.to_atom(enum_type))
+
+      {"GParamFlags", flag_type} ->
+        Module.concat(Vix.Vips.Flag, String.to_atom(flag_type))
     end
   end
 end
