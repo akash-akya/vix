@@ -539,6 +539,50 @@ ERL_NIF_TERM nif_vips_cache_get_max_mem(ErlNifEnv *env, int argc,
   return make_ok(env, enif_make_uint64(env, vips_cache_get_max_mem()));
 }
 
+static void *load_operation(GType type, void *a) {
+  gpointer g_class;
+  VipsObjectClass *class;
+  VipsOperation *op;
+  const char **names;
+  int *flags;
+  int n_args = 0;
+
+  g_class = g_type_class_ref(type);
+  class = VIPS_OBJECT_CLASS(g_class);
+
+  if (class->deprecated)
+    return (NULL);
+  if (VIPS_IS_OPERATION_CLASS(class) &&
+      (VIPS_OPERATION_CLASS(class)->flags & VIPS_OPERATION_DEPRECATED))
+    return (NULL);
+  if (G_TYPE_IS_ABSTRACT(type))
+    return (NULL);
+  if (G_TYPE_CHECK_CLASS_TYPE(class, VIPS_TYPE_FOREIGN))
+    return (NULL);
+
+  op = vips_operation_new(vips_nickname_find(type));
+
+  if (vips_object_get_args(VIPS_OBJECT(op), &names, &flags, &n_args) != 0) {
+    error("failed to get VipsObject arguments. error: %s", vips_error_buffer());
+    vips_error_clear();
+    ErlNifEnv *env = (ErlNifEnv *) a;
+    return (void *) raise_exception(env, "failed to get VipsObject arguments");
+  }
+
+  g_type_class_unref(g_class);
+
+  return (NULL);
+}
+
+static ERL_NIF_TERM load_vips_types(ErlNifEnv *env) {
+  ERL_NIF_TERM term;
+  term = (ERL_NIF_TERM)vips_type_map_all(VIPS_TYPE_OPERATION, load_operation, env);
+  if (term)
+    return term;
+  else
+    return ATOM_OK;
+}
+
 ERL_NIF_TERM nif_vips_operation_init(ErlNifEnv *env) {
   ATOM_VIPS_ARGUMENT_NONE = enif_make_atom(env, "vips_argument_none");
   ATOM_VIPS_ARGUMENT_REQUIRED = enif_make_atom(env, "vips_argument_required");
@@ -555,5 +599,8 @@ ERL_NIF_TERM nif_vips_operation_init(ErlNifEnv *env) {
   if (!G_BOXED_RT)
     return raise_exception(env, "Failed to open g_boxed_resource");
 
-  return ATOM_OK;
+  /* There is a race condition; if we attempt to access subclass of a
+     class before definitions are "loaded" we won't be able to get any
+     entries */
+  return load_vips_types(env);
 }
