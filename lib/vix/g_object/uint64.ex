@@ -11,6 +11,9 @@ defmodule Vix.GObject.UInt64 do
   end
 
   @impl Type
+  def default({_min, _max, default}), do: default
+
+  @impl Type
   def cast(value, data) do
     case value do
       value when is_integer(value) and value >= 0 ->

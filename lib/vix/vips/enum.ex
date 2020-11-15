@@ -32,6 +32,9 @@ defmodule Vix.Vips.EnumHelper do
           end
         end
 
+        @impl Type
+        def default(default), do: default
+
         unquote(
           Enum.map(enum, fn {name, value} ->
             quote do

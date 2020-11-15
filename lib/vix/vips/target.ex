@@ -12,5 +12,8 @@ defmodule Vix.Vips.Target do
   end
 
   @impl Type
+  def default(nil), do: raise("Not supported")
+
+  @impl Type
   def cast(_value, _data), do: raise("VipsTarget is not implemented yet")
 end

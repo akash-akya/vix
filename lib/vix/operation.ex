@@ -5,6 +5,10 @@ defmodule Vix.OperationHelper do
   alias Vix.Type
   alias Vix.GObject.GParamSpec
 
+  defp default(pspec), do: inspect(Type.default(pspec))
+
+  defp typespec_string(pspec), do: Macro.to_string(Type.typespec(pspec))
+
   def prepare_doc(desc, required, optional) do
     doc_required_args =
       Enum.map_join(required, "\n", fn pspec ->
@@ -13,7 +17,9 @@ defmodule Vix.OperationHelper do
 
     doc_optional_args =
       Enum.map_join(optional, "\n", fn pspec ->
-        "  * #{pspec.param_name} - #{pspec.desc} (#{pspec.value_type})"
+        "* #{pspec.param_name} - #{pspec.desc} (`#{typespec_string(pspec)}`). Default: `#{
+          default(pspec)
+        }`"
       end)
 
     """

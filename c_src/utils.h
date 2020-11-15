@@ -53,6 +53,8 @@ extern ERL_NIF_TERM ATOM_OK;
 
 extern ERL_NIF_TERM ATOM_ERROR;
 
+extern ERL_NIF_TERM ATOM_NIL;
+
 ERL_NIF_TERM raise_exception(ErlNifEnv *env, const char *msg);
 
 ERL_NIF_TERM raise_badarg(ErlNifEnv *env, const char *reason);

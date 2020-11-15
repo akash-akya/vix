@@ -13,6 +13,9 @@ defmodule Vix.Vips.Image do
   end
 
   @impl Type
+  def default(nil), do: "#{__MODULE__}: default not supported"
+
+  @impl Type
   def cast(value, _data), do: value
 
   def new_from_file(path) do

@@ -13,6 +13,9 @@ defmodule Vix.Vips.ArrayImage do
   end
 
   @impl Type
+  def default(nil), do: "#{__MODULE__}: default not supported"
+
+  @impl Type
   def cast(value, data) do
     value
     |> Enum.map(&Vix.Vips.Image.cast(&1, data))

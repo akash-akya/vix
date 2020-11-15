@@ -34,6 +34,9 @@ defmodule Vix.Vips.FlagHelper do
         end
 
         @impl Type
+        def default(nil), do: raise("Not supported")
+
+        @impl Type
         def cast(flags, _data) do
           Enum.reduce(flags, 0, fn flag, value ->
             value ||| cast(flag)

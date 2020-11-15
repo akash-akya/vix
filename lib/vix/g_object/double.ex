@@ -11,6 +11,9 @@ defmodule Vix.GObject.Double do
   end
 
   @impl Type
+  def default({_min, _max, default}), do: default
+
+  @impl Type
   def cast(value, data) do
     case value do
       value when is_number(value) ->

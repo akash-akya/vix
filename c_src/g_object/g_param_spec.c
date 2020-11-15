@@ -17,21 +17,12 @@ static double clamp_double(double value) {
 
 static ERL_NIF_TERM enum_details(ErlNifEnv *env, GParamSpec *pspec) {
   GParamSpecEnum *pspec_enum = G_PARAM_SPEC_ENUM(pspec);
-  ERL_NIF_TERM list, tuple, enum_value_name, enum_value;
-  unsigned int i;
+  GEnumClass *e_class;
+  GEnumValue *e_value;
 
-  list = enif_make_list(env, 0);
-
-  for (i = 0; i < pspec_enum->enum_class->n_values - 1; i++) {
-    enum_value_name =
-        enif_make_atom(env, pspec_enum->enum_class->values[i].value_name);
-    enum_value = enif_make_int(env, pspec_enum->enum_class->values[i].value);
-    tuple = enif_make_tuple2(env, enum_value_name, enum_value);
-    list = enif_make_list_cell(env, tuple, list);
-  }
-
-  return enif_make_tuple2(env, list,
-                          enif_make_int(env, pspec_enum->default_value));
+  e_class = pspec_enum->enum_class;
+  e_value = g_enum_get_value(e_class, pspec_enum->default_value);
+  return enif_make_atom(env, e_value->value_name);
 }
 
 static ERL_NIF_TERM boolean_details(ErlNifEnv *env, GParamSpec *pspec) {
@@ -84,7 +75,7 @@ static ERL_NIF_TERM int64_details(ErlNifEnv *env, GParamSpec *pspec) {
 static ERL_NIF_TERM string_details(ErlNifEnv *env, GParamSpec *pspec) {
   GParamSpecString *pspec_string = G_PARAM_SPEC_STRING(pspec);
   if (pspec_string->default_value == NULL) {
-    return enif_make_string(env, "", ERL_NIF_LATIN1);
+    return ATOM_NIL;
   } else {
     return enif_make_string(env, pspec_string->default_value, ERL_NIF_LATIN1);
   }
@@ -162,9 +153,9 @@ ERL_NIF_TERM g_param_spec_details(ErlNifEnv *env, GParamSpec *pspec) {
   } else if (G_IS_PARAM_SPEC_FLAGS(pspec)) {
     term = flag_details(env, pspec);
   } else if (G_IS_PARAM_SPEC_BOXED(pspec)) {
-    term = enif_make_atom(env, "nil");
+    term = ATOM_NIL; // TODO: handle default value
   } else if (G_IS_PARAM_SPEC_OBJECT(pspec)) {
-    term = enif_make_atom(env, "nil");
+    term = ATOM_NIL; // TODO: handle default value
   } else {
     error("Unknown GParamSpec: %s",
           g_type_name(G_PARAM_SPEC_VALUE_TYPE(pspec)));
