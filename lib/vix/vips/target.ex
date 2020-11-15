@@ -5,12 +5,6 @@ defmodule Vix.Vips.Target do
   @opaque t() :: reference()
 
   @impl Type
-  def spec_type, do: "GParamObject"
-
-  @impl Type
-  def value_type, do: "VipsTarget"
-
-  @impl Type
   def typespec do
     quote do
       unquote(__MODULE__).t()
@@ -18,5 +12,5 @@ defmodule Vix.Vips.Target do
   end
 
   @impl Type
-  def new(_value, _data), do: raise("VipsTarget is not implemented yet")
+  def cast(_value, _data), do: raise("VipsTarget is not implemented yet")
 end

@@ -1,31 +1,18 @@
 defmodule Vix.Type do
   @moduledoc false
 
-  alias Vix.GObject.GParamSpec
   alias Vix.{Vips, GObject}
-
-  @callback spec_type() :: String.t()
-
-  @callback value_type() :: String.t()
 
   @callback typespec() :: term()
 
-  @callback new(term, GParamSpec.t()) :: term()
-
-  def value_type(pspec) do
-    impl(pspec).value_type()
-  end
-
-  def spec_type(pspec) do
-    impl(pspec).spec_type()
-  end
+  @callback cast(term, term) :: term()
 
   def typespec(pspec) do
     impl(pspec).typespec()
   end
 
-  def new(value, pspec) do
-    impl(pspec).new(value, pspec.data)
+  def cast(value, pspec) do
+    impl(pspec).cast(value, pspec.data)
   end
 
   defp impl(pspec) do
@@ -51,6 +38,12 @@ defmodule Vix.Type do
       {"GParamObject", "VipsTarget"} ->
         Vips.Target
 
+      {"GParamEnum", enum_type} ->
+        Module.concat(Vix.Vips.Enum, String.to_atom(enum_type))
+
+      {"GParamFlags", flag_type} ->
+        Module.concat(Vix.Vips.Flag, String.to_atom(flag_type))
+
       {_, "gint"} ->
         GObject.Int
 
@@ -65,12 +58,6 @@ defmodule Vix.Type do
 
       {_, "gchararray"} ->
         GObject.String
-
-      {"GParamEnum", enum_type} ->
-        Module.concat(Vix.Vips.Enum, String.to_atom(enum_type))
-
-      {"GParamFlags", flag_type} ->
-        Module.concat(Vix.Vips.Flag, String.to_atom(flag_type))
     end
   end
 end

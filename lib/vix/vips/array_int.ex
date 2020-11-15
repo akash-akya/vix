@@ -6,12 +6,6 @@ defmodule Vix.Vips.ArrayInt do
   @opaque t() :: reference()
 
   @impl Type
-  def spec_type, do: "GParamBoxed"
-
-  @impl Type
-  def value_type, do: "VipsArrayInt"
-
-  @impl Type
   def typespec do
     quote do
       list(integer())
@@ -19,9 +13,9 @@ defmodule Vix.Vips.ArrayInt do
   end
 
   @impl Type
-  def new(value, data) do
+  def cast(value, data) do
     value
-    |> Enum.map(&Vix.GObject.Int.new(&1, data))
+    |> Enum.map(&Vix.GObject.Int.cast(&1, data))
     |> Vix.Nif.nif_int_array()
   end
 end

@@ -4,12 +4,6 @@ defmodule Vix.GObject.Int do
   @behaviour Type
 
   @impl Type
-  def spec_type, do: "GParamInt"
-
-  @impl Type
-  def value_type, do: "gint"
-
-  @impl Type
   def typespec do
     quote do
       integer()
@@ -17,7 +11,7 @@ defmodule Vix.GObject.Int do
   end
 
   @impl Type
-  def new(value, data) do
+  def cast(value, data) do
     case value do
       value when is_integer(value) ->
         validate_number_limits!(value, data)

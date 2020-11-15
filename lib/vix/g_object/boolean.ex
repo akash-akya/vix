@@ -4,12 +4,6 @@ defmodule Vix.GObject.Boolean do
   @behaviour Type
 
   @impl Type
-  def spec_type, do: "GParamBoolean"
-
-  @impl Type
-  def value_type, do: "gboolean"
-
-  @impl Type
   def typespec do
     quote do
       boolean()
@@ -17,7 +11,7 @@ defmodule Vix.GObject.Boolean do
   end
 
   @impl Type
-  def new(value, _data) do
+  def cast(value, _data) do
     case value do
       value when is_boolean(value) ->
         value

@@ -26,12 +26,6 @@ defmodule Vix.Vips.EnumHelper do
         @behaviour Type
 
         @impl Type
-        def spec_type, do: "GParamEnum"
-
-        @impl Type
-        def value_type, do: unquote(to_string(name))
-
-        @impl Type
         def typespec do
           quote do
             unquote(__MODULE__).t()
@@ -42,7 +36,7 @@ defmodule Vix.Vips.EnumHelper do
           Enum.map(enum, fn {name, value} ->
             quote do
               @impl Type
-              def new(unquote(name), _data), do: unquote(value)
+              def cast(unquote(name), _data), do: unquote(value)
             end
           end)
         )

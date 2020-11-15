@@ -6,12 +6,6 @@ defmodule Vix.Vips.ArrayImage do
   @opaque t() :: reference()
 
   @impl Type
-  def spec_type, do: "GParamBoxed"
-
-  @impl Type
-  def value_type, do: "VipsArrayImage"
-
-  @impl Type
   def typespec do
     quote do
       list(unquote(Vix.Vips.Image.typespec()))
@@ -19,9 +13,9 @@ defmodule Vix.Vips.ArrayImage do
   end
 
   @impl Type
-  def new(value, data) do
+  def cast(value, data) do
     value
-    |> Enum.map(&Vix.Vips.Image.new(&1, data))
+    |> Enum.map(&Vix.Vips.Image.cast(&1, data))
     |> Vix.Nif.nif_image_array()
   end
 end

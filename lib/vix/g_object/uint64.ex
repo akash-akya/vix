@@ -4,12 +4,6 @@ defmodule Vix.GObject.UInt64 do
   @behaviour Type
 
   @impl Type
-  def spec_type, do: "GParamUInt64"
-
-  @impl Type
-  def value_type, do: "guint64"
-
-  @impl Type
   def typespec do
     quote do
       non_neg_integer()
@@ -17,7 +11,7 @@ defmodule Vix.GObject.UInt64 do
   end
 
   @impl Type
-  def new(value, data) do
+  def cast(value, data) do
     case value do
       value when is_integer(value) and value >= 0 ->
         validate_number_limits!(value, data)

@@ -6,12 +6,6 @@ defmodule Vix.Vips.ArrayDouble do
   @opaque t() :: reference()
 
   @impl Type
-  def spec_type, do: "GParamBoxed"
-
-  @impl Type
-  def value_type, do: "VipsArrayDouble"
-
-  @impl Type
   def typespec do
     quote do
       list(float())
@@ -19,9 +13,9 @@ defmodule Vix.Vips.ArrayDouble do
   end
 
   @impl Type
-  def new(value, data) do
+  def cast(value, data) do
     value
-    |> Enum.map(&Vix.GObject.Double.new(&1, data))
+    |> Enum.map(&Vix.GObject.Double.cast(&1, data))
     |> Vix.Nif.nif_int_array()
   end
 end

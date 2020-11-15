@@ -6,12 +6,6 @@ defmodule Vix.Vips.Image do
   @opaque t() :: reference()
 
   @impl Type
-  def spec_type, do: "GParamObject"
-
-  @impl Type
-  def value_type, do: "VipsImage"
-
-  @impl Type
   def typespec do
     quote do
       unquote(__MODULE__).t()
@@ -19,7 +13,7 @@ defmodule Vix.Vips.Image do
   end
 
   @impl Type
-  def new(value, _data), do: value
+  def cast(value, _data), do: value
 
   def new_from_file(path) do
     Nif.nif_image_new_from_file(normalize_string(path))

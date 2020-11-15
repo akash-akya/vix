@@ -4,12 +4,6 @@ defmodule Vix.GObject.String do
   @behaviour Type
 
   @impl Type
-  def spec_type, do: "GParamString"
-
-  @impl Type
-  def value_type, do: "gchararray"
-
-  @impl Type
   def typespec do
     quote do
       charlist()
@@ -17,7 +11,7 @@ defmodule Vix.GObject.String do
   end
 
   @impl Type
-  def new(value, _data) do
+  def cast(value, _data) do
     case value do
       value when is_binary(value) -> to_charlist(value)
       value when is_list(value) -> value

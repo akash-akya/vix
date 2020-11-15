@@ -27,12 +27,6 @@ defmodule Vix.Vips.FlagHelper do
         @behaviour Type
 
         @impl Type
-        def spec_type, do: "GParamFlags"
-
-        @impl Type
-        def value_type, do: unquote(to_string(name))
-
-        @impl Type
         def typespec do
           quote do
             list(unquote(__MODULE__).t())
@@ -40,7 +34,7 @@ defmodule Vix.Vips.FlagHelper do
         end
 
         @impl Type
-        def new(flags, _data) do
+        def cast(flags, _data) do
           Enum.reduce(flags, 0, fn flag, value ->
             value ||| cast(flag)
           end)

@@ -4,12 +4,6 @@ defmodule Vix.GObject.Double do
   @behaviour Type
 
   @impl Type
-  def spec_type, do: "GParamDouble"
-
-  @impl Type
-  def value_type, do: "double"
-
-  @impl Type
   def typespec do
     quote do
       float()
@@ -17,7 +11,7 @@ defmodule Vix.GObject.Double do
   end
 
   @impl Type
-  def new(value, data) do
+  def cast(value, data) do
     case value do
       value when is_number(value) ->
         value =

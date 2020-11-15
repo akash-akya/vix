@@ -130,7 +130,7 @@ defmodule Vix.Operation do
         (unquote(nif_args) ++ nif_optional_args)
         |> Enum.map(fn {name, value} ->
           param_spec = Map.get(unquote(Macro.escape(input_args)), List.to_atom(name))
-          {name, Type.new(value, param_spec)}
+          {name, Type.cast(value, param_spec)}
         end)
 
       result =
