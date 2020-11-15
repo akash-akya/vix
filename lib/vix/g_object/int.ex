@@ -1,7 +1,6 @@
 defmodule Vix.GObject.Int do
   alias Vix.Type
   @moduledoc false
-
   @behaviour Type
 
   @impl Type

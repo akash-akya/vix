@@ -1,9 +1,7 @@
 defmodule Vix.GObject.UInt64 do
   alias Vix.Type
   @moduledoc false
-
   @behaviour Type
-  @opaque t() :: integer()
 
   @impl Type
   def spec_type, do: "GParamUInt64"

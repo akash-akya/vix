@@ -1,9 +1,7 @@
 defmodule Vix.GObject.String do
   alias Vix.Type
   @moduledoc false
-
   @behaviour Type
-  @opaque t() :: reference()
 
   @impl Type
   def spec_type, do: "GParamString"

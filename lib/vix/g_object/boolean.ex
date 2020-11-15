@@ -1,9 +1,7 @@
 defmodule Vix.GObject.Boolean do
   alias Vix.Type
   @moduledoc false
-
   @behaviour Type
-  @opaque t() :: integer()
 
   @impl Type
   def spec_type, do: "GParamBoolean"
