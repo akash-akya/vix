@@ -53,5 +53,6 @@ defmodule Vix.Vips.EnumHelper do
 end
 
 defmodule Vix.Vips.Enum do
+  @moduledoc false
   @before_compile Vix.Vips.EnumHelper
 end

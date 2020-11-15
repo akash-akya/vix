@@ -1,5 +1,6 @@
 defmodule Vix.GObject.String do
   alias Vix.Type
+  @moduledoc false
 
   @behaviour Type
   @opaque t() :: reference()

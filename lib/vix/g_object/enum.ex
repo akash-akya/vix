@@ -1,5 +1,6 @@
 defmodule Vix.GObject.Enum do
   alias Vix.Type
+  @moduledoc false
 
   @behaviour Type
   @opaque t() :: atom

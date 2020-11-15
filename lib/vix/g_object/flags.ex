@@ -1,5 +1,6 @@
 defmodule Vix.GObject.Flags do
   alias Vix.Type
+  @moduledoc false
 
   @behaviour Type
   @opaque t() :: list(atom)

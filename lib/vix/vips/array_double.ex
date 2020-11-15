@@ -1,5 +1,6 @@
 defmodule Vix.Vips.ArrayDouble do
   alias Vix.Type
+  @moduledoc false
 
   @behaviour Type
   @opaque t() :: reference()

@@ -60,5 +60,6 @@ defmodule Vix.Vips.FlagHelper do
 end
 
 defmodule Vix.Vips.Flag do
+  @moduledoc false
   @before_compile Vix.Vips.FlagHelper
 end

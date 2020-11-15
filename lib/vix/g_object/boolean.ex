@@ -1,5 +1,6 @@
 defmodule Vix.GObject.Boolean do
   alias Vix.Type
+  @moduledoc false
 
   @behaviour Type
   @opaque t() :: integer()

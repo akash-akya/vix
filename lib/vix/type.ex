@@ -1,4 +1,6 @@
 defmodule Vix.Type do
+  @moduledoc false
+
   alias Vix.GObject.GParamSpec
   alias Vix.{Vips, GObject}
 
@@ -28,13 +30,13 @@ defmodule Vix.Type do
 
   defp impl(pspec) do
     case {pspec.spec_type, pspec.value_type} do
-      {_, "VipsArrayInt"} ->
+      {"GParamBoxed", "VipsArrayInt"} ->
         Vips.ArrayInt
 
-      {_, "VipsArrayDouble"} ->
+      {"GParamBoxed", "VipsArrayDouble"} ->
         Vips.ArrayDouble
 
-      {_, "VipsArrayImage"} ->
+      {"GParamBoxed", "VipsArrayImage"} ->
         Vips.ArrayImage
 
       {"GParamBoxed", "VipsBlob"} ->
