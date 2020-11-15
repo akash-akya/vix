@@ -6,6 +6,8 @@
 
 #include "g_param_spec.h"
 
+/* elixir/erlang does not support infinity, use extreme values
+   instead */
 static double clamp_double(double value) {
   if (value == INFINITY)
     return DBL_MAX;
@@ -23,6 +25,28 @@ static ERL_NIF_TERM enum_details(ErlNifEnv *env, GParamSpec *pspec) {
   e_class = pspec_enum->enum_class;
   e_value = g_enum_get_value(e_class, pspec_enum->default_value);
   return enif_make_atom(env, e_value->value_name);
+}
+
+static ERL_NIF_TERM flag_details(ErlNifEnv *env, GParamSpec *pspec) {
+  GParamSpecFlags *pspec_flags = G_PARAM_SPEC_FLAGS(pspec);
+  GFlagsClass *f_class;
+  ERL_NIF_TERM default_flags, flag;
+  guint default_int;
+  unsigned int i;
+
+  f_class = pspec_flags->flags_class;
+  default_int = pspec_flags->default_value;
+
+  default_flags = enif_make_list(env, 0);
+
+  for (i = 0; i < f_class->n_values - 1; i++) {
+    if (f_class->values[i].value & default_int) {
+      flag = enif_make_atom(env, f_class->values[i].value_name);
+      default_flags = enif_make_list_cell(env, flag, default_flags);
+    }
+  }
+
+  return default_flags;
 }
 
 static ERL_NIF_TERM boolean_details(ErlNifEnv *env, GParamSpec *pspec) {
@@ -79,26 +103,6 @@ static ERL_NIF_TERM string_details(ErlNifEnv *env, GParamSpec *pspec) {
   } else {
     return enif_make_string(env, pspec_string->default_value, ERL_NIF_LATIN1);
   }
-}
-
-static ERL_NIF_TERM flag_details(ErlNifEnv *env, GParamSpec *pspec) {
-  GParamSpecFlags *pspec_flags = G_PARAM_SPEC_FLAGS(pspec);
-  ERL_NIF_TERM list, tuple, flag_name, flag_value;
-  unsigned int i;
-
-  list = enif_make_list(env, 0);
-
-  for (i = 0; i < pspec_flags->flags_class->n_values - 1; i++) {
-    flag_name =
-        enif_make_atom(env, pspec_flags->flags_class->values[i].value_name);
-    flag_value = enif_make_int(env, pspec_flags->flags_class->values[i].value);
-
-    tuple = enif_make_tuple2(env, flag_name, flag_value);
-    list = enif_make_list_cell(env, tuple, list);
-  }
-
-  return enif_make_tuple2(env, list,
-                          enif_make_int(env, pspec_flags->default_value));
 }
 
 ERL_NIF_TERM g_param_spec_to_erl_term(ErlNifEnv *env, GParamSpec *pspec) {
