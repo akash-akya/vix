@@ -23,3 +23,5 @@ erl_crash.dump
 eips-*.tar
 
 /.ccls-cache
+
+/*.jpg
