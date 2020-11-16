@@ -5,28 +5,6 @@ defmodule Vix.OperationHelper do
   alias Vix.Type
   alias Vix.GObject.GParamSpec
 
-  defp default(pspec) do
-    if Type.default(pspec) == :unsupported do
-      ""
-    else
-      "Default: `#{inspect(Type.default(pspec))}`"
-    end
-  end
-
-  defp optional_args([]), do: ""
-
-  defp optional_args(optional) do
-    doc_optional_args =
-      Enum.map_join(optional, "\n", fn pspec ->
-        "* #{pspec.param_name} - #{pspec.desc}. #{default(pspec)}"
-      end)
-
-    """
-    ## Optional
-    #{doc_optional_args}
-    """
-  end
-
   def prepare_doc(desc, required, optional) do
     doc_required_args =
       Enum.map_join(required, "\n", fn pspec ->
@@ -70,26 +48,25 @@ defmodule Vix.OperationHelper do
 
   def function_name(name), do: to_string(name) |> String.downcase() |> String.to_atom()
 
+  def type_name(name) do
+    to_string(name)
+    |> Macro.underscore()
+    |> String.to_atom()
+    |> Macro.var(__MODULE__)
+  end
+
   def input_typespec(pspec_list) do
-    Enum.map(pspec_list, fn pspec ->
-      Type.typespec(pspec)
-    end)
+    Enum.map(pspec_list, &typespec/1)
   end
 
   def output_typespec(pspec_list) do
     if length(pspec_list) == 1 do
-      Type.typespec(hd(pspec_list))
+      typespec(hd(pspec_list))
     else
       quote do
         list(term())
       end
     end
-  end
-
-  defp optional_args_typespec(optional) do
-    Enum.map(optional, fn pspec ->
-      {pspec.param_name, Type.typespec(pspec)}
-    end)
   end
 
   def typespec(func_name, required, optional, output) do
@@ -122,13 +99,71 @@ defmodule Vix.OperationHelper do
 
     {description, args}
   end
+
+  defp default(pspec) do
+    if Type.default(pspec) == :unsupported do
+      ""
+    else
+      "Default: `#{inspect(Type.default(pspec))}`"
+    end
+  end
+
+  defp optional_args([]), do: ""
+
+  defp optional_args(optional) do
+    doc_optional_args =
+      Enum.map_join(optional, "\n", fn pspec ->
+        "* #{pspec.param_name} - #{pspec.desc}. #{default(pspec)}"
+      end)
+
+    """
+    ## Optional
+    #{doc_optional_args}
+    """
+  end
+
+  defp typespec(%GParamSpec{spec_type: "GParamEnum"} = pspec) do
+    type_name(pspec.value_type)
+  end
+
+  defp typespec(%GParamSpec{spec_type: "GParamFlags"} = pspec) do
+    type_name(pspec.value_type)
+  end
+
+  defp typespec(pspec), do: Type.typespec(pspec)
+
+  defp optional_args_typespec(optional) do
+    Enum.map(optional, fn pspec ->
+      {pspec.param_name, typespec(pspec)}
+    end)
+  end
 end
 
 defmodule Vix.Operation do
+  @moduledoc """
+  Vips Operations
+  """
+
   import Vix.OperationHelper
 
   alias Vix.Type
   alias Vix.Nif
+
+  Vix.Nif.nif_vips_enum_list()
+  |> Enum.map(fn {name, enum} ->
+    {enum_str_list, _} = Enum.unzip(enum)
+
+    @type unquote(type_name(name)) ::
+            unquote(Enum.reduce(enum_str_list, &{:|, [], [&1, &2]}))
+  end)
+
+  Vix.Nif.nif_vips_flag_list()
+  |> Enum.map(fn {name, flag} ->
+    {flag_str_list, _} = Enum.unzip(flag)
+
+    @type unquote(type_name(name)) ::
+            list(unquote(Enum.reduce(flag_str_list, &{:|, [], [&1, &2]})))
+  end)
 
   Nif.nif_vips_operation_list()
   |> Enum.uniq()

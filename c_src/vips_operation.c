@@ -134,7 +134,7 @@ static ERL_NIF_TERM set_operation_properties(ErlNifEnv *env, VipsOperation *op,
     }
 
     if (count != 2) {
-      error("Tuple length must be 2");
+      error("Tuple length must be of length 2");
       return enif_make_badarg(env);
     }
 

@@ -19,6 +19,7 @@ defmodule Vix.GObject.Double do
       value when is_number(value) ->
         value =
           if !is_float(value) do
+            # convert to float
             value * 1.0
           else
             value

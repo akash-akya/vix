@@ -19,6 +19,8 @@ defmodule Vix.Vips.EnumHelper do
 
     contents =
       quote do
+        # Internal module
+        @moduledoc false
         @type t() :: unquote(spec)
 
         alias Vix.Type

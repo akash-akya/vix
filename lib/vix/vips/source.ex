@@ -1,4 +1,8 @@
 defmodule Vix.Vips.Source do
+  @moduledoc """
+  *NOT supported yet*
+  """
+
   alias Vix.Type
 
   @behaviour Type
