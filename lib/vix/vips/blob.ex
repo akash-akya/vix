@@ -12,7 +12,7 @@ defmodule Vix.Vips.Blob do
   end
 
   @impl Type
-  def default(nil), do: raise("Not supported")
+  def default(nil), do: :unsupported
 
   @impl Type
   def cast(_value, _data), do: raise("VipsBlob is not implemented yet")

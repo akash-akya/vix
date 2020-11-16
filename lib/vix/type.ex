@@ -10,25 +10,18 @@ defmodule Vix.Type do
   @callback cast(term, term) :: term()
 
   def typespec(pspec) do
-    case impl(pspec) do
-      err when is_binary(err) -> "typespec is not supported"
-      impl -> impl.typespec()
-    end
+    impl(pspec).typespec()
   end
 
   def default(pspec) do
-    case impl(pspec) do
-      err when is_binary(err) -> "default is not supported"
-      impl -> impl.default(pspec.data)
-    end
+    impl(pspec).default(pspec.data)
   end
 
   def cast(value, pspec) do
-    case impl(pspec) do
-      err when is_binary(err) -> "cast is not supported"
-      impl -> impl.cast(value, pspec.data)
-    end
+    impl(pspec).cast(value, pspec.data)
   end
+
+  def supported?(pspec), do: impl(pspec) != :unsupported
 
   defp impl(pspec) do
     case {pspec.spec_type, pspec.value_type} do
@@ -74,8 +67,8 @@ defmodule Vix.Type do
       {_, "gchararray"} ->
         GObject.String
 
-      {spec_type, value_type} ->
-        "spec_type: #{spec_type} of value_type: #{value_type} is not supported"
+      {_spec_type, _value_type} ->
+        :unsupported
     end
   end
 end

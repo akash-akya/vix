@@ -5,21 +5,32 @@ defmodule Vix.OperationHelper do
   alias Vix.Type
   alias Vix.GObject.GParamSpec
 
-  defp default(pspec), do: inspect(Type.default(pspec))
+  defp default(pspec) do
+    if Type.default(pspec) == :unsupported do
+      ""
+    else
+      "Default: `#{inspect(Type.default(pspec))}`"
+    end
+  end
 
-  defp typespec_string(pspec), do: Macro.to_string(Type.typespec(pspec))
+  defp optional_args([]), do: ""
+
+  defp optional_args(optional) do
+    doc_optional_args =
+      Enum.map_join(optional, "\n", fn pspec ->
+        "* #{pspec.param_name} - #{pspec.desc}. #{default(pspec)}"
+      end)
+
+    """
+    ## Optional
+    #{doc_optional_args}
+    """
+  end
 
   def prepare_doc(desc, required, optional) do
     doc_required_args =
       Enum.map_join(required, "\n", fn pspec ->
         "  * #{pspec.param_name} - #{pspec.desc}"
-      end)
-
-    doc_optional_args =
-      Enum.map_join(optional, "\n", fn pspec ->
-        "* #{pspec.param_name} - #{pspec.desc} (`#{typespec_string(pspec)}`). Default: `#{
-          default(pspec)
-        }`"
       end)
 
     """
@@ -28,8 +39,7 @@ defmodule Vix.OperationHelper do
     ## Arguments
     #{doc_required_args}
 
-    ## Optional
-    #{doc_optional_args}
+    #{optional_args(optional)}
     """
   end
 
@@ -50,6 +60,9 @@ defmodule Vix.OperationHelper do
       Enum.split_with(input, fn %{flags: flags} ->
         :vips_argument_required in flags
       end)
+
+    # TODO: support VipsInterpolate and other types
+    optional = Enum.filter(optional, &Type.supported?/1)
 
     required = Enum.sort_by(required, & &1.priority)
     {desc, required, optional, output}
@@ -73,9 +86,18 @@ defmodule Vix.OperationHelper do
     end
   end
 
-  def typespec(func_name, required, _optional, output) do
+  defp optional_args_typespec(optional) do
+    Enum.map(optional, fn pspec ->
+      {pspec.param_name, Type.typespec(pspec)}
+    end)
+  end
+
+  def typespec(func_name, required, optional, output) do
     quote do
-      unquote(func_name)(unquote_splicing(input_typespec(required)), keyword()) ::
+      unquote(func_name)(
+        unquote_splicing(input_typespec(required)),
+        unquote(optional_args_typespec(optional))
+      ) ::
         unquote(output_typespec(output))
     end
   end

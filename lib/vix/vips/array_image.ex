@@ -13,7 +13,7 @@ defmodule Vix.Vips.ArrayImage do
   end
 
   @impl Type
-  def default(nil), do: "#{__MODULE__}: default not supported"
+  def default(nil), do: :unsupported
 
   @impl Type
   def cast(value, data) do
