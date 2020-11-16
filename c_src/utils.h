@@ -12,7 +12,7 @@
 #define USE_DIRTY_CPU 0
 #endif
 
-#define DEBUG
+/* #define DEBUG */
 
 #ifdef DEBUG
 #define debug(...)                                                             \
