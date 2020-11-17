@@ -62,7 +62,7 @@ static ERL_NIF_TERM get_operation_properties(ErlNifEnv *env,
                                              VipsOperation *op) {
 
   GValue gvalue = {0};
-  GObject *g_object;
+  GObject *obj;
 
   const char **names;
   int *flags;
@@ -92,9 +92,9 @@ static ERL_NIF_TERM get_operation_properties(ErlNifEnv *env,
       g_value_init(&gvalue, G_PARAM_SPEC_VALUE_TYPE(pspec));
       g_object_get_property(G_OBJECT(op), names[i], &gvalue);
 
-      g_object = g_value_get_object(&gvalue);
+      obj = g_value_get_object(&gvalue);
       list =
-          enif_make_list_cell(env, g_object_to_erl_term(env, g_object), list);
+          enif_make_list_cell(env, g_object_to_erl_term(env, obj), list);
       g_value_unset(&gvalue);
     }
   }

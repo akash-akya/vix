@@ -8,13 +8,12 @@
 ErlNifResourceType *G_OBJECT_RT;
 
 typedef struct GObjectResource {
-  GObject *g_object;
+  GObject *obj;
 } GObjectResource;
 
-ERL_NIF_TERM g_object_to_erl_term(ErlNifEnv *env, GObject *g_object);
+ERL_NIF_TERM g_object_to_erl_term(ErlNifEnv *env, GObject *obj);
 
-bool erl_term_to_g_object(ErlNifEnv *env, ERL_NIF_TERM term,
-                          GObject **g_object);
+bool erl_term_to_g_object(ErlNifEnv *env, ERL_NIF_TERM term, GObject **obj);
 
 int nif_g_object_init(ErlNifEnv *env);
 

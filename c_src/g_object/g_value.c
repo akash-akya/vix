@@ -149,14 +149,14 @@ static ERL_NIF_TERM set_boxed(ErlNifEnv *env, ERL_NIF_TERM term,
 
 static ERL_NIF_TERM set_g_object(ErlNifEnv *env, ERL_NIF_TERM term,
                                  GValue *gvalue) {
-  GObject *g_object;
+  GObject *obj;
 
-  if (!erl_term_to_g_object(env, term, &g_object)) {
+  if (!erl_term_to_g_object(env, term, &obj)) {
     error("failed to get GObject argument");
     return raise_exception(env, "failed to get GObject argument");
   }
 
-  g_value_set_object(gvalue, g_object);
+  g_value_set_object(gvalue, obj);
   return ATOM_OK;
 }
 
