@@ -539,7 +539,7 @@ ERL_NIF_TERM nif_vips_cache_get_max_mem(ErlNifEnv *env, int argc,
   return make_ok(env, enif_make_uint64(env, vips_cache_get_max_mem()));
 }
 
-static void *load_operation(GType type, void *a) {
+static void *load_operation(GType type, void *error) {
   gpointer g_class;
   VipsObjectClass *class;
   VipsOperation *op;
@@ -565,8 +565,7 @@ static void *load_operation(GType type, void *a) {
   if (vips_object_get_args(VIPS_OBJECT(op), &names, &flags, &n_args) != 0) {
     error("failed to get VipsObject arguments. error: %s", vips_error_buffer());
     vips_error_clear();
-    ErlNifEnv *env = (ErlNifEnv *) a;
-    return (void *) raise_exception(env, "failed to get VipsObject arguments");
+    return error;
   }
 
   g_type_class_unref(g_class);
@@ -574,16 +573,18 @@ static void *load_operation(GType type, void *a) {
   return (NULL);
 }
 
-static ERL_NIF_TERM load_vips_types(ErlNifEnv *env) {
-  ERL_NIF_TERM term;
-  term = (ERL_NIF_TERM)vips_type_map_all(VIPS_TYPE_OPERATION, load_operation, env);
-  if (term)
-    return term;
+static int load_vips_types(ErlNifEnv *env) {
+  bool error = true, ret;
+
+  ret = (ERL_NIF_TERM)vips_type_map_all(VIPS_TYPE_OPERATION, load_operation,
+                                        &error);
+  if (ret == error)
+    return 1;
   else
-    return ATOM_OK;
+    return 0;
 }
 
-ERL_NIF_TERM nif_vips_operation_init(ErlNifEnv *env) {
+int nif_vips_operation_init(ErlNifEnv *env) {
   ATOM_VIPS_ARGUMENT_NONE = enif_make_atom(env, "vips_argument_none");
   ATOM_VIPS_ARGUMENT_REQUIRED = enif_make_atom(env, "vips_argument_required");
   ATOM_VIPS_ARGUMENT_CONSTRUCT = enif_make_atom(env, "vips_argument_construct");
@@ -595,9 +596,6 @@ ERL_NIF_TERM nif_vips_operation_init(ErlNifEnv *env) {
   ATOM_VIPS_ARGUMENT_DEPRECATED =
       enif_make_atom(env, "vips_argument_deprecated");
   ATOM_VIPS_ARGUMENT_MODIFY = enif_make_atom(env, "vips_argument_modify");
-
-  if (!G_BOXED_RT)
-    return raise_exception(env, "Failed to open g_boxed_resource");
 
   /* There is a race condition; if we attempt to access subclass of a
      class before definitions are "loaded" we won't be able to get any

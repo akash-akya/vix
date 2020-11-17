@@ -9,11 +9,11 @@ ErlNifResourceType *G_BOXED_RT;
 
 typedef struct GBoxedResource {
   GType boxed_type;
-  gpointer g_boxed;
+  gpointer boxed_ptr;
 } GBoxedResource;
 
 bool erl_term_to_g_boxed(ErlNifEnv *env, ERL_NIF_TERM term, gpointer *ptr);
 
-ERL_NIF_TERM nif_g_boxed_init(ErlNifEnv *env);
+int nif_g_boxed_init(ErlNifEnv *env);
 
 #endif

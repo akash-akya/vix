@@ -47,13 +47,15 @@ bool erl_term_to_g_object(ErlNifEnv *env, ERL_NIF_TERM term,
   return false;
 }
 
-ERL_NIF_TERM nif_g_object_init(ErlNifEnv *env) {
+int nif_g_object_init(ErlNifEnv *env) {
   G_OBJECT_RT =
       enif_open_resource_type_x(env, "g_object_resource", &g_object_rt_init,
                                 ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER, NULL);
 
-  if (!G_OBJECT_RT)
-    return raise_exception(env, "Failed to open g_object_resource");
+  if (!G_OBJECT_RT) {
+    error("Failed to open g_object_resource");
+    return 1;
+  }
 
-  return ATOM_OK;
+  return 0;
 }

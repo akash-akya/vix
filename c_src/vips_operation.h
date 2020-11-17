@@ -42,6 +42,6 @@ ERL_NIF_TERM nif_vips_cache_set_max_mem(ErlNifEnv *env, int argc,
 ERL_NIF_TERM nif_vips_cache_get_max_mem(ErlNifEnv *env, int argc,
                                         const ERL_NIF_TERM argv[]);
 
-ERL_NIF_TERM nif_vips_operation_init(ErlNifEnv *env);
+int nif_vips_operation_init(ErlNifEnv *env);
 
 #endif

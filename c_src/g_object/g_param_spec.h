@@ -18,6 +18,6 @@ bool erl_term_to_g_param_spec(ErlNifEnv *env, ERL_NIF_TERM term,
 
 ERL_NIF_TERM g_param_spec_details(ErlNifEnv *env, GParamSpec *pspec);
 
-ERL_NIF_TERM nif_g_param_spec_init(ErlNifEnv *env);
+int nif_g_param_spec_init(ErlNifEnv *env);
 
 #endif

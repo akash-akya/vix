@@ -63,6 +63,6 @@ ERL_NIF_TERM make_ok(ErlNifEnv *env, ERL_NIF_TERM term);
 
 ERL_NIF_TERM make_error(ErlNifEnv *env, const char *reason);
 
-ERL_NIF_TERM utils_init(ErlNifEnv *env);
+int utils_init(ErlNifEnv *env);
 
 #endif

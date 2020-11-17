@@ -88,7 +88,7 @@ ERL_NIF_TERM nif_int_array(ErlNifEnv *env, int argc,
 
   assert_argc(argc, 1);
 
-  GBoxedResource *g_boxed_r =
+  GBoxedResource *boxed_r =
       enif_alloc_resource(G_BOXED_RT, sizeof(GBoxedResource));
 
   unsigned int len;
@@ -101,11 +101,11 @@ ERL_NIF_TERM nif_int_array(ErlNifEnv *env, int argc,
   VipsArrayInt *vips_array =
       erl_list_to_vips_int_array(env, argv[0], len, array);
 
-  g_boxed_r->boxed_type = VIPS_TYPE_ARRAY_INT;
-  g_boxed_r->g_boxed = vips_array;
+  boxed_r->boxed_type = VIPS_TYPE_ARRAY_INT;
+  boxed_r->boxed_ptr = vips_array;
 
-  ERL_NIF_TERM term = enif_make_resource(env, g_boxed_r);
-  enif_release_resource(g_boxed_r);
+  ERL_NIF_TERM term = enif_make_resource(env, boxed_r);
+  enif_release_resource(boxed_r);
 
   return term;
 }
@@ -114,7 +114,7 @@ ERL_NIF_TERM nif_double_array(ErlNifEnv *env, int argc,
                               const ERL_NIF_TERM argv[]) {
   assert_argc(argc, 1);
 
-  GBoxedResource *g_boxed_r =
+  GBoxedResource *boxed_r =
       enif_alloc_resource(G_BOXED_RT, sizeof(GBoxedResource));
 
   unsigned int len;
@@ -127,11 +127,11 @@ ERL_NIF_TERM nif_double_array(ErlNifEnv *env, int argc,
   VipsArrayDouble *vips_array =
       erl_list_to_vips_double_array(env, argv[0], len, array);
 
-  g_boxed_r->boxed_type = VIPS_TYPE_ARRAY_DOUBLE;
-  g_boxed_r->g_boxed = vips_array;
+  boxed_r->boxed_type = VIPS_TYPE_ARRAY_DOUBLE;
+  boxed_r->boxed_ptr = vips_array;
 
-  ERL_NIF_TERM term = enif_make_resource(env, g_boxed_r);
-  enif_release_resource(g_boxed_r);
+  ERL_NIF_TERM term = enif_make_resource(env, boxed_r);
+  enif_release_resource(boxed_r);
 
   return term;
 }
@@ -140,7 +140,7 @@ ERL_NIF_TERM nif_image_array(ErlNifEnv *env, int argc,
                              const ERL_NIF_TERM argv[]) {
   assert_argc(argc, 1);
 
-  GBoxedResource *g_boxed_r =
+  GBoxedResource *boxed_r =
       enif_alloc_resource(G_BOXED_RT, sizeof(GBoxedResource));
 
   unsigned int len;
@@ -153,11 +153,11 @@ ERL_NIF_TERM nif_image_array(ErlNifEnv *env, int argc,
   VipsArrayImage *vips_array =
       erl_list_to_vips_image_array(env, argv[0], len, array);
 
-  g_boxed_r->boxed_type = VIPS_TYPE_ARRAY_IMAGE;
-  g_boxed_r->g_boxed = vips_array;
+  boxed_r->boxed_type = VIPS_TYPE_ARRAY_IMAGE;
+  boxed_r->boxed_ptr = vips_array;
 
-  ERL_NIF_TERM term = enif_make_resource(env, g_boxed_r);
-  enif_release_resource(g_boxed_r);
+  ERL_NIF_TERM term = enif_make_resource(env, boxed_r);
+  enif_release_resource(boxed_r);
 
   return term;
 }

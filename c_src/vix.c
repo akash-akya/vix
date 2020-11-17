@@ -12,30 +12,25 @@
 #include "vips_operation.h"
 
 static int on_load(ErlNifEnv *env, void **priv, ERL_NIF_TERM load_info) {
-  ERL_NIF_TERM res;
+  if (VIPS_INIT("vix")){
+    error("Failed to initialize Vips");
+    return 1;
+  }
 
-  if (VIPS_INIT("vix"))
+  if (utils_init(env))
     return 1;
 
-  res = utils_init(env);
-  if (enif_is_exception(env, res))
-    return res;
+  if (nif_g_object_init(env))
+    return 1;
 
-  res = nif_g_object_init(env);
-  if (enif_is_exception(env, res))
-    return res;
+  if (nif_g_param_spec_init(env))
+    return 1;
 
-  res = nif_g_param_spec_init(env);
-  if (enif_is_exception(env, res))
-    return res;
+  if (nif_g_boxed_init(env))
+    return 1;
 
-  res = nif_g_boxed_init(env);
-  if (enif_is_exception(env, res))
-    return res;
-
-  res = nif_vips_operation_init(env);
-  if (enif_is_exception(env, res))
-    return res;
+  if (nif_vips_operation_init(env))
+    return 1;
 
   return 0;
 }
