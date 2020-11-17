@@ -73,6 +73,22 @@ defmodule Vix.Vips.Image do
     Nif.nif_image_write_to_file(vips_image, normalize_string(path))
   end
 
+  @doc """
+  Make a VipsImage which, when written to, will create a temporary file on disc.
+
+  The file will be automatically deleted when the image is destroyed. format is something like "%s.v" for a vips file.
+
+  The file is created in the temporary directory. This is set with the environment variable TMPDIR. If this is not set, then on Unix systems, vips will default to /tmp. On Windows, vips uses `GetTempPath()` to find the temporary directory.
+
+  ```elixir
+  vips_image = Image.new_temp_file("%s.v")
+  ```
+  """
+  @spec new_temp_file(String.t()) :: :ok | {:error, term()}
+  def new_temp_file(format) do
+    Nif.nif_image_new_temp_file(normalize_string(format))
+  end
+
   defp normalize_string(str) when is_binary(str), do: to_charlist(str)
 
   defp normalize_string(str) when is_list(str), do: str
