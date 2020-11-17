@@ -1,4 +1,4 @@
-defmodule Vix.OperationHelper do
+defmodule Vix.Vips.OperationHelper do
   @moduledoc false
 
   alias Vix.Nif
@@ -139,12 +139,12 @@ defmodule Vix.OperationHelper do
   end
 end
 
-defmodule Vix.Operation do
+defmodule Vix.Vips.Operation do
   @moduledoc """
   Vips Operations
   """
 
-  import Vix.OperationHelper
+  import Vix.Vips.OperationHelper
 
   alias Vix.Type
   alias Vix.Nif

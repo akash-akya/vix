@@ -1,7 +1,7 @@
-defmodule Vix.OperationTest do
+defmodule Vix.Vips.OperationTest do
   use ExUnit.Case
   alias Vix.Vips.Image
-  alias Vix.Operation
+  alias Vix.Vips.Operation
 
   @sample "puppies.jpg"
 
