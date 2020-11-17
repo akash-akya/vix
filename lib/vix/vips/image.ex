@@ -76,9 +76,9 @@ defmodule Vix.Vips.Image do
   @doc """
   Make a VipsImage which, when written to, will create a temporary file on disc.
 
-  The file will be automatically deleted when the image is destroyed. format is something like "%s.v" for a vips file.
+  The file will be automatically deleted when the image is destroyed. format is something like `"%s.v"` for a vips file.
 
-  The file is created in the temporary directory. This is set with the environment variable TMPDIR. If this is not set, then on Unix systems, vips will default to /tmp. On Windows, vips uses `GetTempPath()` to find the temporary directory.
+  The file is created in the temporary directory. This is set with the environment variable TMPDIR. If this is not set, then on Unix systems, vips will default to `/tmp`. On Windows, vips uses `GetTempPath()` to find the temporary directory.
 
   ```elixir
   vips_image = Image.new_temp_file("%s.v")
