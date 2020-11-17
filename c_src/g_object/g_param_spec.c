@@ -24,7 +24,7 @@ static ERL_NIF_TERM enum_details(ErlNifEnv *env, GParamSpec *pspec) {
 
   e_class = pspec_enum->enum_class;
   e_value = g_enum_get_value(e_class, pspec_enum->default_value);
-  return enif_make_atom(env, e_value->value_name);
+  return make_atom(env, e_value->value_name);
 }
 
 static ERL_NIF_TERM flag_details(ErlNifEnv *env, GParamSpec *pspec) {
@@ -41,7 +41,7 @@ static ERL_NIF_TERM flag_details(ErlNifEnv *env, GParamSpec *pspec) {
 
   for (i = 0; i < f_class->n_values - 1; i++) {
     if (f_class->values[i].value & default_int) {
-      flag = enif_make_atom(env, f_class->values[i].value_name);
+      flag = make_atom(env, f_class->values[i].value_name);
       default_flags = enif_make_list_cell(env, flag, default_flags);
     }
   }
@@ -53,9 +53,9 @@ static ERL_NIF_TERM boolean_details(ErlNifEnv *env, GParamSpec *pspec) {
   GParamSpecBoolean *pspec_bool = G_PARAM_SPEC_BOOLEAN(pspec);
 
   if (pspec_bool->default_value) {
-    return enif_make_atom(env, "true");
+    return make_atom(env, "true");
   } else {
-    return enif_make_atom(env, "false");
+    return make_atom(env, "false");
   }
 }
 

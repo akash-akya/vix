@@ -369,7 +369,7 @@ ERL_NIF_TERM nif_vips_enum_list(ErlNifEnv *env, int argc,
     enum_values = enif_make_list(env, 0);
 
     for (unsigned int j = 0; j < enum_class->n_values - 1; j++) {
-      enum_str = enif_make_atom(env, enum_class->values[j].value_name);
+      enum_str = make_atom(env, enum_class->values[j].value_name);
       enum_int = enif_make_int(env, enum_class->values[j].value);
 
       tuple = enif_make_tuple2(env, enum_str, enum_int);
@@ -434,7 +434,7 @@ ERL_NIF_TERM nif_vips_flag_list(ErlNifEnv *env, int argc,
     flag_values = enif_make_list(env, 0);
 
     for (unsigned int j = 0; j < flag_class->n_values - 1; j++) {
-      flag_str = enif_make_atom(env, flag_class->values[j].value_name);
+      flag_str = make_atom(env, flag_class->values[j].value_name);
       flag_int = enif_make_int(env, flag_class->values[j].value);
 
       tuple = enif_make_tuple2(env, flag_str, flag_int);
@@ -577,17 +577,15 @@ static int load_vips_types(ErlNifEnv *env) {
 }
 
 int nif_vips_operation_init(ErlNifEnv *env) {
-  ATOM_VIPS_ARGUMENT_NONE = enif_make_atom(env, "vips_argument_none");
-  ATOM_VIPS_ARGUMENT_REQUIRED = enif_make_atom(env, "vips_argument_required");
-  ATOM_VIPS_ARGUMENT_CONSTRUCT = enif_make_atom(env, "vips_argument_construct");
-  ATOM_VIPS_ARGUMENT_SET_ONCE = enif_make_atom(env, "vips_argument_set_once");
-  ATOM_VIPS_ARGUMENT_SET_ALWAYS =
-      enif_make_atom(env, "vips_argument_set_always");
-  ATOM_VIPS_ARGUMENT_INPUT = enif_make_atom(env, "vips_argument_input");
-  ATOM_VIPS_ARGUMENT_OUTPUT = enif_make_atom(env, "vips_argument_output");
-  ATOM_VIPS_ARGUMENT_DEPRECATED =
-      enif_make_atom(env, "vips_argument_deprecated");
-  ATOM_VIPS_ARGUMENT_MODIFY = enif_make_atom(env, "vips_argument_modify");
+  ATOM_VIPS_ARGUMENT_NONE = make_atom(env, "vips_argument_none");
+  ATOM_VIPS_ARGUMENT_REQUIRED = make_atom(env, "vips_argument_required");
+  ATOM_VIPS_ARGUMENT_CONSTRUCT = make_atom(env, "vips_argument_construct");
+  ATOM_VIPS_ARGUMENT_SET_ONCE = make_atom(env, "vips_argument_set_once");
+  ATOM_VIPS_ARGUMENT_SET_ALWAYS = make_atom(env, "vips_argument_set_always");
+  ATOM_VIPS_ARGUMENT_INPUT = make_atom(env, "vips_argument_input");
+  ATOM_VIPS_ARGUMENT_OUTPUT = make_atom(env, "vips_argument_output");
+  ATOM_VIPS_ARGUMENT_DEPRECATED = make_atom(env, "vips_argument_deprecated");
+  ATOM_VIPS_ARGUMENT_MODIFY = make_atom(env, "vips_argument_modify");
 
   /* There is a race condition; if we attempt to access subclass of a
      class before definitions are "loaded" we won't be able to get any
