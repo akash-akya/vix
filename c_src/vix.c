@@ -12,7 +12,7 @@
 #include "vips_operation.h"
 
 static int on_load(ErlNifEnv *env, void **priv, ERL_NIF_TERM load_info) {
-  if (VIPS_INIT("vix")){
+  if (VIPS_INIT("vix")) {
     error("Failed to initialize Vips");
     return 1;
   }
@@ -57,8 +57,10 @@ static ErlNifFunc nif_funcs[] = {
      USE_DIRTY_CPU},
     {"nif_vips_cache_get_max_files", 0, nif_vips_cache_get_max_files,
      USE_DIRTY_CPU},
-    {"nif_vips_cache_set_max_mem", 1, nif_vips_cache_set_max_mem, USE_DIRTY_CPU},
-    {"nif_vips_cache_get_max_mem", 0, nif_vips_cache_get_max_mem, USE_DIRTY_CPU},
+    {"nif_vips_cache_set_max_mem", 1, nif_vips_cache_set_max_mem,
+     USE_DIRTY_CPU},
+    {"nif_vips_cache_get_max_mem", 0, nif_vips_cache_get_max_mem,
+     USE_DIRTY_CPU},
 
     /*  VipsBoxed */
     {"nif_int_array", 1, nif_int_array, USE_DIRTY_CPU},

@@ -5,12 +5,6 @@
 #include "g_boxed.h"
 #include "g_object.h"
 
-static void g_boxed_dtor(ErlNifEnv *env, void *obj) {
-  GBoxedResource *boxed_r = (GBoxedResource *)obj;
-  g_boxed_free(boxed_r->boxed_type, boxed_r->boxed_ptr);
-  debug("GBoxedResource dtor");
-}
-
 bool erl_term_to_g_boxed(ErlNifEnv *env, ERL_NIF_TERM term, gpointer *ptr) {
   GBoxedResource *boxed_r = NULL;
 
@@ -20,6 +14,12 @@ bool erl_term_to_g_boxed(ErlNifEnv *env, ERL_NIF_TERM term, gpointer *ptr) {
   }
 
   return false;
+}
+
+static void g_boxed_dtor(ErlNifEnv *env, void *obj) {
+  GBoxedResource *boxed_r = (GBoxedResource *)obj;
+  g_boxed_free(boxed_r->boxed_type, boxed_r->boxed_ptr);
+  debug("GBoxedResource dtor");
 }
 
 int nif_g_boxed_init(ErlNifEnv *env) {

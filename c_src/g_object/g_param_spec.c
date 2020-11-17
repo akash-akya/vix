@@ -169,28 +169,15 @@ ERL_NIF_TERM g_param_spec_details(ErlNifEnv *env, GParamSpec *pspec) {
   return enif_make_tuple4(env, desc, spec_type, value_type, term);
 }
 
-/******* GParamSpec Resource *******/
 static void g_param_spec_dtor(ErlNifEnv *env, void *obj) {
-  debug("GParamSpec g_param_spec_dtor called");
+  debug("GParamSpecResource dtor");
 }
-
-static void g_param_spec_stop(ErlNifEnv *env, void *obj, int fd,
-                              int is_direct_call) {
-  debug("GParamSpec g_param_spec_stop called %d", fd);
-}
-
-static void g_param_spec_down(ErlNifEnv *env, void *obj, ErlNifPid *pid,
-                              ErlNifMonitor *monitor) {
-  debug("GParamSpec g_param_spec_down called");
-}
-
-static ErlNifResourceTypeInit g_param_spec_rt_init = {
-    g_param_spec_dtor, g_param_spec_stop, g_param_spec_down};
 
 int nif_g_param_spec_init(ErlNifEnv *env) {
-  G_PARAM_SPEC_RT = enif_open_resource_type_x(
-      env, "g_param_spec_resource", &g_param_spec_rt_init,
-      ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER, NULL);
+  G_PARAM_SPEC_RT =
+      enif_open_resource_type(env, NULL, "g_param_spec_resource",
+                              (ErlNifResourceDtor *)g_param_spec_dtor,
+                              ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER, NULL);
 
   if (!G_PARAM_SPEC_RT) {
     error("Failed to open g_param_spec_resource");

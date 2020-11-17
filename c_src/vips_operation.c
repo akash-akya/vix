@@ -93,8 +93,7 @@ static ERL_NIF_TERM get_operation_properties(ErlNifEnv *env,
       g_object_get_property(G_OBJECT(op), names[i], &gvalue);
 
       obj = g_value_get_object(&gvalue);
-      list =
-          enif_make_list_cell(env, g_object_to_erl_term(env, obj), list);
+      list = enif_make_list_cell(env, g_object_to_erl_term(env, obj), list);
       g_value_unset(&gvalue);
     }
   }
@@ -176,15 +175,11 @@ ERL_NIF_TERM nif_vips_operation_call(ErlNifEnv *env, int argc,
 
   op = vips_operation_new(op_name);
 
-  debug("created operation");
-
   result = set_operation_properties(env, op, argv[1]);
   if (enif_is_exception(env, result)) {
     error("failed to set input properties");
     goto exit;
   }
-
-  debug("set operation properties");
 
   VipsOperation *new_op;
   if (!(new_op = vips_cache_operation_build(op))) {
@@ -194,8 +189,6 @@ ERL_NIF_TERM nif_vips_operation_call(ErlNifEnv *env, int argc,
     goto exit;
   }
 
-  debug("ran operation");
-
   g_object_unref(op);
   op = new_op;
 
@@ -204,7 +197,6 @@ ERL_NIF_TERM nif_vips_operation_call(ErlNifEnv *env, int argc,
     error("failed to get output properties");
     goto exit;
   }
-  debug("got operation properties");
 
 exit:
   if (op) {

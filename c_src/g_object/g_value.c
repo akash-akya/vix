@@ -20,7 +20,8 @@ static ERL_NIF_TERM set_enum(ErlNifEnv *env, ERL_NIF_TERM term,
   return ATOM_OK;
 }
 
-static ERL_NIF_TERM set_flags(ErlNifEnv *env, ERL_NIF_TERM term, GValue *gvalue) {
+static ERL_NIF_TERM set_flags(ErlNifEnv *env, ERL_NIF_TERM term,
+                              GValue *gvalue) {
 
   int value;
 
@@ -164,30 +165,28 @@ ERL_NIF_TERM set_g_value_from_erl_term(ErlNifEnv *env, GParamSpec *pspec,
                                        ERL_NIF_TERM term, GValue *gvalue) {
   g_value_init(gvalue, G_PARAM_SPEC_VALUE_TYPE(pspec));
 
-  if (G_IS_PARAM_SPEC_ENUM(pspec)) {
+  if (G_IS_PARAM_SPEC_ENUM(pspec))
     return set_enum(env, term, gvalue);
-  } else if (G_IS_PARAM_SPEC_BOOLEAN(pspec)) {
+  else if (G_IS_PARAM_SPEC_BOOLEAN(pspec))
     return set_boolean(env, term, gvalue);
-  } else if (G_IS_PARAM_SPEC_UINT64(pspec)) {
+  else if (G_IS_PARAM_SPEC_UINT64(pspec))
     return set_uint64(env, term, gvalue);
-  } else if (G_IS_PARAM_SPEC_DOUBLE(pspec)) {
+  else if (G_IS_PARAM_SPEC_DOUBLE(pspec))
     return set_double(env, term, gvalue);
-  } else if (G_IS_PARAM_SPEC_INT(pspec)) {
+  else if (G_IS_PARAM_SPEC_INT(pspec))
     return set_int(env, term, gvalue);
-  } else if (G_IS_PARAM_SPEC_UINT(pspec)) {
+  else if (G_IS_PARAM_SPEC_UINT(pspec))
     return set_uint(env, term, gvalue);
-  } else if (G_IS_PARAM_SPEC_INT64(pspec)) {
+  else if (G_IS_PARAM_SPEC_INT64(pspec))
     return set_int64(env, term, gvalue);
-  } else if (G_IS_PARAM_SPEC_STRING(pspec)) {
+  else if (G_IS_PARAM_SPEC_STRING(pspec))
     return set_string(env, term, gvalue);
-  } else if (G_IS_PARAM_SPEC_BOXED(pspec)) {
+  else if (G_IS_PARAM_SPEC_BOXED(pspec))
     return set_boxed(env, term, gvalue);
-  } else if (G_IS_PARAM_SPEC_OBJECT(pspec)) {
+  else if (G_IS_PARAM_SPEC_OBJECT(pspec))
     return set_g_object(env, term, gvalue);
-  } else if (G_IS_PARAM_SPEC_FLAGS(pspec)) {
+  else if (G_IS_PARAM_SPEC_FLAGS(pspec))
     return set_flags(env, term, gvalue);
-  } else {
-    error("Unknown pspec");
+  else
     return raise_exception(env, "Unknown pspec");
-  }
 }
