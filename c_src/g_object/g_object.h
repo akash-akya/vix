@@ -13,6 +13,9 @@ typedef struct GObjectResource {
 
 ERL_NIF_TERM g_object_to_erl_term(ErlNifEnv *env, GObject *obj);
 
+ERL_NIF_TERM nif_g_object_type_name(ErlNifEnv *env, int argc,
+                                    const ERL_NIF_TERM argv[]);
+
 bool erl_term_to_g_object(ErlNifEnv *env, ERL_NIF_TERM term, GObject **obj);
 
 int nif_g_object_init(ErlNifEnv *env);

@@ -16,6 +16,17 @@ bool erl_term_to_g_boxed(ErlNifEnv *env, ERL_NIF_TERM term, gpointer *ptr) {
   return false;
 }
 
+bool erl_term_boxed_type(ErlNifEnv *env, ERL_NIF_TERM term, GType *type) {
+  GBoxedResource *boxed_r = NULL;
+
+  if (enif_get_resource(env, term, G_BOXED_RT, (void **)&boxed_r)) {
+    (*type) = boxed_r->boxed_type;
+    return true;
+  }
+
+  return false;
+}
+
 static void g_boxed_dtor(ErlNifEnv *env, void *obj) {
   GBoxedResource *boxed_r = (GBoxedResource *)obj;
   g_boxed_free(boxed_r->boxed_type, boxed_r->boxed_ptr);

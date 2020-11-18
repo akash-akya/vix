@@ -16,6 +16,18 @@ ERL_NIF_TERM g_object_to_erl_term(ErlNifEnv *env, GObject *obj) {
   return term;
 }
 
+ERL_NIF_TERM nif_g_object_type_name(ErlNifEnv *env, int argc,
+                                    const ERL_NIF_TERM argv[]) {
+  assert_argc(argc, 1);
+
+  GObject *obj;
+
+  if (!erl_term_to_g_object(env, argv[0], &obj))
+    return make_error(env, "Failed to get GObject");
+
+  return enif_make_string(env, G_OBJECT_TYPE_NAME(obj), ERL_NIF_LATIN1);
+}
+
 bool erl_term_to_g_object(ErlNifEnv *env, ERL_NIF_TERM term, GObject **obj) {
   GObjectResource *gobject_r = NULL;
   if (enif_get_resource(env, term, G_OBJECT_RT, (void **)&gobject_r)) {
