@@ -1,0 +1,40 @@
+name: Elixir
+on: push
+env:
+  VERSION_VIPS: 8.10.2
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    name: Linux OTP ${{matrix.otp}} / Elixir ${{matrix.elixir}}
+    strategy:
+      matrix:
+        otp: [22.2]
+        elixir: [1.9.4]
+    steps:
+      - uses: actions/setup-elixir@v1
+        with:
+          otp-version: ${{matrix.otp}}
+          elixir-version: ${{matrix.elixir}}
+      - name: Install libvips deps
+        run: sudo apt-get install git build-essential libxml2-dev libfftw3-dev libmagickwand-dev libopenexr-dev liborc-0.4-0 gobject-introspection libgsf-1-dev libglib2.0-dev liborc-0.4-dev curl
+      - name: Download libvips
+        run: |
+          mkdir vips
+          curl -L https://github.com/libvips/libvips/releases/download/v${{ env.VERSION_VIPS }}/vips-${{ env.VERSION_VIPS }}.tar.gz | tar xzC vips --strip-components=1
+          cd vips
+          ./configure
+          make
+          sudo make install
+          cd ../
+          rm -rf vips
+          sudo ldconfig -v
+      - name: Checkout vix
+        uses: actions/checkout@v2
+      - name: Install Dependencies
+        run: mix deps.get
+      - name: Compile
+        run: mix compile --force --warnings-as-errors
+      - name: Check format
+        run: mix format --check-formatted
+      - name: Run Tests
+        run: mix test
