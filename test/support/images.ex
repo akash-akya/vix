@@ -10,8 +10,4 @@ defmodule Vix.Support.Images do
   def img_path(name) do
     Path.join(@images_path, name)
   end
-
-  defp expected(action, name) do
-    Path.join(@images_path, "#{action}_#{name}")
-  end
 end
