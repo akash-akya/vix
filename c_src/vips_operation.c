@@ -534,15 +534,16 @@ ERL_NIF_TERM nif_vips_cache_get_max_mem(ErlNifEnv *env, int argc,
   return make_ok(env, enif_make_uint64(env, vips_cache_get_max_mem()));
 }
 
-static bool load_operation(GType type) {
+static void *load_operation(GType type, void *a) {
   const char **names;
   gpointer g_class;
   VipsObjectClass *class;
   VipsOperation *op;
-  bool err = true;
-
-  int n_args = 0;
   int *flags;
+  bool *err;
+  int n_args = 0;
+
+  err = (bool *)a;
 
   g_class = g_type_class_ref(type);
   class = VIPS_OBJECT_CLASS(g_class);
@@ -555,14 +556,14 @@ static bool load_operation(GType type) {
 
   op = vips_operation_new(vips_nickname_find(type));
 
-  if (op == NULL)
+  if (op == NULL) {
     goto unref_class_exit;
+  }
 
   if (get_vips_operation_args(op, &names, &flags, &n_args) != 0) {
     error("failed to get VipsObject arguments. error: %s", vips_error_buffer());
     vips_error_clear();
-  } else {
-    err = false;
+    *err = true;
   }
 
   vips_object_unref_outputs(VIPS_OBJECT(op));
@@ -571,24 +572,16 @@ static bool load_operation(GType type) {
 unref_class_exit:
   g_type_class_unref(g_class);
 
-  return err;
+  if (*err)
+    return err;
+  else
+    return (NULL);
 }
 
 static int load_vips_types(ErlNifEnv *env) {
-  bool err;
-  guint count;
-  GType *types;
-
-  types = g_type_children(VIPS_TYPE_OPERATION, &count);
-
-  for (guint i = 0; i < count; i++) {
-    err = load_operation(types[i]);
-    if (!err)
-      break;
-  }
-
-  g_free(types);
-  return err ? 1 : 0;
+  bool error = false;
+  vips_type_map_all(VIPS_TYPE_OPERATION, load_operation, &error);
+  return error ? 1 : 0;
 }
 
 int nif_vips_operation_init(ErlNifEnv *env) {
