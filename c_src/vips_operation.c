@@ -25,6 +25,56 @@ typedef struct GTypeList {
   unsigned int count;
 } GTypeList;
 
+typedef struct _VipsNameFlagsPair {
+  const char **names;
+  int *flags;
+} VipsNameFlagsPair;
+
+static void *vips_object_find_args(VipsObject *object, GParamSpec *pspec,
+                                   VipsArgumentClass *argument_class,
+                                   VipsArgumentInstance *argument_instance,
+                                   void *a, void *b) {
+  VipsNameFlagsPair *pair = (VipsNameFlagsPair *)a;
+  int *i = (int *)b;
+
+  pair->names[*i] = g_param_spec_get_name(pspec);
+  pair->flags[*i] = (int)argument_class->flags;
+
+  *i += 1;
+
+  return (NULL);
+}
+
+static int get_vips_operation_args(VipsOperation *op, const char ***names,
+                                   int **flags, int *n_args) {
+  VipsObject *object;
+  VipsObjectClass *object_class;
+  VipsNameFlagsPair pair;
+  int n, i;
+
+  object = VIPS_OBJECT(op);
+
+  object_class = VIPS_OBJECT_GET_CLASS(object);
+  n = g_slist_length(object_class->argument_table_traverse);
+
+  pair.names = VIPS_ARRAY(object, n, const char *);
+  pair.flags = VIPS_ARRAY(object, n, int);
+  if (!pair.names || !pair.flags)
+    return (-1);
+
+  i = 0;
+  (void)vips_argument_map(object, vips_object_find_args, &pair, &i);
+
+  if (names)
+    *names = pair.names;
+  if (flags)
+    *flags = pair.flags;
+  if (n_args)
+    *n_args = n;
+
+  return (0);
+}
+
 static ERL_NIF_TERM vips_argument_flags_to_erl_terms(ErlNifEnv *env,
                                                      int flags) {
   ERL_NIF_TERM list;
@@ -68,7 +118,7 @@ static ERL_NIF_TERM get_operation_properties(ErlNifEnv *env,
   int *flags;
   int n_args = 0;
 
-  if (vips_object_get_args(VIPS_OBJECT(op), &names, &flags, &n_args)) {
+  if (get_vips_operation_args(op, &names, &flags, &n_args)) {
     error("failed to get args. error: %s", vips_error_buffer());
     vips_error_clear();
     return enif_make_badarg(env);
@@ -226,7 +276,7 @@ ERL_NIF_TERM nif_vips_operation_get_arguments(ErlNifEnv *env, int argc,
 
   op = vips_operation_new(op_name);
 
-  if (vips_object_get_args(VIPS_OBJECT(op), &names, &flags, &n_args) != 0) {
+  if (get_vips_operation_args(op, &names, &flags, &n_args) != 0) {
     error("failed to get VipsObject arguments. error: %s", vips_error_buffer());
     vips_error_clear();
     return raise_exception(env, "failed to get VipsObject arguments");
@@ -508,7 +558,7 @@ static bool load_operation(GType type) {
   if (op == NULL)
     goto unref_class_exit;
 
-  if (vips_object_get_args(VIPS_OBJECT(op), &names, &flags, &n_args) != 0) {
+  if (get_vips_operation_args(op, &names, &flags, &n_args) != 0) {
     error("failed to get VipsObject arguments. error: %s", vips_error_buffer());
     vips_error_clear();
   } else {
