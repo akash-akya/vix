@@ -5,12 +5,13 @@
 #include "g_object.h"
 
 ERL_NIF_TERM g_object_to_erl_term(ErlNifEnv *env, GObject *obj) {
-  GObjectResource *gobject_r =
-      enif_alloc_resource(G_OBJECT_RT, sizeof(GObjectResource));
+  ERL_NIF_TERM term;
+  GObjectResource *gobject_r;
 
+  gobject_r = enif_alloc_resource(G_OBJECT_RT, sizeof(GObjectResource));
   gobject_r->obj = g_object_ref(obj);
 
-  ERL_NIF_TERM term = enif_make_resource(env, gobject_r);
+  term = enif_make_resource(env, gobject_r);
   enif_release_resource(gobject_r);
 
   return term;

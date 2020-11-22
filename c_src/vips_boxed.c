@@ -88,25 +88,29 @@ ERL_NIF_TERM nif_int_array(ErlNifEnv *env, int argc,
 
   assert_argc(argc, 1);
 
-  GBoxedResource *boxed_r =
-      enif_alloc_resource(G_BOXED_RT, sizeof(GBoxedResource));
-
+  GBoxedResource *boxed_r;
   unsigned int len;
+  int *array;
+  VipsArrayInt *vips_array;
+  ERL_NIF_TERM term;
+
   if (!enif_get_list_length(env, argv[0], &len)) {
     error("Failed to get list length");
     return enif_make_badarg(env);
   }
 
-  int array[len];
-  VipsArrayInt *vips_array =
-      erl_list_to_vips_int_array(env, argv[0], len, array);
+  array = g_new(int, len);
+
+  boxed_r = enif_alloc_resource(G_BOXED_RT, sizeof(GBoxedResource));
+  vips_array = erl_list_to_vips_int_array(env, argv[0], len, array);
 
   boxed_r->boxed_type = VIPS_TYPE_ARRAY_INT;
   boxed_r->boxed_ptr = vips_array;
 
-  ERL_NIF_TERM term = enif_make_resource(env, boxed_r);
+  term = enif_make_resource(env, boxed_r);
   enif_release_resource(boxed_r);
 
+  g_free(array);
   return term;
 }
 
@@ -114,25 +118,29 @@ ERL_NIF_TERM nif_double_array(ErlNifEnv *env, int argc,
                               const ERL_NIF_TERM argv[]) {
   assert_argc(argc, 1);
 
-  GBoxedResource *boxed_r =
-      enif_alloc_resource(G_BOXED_RT, sizeof(GBoxedResource));
-
+  GBoxedResource *boxed_r;
   unsigned int len;
+  double *array;
+  VipsArrayDouble *vips_array;
+  ERL_NIF_TERM term;
+
   if (!enif_get_list_length(env, argv[0], &len)) {
     error("Failed to get list length");
     return enif_make_badarg(env);
   }
 
-  double array[len];
-  VipsArrayDouble *vips_array =
-      erl_list_to_vips_double_array(env, argv[0], len, array);
+  array = g_new(double, len);
+
+  boxed_r = enif_alloc_resource(G_BOXED_RT, sizeof(GBoxedResource));
+  vips_array = erl_list_to_vips_double_array(env, argv[0], len, array);
 
   boxed_r->boxed_type = VIPS_TYPE_ARRAY_DOUBLE;
   boxed_r->boxed_ptr = vips_array;
 
-  ERL_NIF_TERM term = enif_make_resource(env, boxed_r);
+  term = enif_make_resource(env, boxed_r);
   enif_release_resource(boxed_r);
 
+  g_free(array);
   return term;
 }
 
@@ -140,24 +148,28 @@ ERL_NIF_TERM nif_image_array(ErlNifEnv *env, int argc,
                              const ERL_NIF_TERM argv[]) {
   assert_argc(argc, 1);
 
-  GBoxedResource *boxed_r =
-      enif_alloc_resource(G_BOXED_RT, sizeof(GBoxedResource));
-
+  GBoxedResource *boxed_r;
   unsigned int len;
+  VipsImage **array;
+  VipsArrayImage *vips_array;
+  ERL_NIF_TERM term;
+
   if (!enif_get_list_length(env, argv[0], &len)) {
     error("Failed to get list length");
     return enif_make_badarg(env);
   }
 
-  VipsImage *array[len];
-  VipsArrayImage *vips_array =
-      erl_list_to_vips_image_array(env, argv[0], len, array);
+  array = g_new(VipsImage *, len);
+
+  boxed_r = enif_alloc_resource(G_BOXED_RT, sizeof(GBoxedResource));
+  vips_array = erl_list_to_vips_image_array(env, argv[0], len, array);
 
   boxed_r->boxed_type = VIPS_TYPE_ARRAY_IMAGE;
   boxed_r->boxed_ptr = vips_array;
 
-  ERL_NIF_TERM term = enif_make_resource(env, boxed_r);
+  term = enif_make_resource(env, boxed_r);
   enif_release_resource(boxed_r);
 
+  g_free(array);
   return term;
 }

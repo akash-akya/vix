@@ -21,7 +21,7 @@ static ERL_NIF_TERM ATOM_VIPS_ARGUMENT_DEPRECATED;
 static ERL_NIF_TERM ATOM_VIPS_ARGUMENT_MODIFY;
 
 typedef struct GTypeList {
-  GType *gtype;
+  GType *types;
   unsigned int count;
 } GTypeList;
 
@@ -153,17 +153,10 @@ static ERL_NIF_TERM get_operation_properties(ErlNifEnv *env,
 
 static ERL_NIF_TERM set_operation_properties(ErlNifEnv *env, VipsOperation *op,
                                              ERL_NIF_TERM list) {
-  unsigned int length = 0;
-
-  if (!enif_get_list_length(env, list, &length)) {
-    error("Failed to get list length");
-    return enif_make_badarg(env);
-  }
-
-  ERL_NIF_TERM head;
+  guint length = 0;
+  ERL_NIF_TERM head, res;
   const ERL_NIF_TERM *tup;
   int count;
-
   char name[1024];
   GParamSpec *pspec;
   VipsArgumentClass *arg_class;
@@ -171,7 +164,12 @@ static ERL_NIF_TERM set_operation_properties(ErlNifEnv *env, VipsOperation *op,
 
   GValue gvalue = {0};
 
-  for (unsigned int i = 0; i < length; i++) {
+  if (!enif_get_list_length(env, list, &length)) {
+    error("Failed to get list length");
+    return enif_make_badarg(env);
+  }
+
+  for (guint i = 0; i < length; i++) {
     if (!enif_get_list_cell(env, list, &head, &list)) {
       error("Failed to get list");
       return enif_make_badarg(env);
@@ -198,7 +196,7 @@ static ERL_NIF_TERM set_operation_properties(ErlNifEnv *env, VipsOperation *op,
       return raise_exception(env, "failed to get argument");
     }
 
-    ERL_NIF_TERM res = set_g_value_from_erl_term(env, pspec, tup[1], &gvalue);
+    res = set_g_value_from_erl_term(env, pspec, tup[1], &gvalue);
     if (enif_is_exception(env, res))
       return res;
 
@@ -213,10 +211,11 @@ ERL_NIF_TERM nif_vips_operation_call(ErlNifEnv *env, int argc,
                                      const ERL_NIF_TERM argv[]) {
   ERL_NIF_TERM result;
   VipsOperation *op = NULL;
+  VipsOperation *new_op;
 
   assert_argc(argc, 2);
 
-  char op_name[200] = {'\0'};
+  char op_name[200] = {0};
   if (enif_get_string(env, argv[0], op_name, 200, ERL_NIF_LATIN1) < 1) {
     error("operation name must be a valid string");
     result = enif_make_badarg(env);
@@ -231,7 +230,6 @@ ERL_NIF_TERM nif_vips_operation_call(ErlNifEnv *env, int argc,
     goto exit;
   }
 
-  VipsOperation *new_op;
   if (!(new_op = vips_cache_operation_build(op))) {
     error("failed to build operation, error: %s", vips_error_buffer());
     vips_error_clear();
@@ -266,7 +264,7 @@ ERL_NIF_TERM nif_vips_operation_get_arguments(ErlNifEnv *env, int argc,
   const char **names;
   int *flags;
   int n_args = 0;
-  ERL_NIF_TERM list, erl_flags, name, priority, tup, description;
+  ERL_NIF_TERM list, erl_flags, name, priority, tup, description, result;
   GParamSpec *pspec;
   VipsArgumentClass *arg_class;
   VipsArgumentInstance *arg_instance;
@@ -279,7 +277,8 @@ ERL_NIF_TERM nif_vips_operation_get_arguments(ErlNifEnv *env, int argc,
   if (get_vips_operation_args(op, &names, &flags, &n_args) != 0) {
     error("failed to get VipsObject arguments. error: %s", vips_error_buffer());
     vips_error_clear();
-    return raise_exception(env, "failed to get VipsObject arguments");
+    result = raise_exception(env, "failed to get VipsObject arguments");
+    goto exit;
   }
 
   description = enif_make_string(
@@ -296,7 +295,8 @@ ERL_NIF_TERM nif_vips_operation_get_arguments(ErlNifEnv *env, int argc,
       error("failed to get VipsObject argument. error: %s",
             vips_error_buffer());
       vips_error_clear();
-      return raise_exception(env, "failed to get VipsObject argument");
+      result = raise_exception(env, "failed to get VipsObject argument");
+      goto exit;
     }
 
     priority = enif_make_int(env, arg_class->priority);
@@ -305,36 +305,38 @@ ERL_NIF_TERM nif_vips_operation_get_arguments(ErlNifEnv *env, int argc,
     list = enif_make_list_cell(env, tup, list);
   }
 
+  result = enif_make_tuple2(env, description, list);
+
+exit:
   vips_object_unref_outputs(VIPS_OBJECT(op));
   g_object_unref(op);
-
-  return enif_make_tuple2(env, description, list);
+  return result;
 }
 
-static void *list_class(GType type, void *user_data) {
+static void *collect_operation_types(GType type, void *user_data) {
   gpointer g_class;
   VipsObjectClass *class;
+  GTypeList *type_list;
 
   g_class = g_type_class_ref(type);
   class = VIPS_OBJECT_CLASS(g_class);
 
   if (class->deprecated)
-    return (NULL);
+    goto skip;
   if (VIPS_IS_OPERATION_CLASS(class) &&
       (VIPS_OPERATION_CLASS(class)->flags & VIPS_OPERATION_DEPRECATED))
-    return (NULL);
+    goto skip;
   if (G_TYPE_IS_ABSTRACT(type))
-    return (NULL);
+    goto skip;
   if (G_TYPE_CHECK_CLASS_TYPE(class, VIPS_TYPE_FOREIGN))
-    return (NULL);
+    goto skip;
 
-  GTypeList *list = (GTypeList *)user_data;
+  type_list = (GTypeList *)user_data;
+  type_list->types[type_list->count] = type;
+  type_list->count = type_list->count + 1;
 
-  list->gtype[list->count] = type;
-  list->count = list->count + 1;
-
+skip:
   g_type_class_unref(g_class);
-
   return (NULL);
 }
 
@@ -343,31 +345,25 @@ ERL_NIF_TERM nif_vips_operation_list(ErlNifEnv *env, int argc,
 
   assert_argc(argc, 0);
 
-  GType _gtype[1024], gtype;
-  GTypeList list;
-  ERL_NIF_TERM erl_term, name;
-  gpointer g_class;
+  GType type;
+  GTypeList type_list;
+  ERL_NIF_TERM list, name;
 
-  list.gtype = (GType *)&_gtype;
-  list.count = 0;
+  type_list.types = g_new(GType, 1024);
+  type_list.count = 0;
 
-  vips_type_map_all(VIPS_TYPE_OPERATION, list_class, &list);
+  vips_type_map_all(VIPS_TYPE_OPERATION, collect_operation_types, &type_list);
 
-  erl_term = enif_make_list(env, 0);
+  list = enif_make_list(env, 0);
 
-  for (unsigned int i = 0; i < list.count; i++) {
-    gtype = list.gtype[i];
-    g_class = g_type_class_ref(gtype);
-
-    name = enif_make_string(env, vips_nickname_find(list.gtype[i]),
-                            ERL_NIF_LATIN1);
-
-    erl_term = enif_make_list_cell(env, name, erl_term);
-
-    g_type_class_unref(g_class);
+  for (guint i = 0; i < type_list.count; i++) {
+    type = type_list.types[i];
+    name = enif_make_string(env, vips_nickname_find(type), ERL_NIF_LATIN1);
+    list = enif_make_list_cell(env, name, list);
   }
 
-  return erl_term;
+  g_free(type_list.types);
+  return list;
 }
 
 ERL_NIF_TERM nif_vips_enum_list(ErlNifEnv *env, int argc,
@@ -375,7 +371,7 @@ ERL_NIF_TERM nif_vips_enum_list(ErlNifEnv *env, int argc,
 
   assert_argc(argc, 0);
 
-  GType gtype;
+  GType type;
   GType *types;
   gpointer g_class;
   GEnumClass *enum_class;
@@ -386,14 +382,14 @@ ERL_NIF_TERM nif_vips_enum_list(ErlNifEnv *env, int argc,
   enums = enif_make_list(env, 0);
 
   for (guint i = 0; i < count; i++) {
-    gtype = types[i];
+    type = types[i];
 
-    g_class = g_type_class_ref(gtype);
+    g_class = g_type_class_ref(type);
     enum_class = G_ENUM_CLASS(g_class);
 
     enum_values = enif_make_list(env, 0);
 
-    for (unsigned int j = 0; j < enum_class->n_values - 1; j++) {
+    for (guint j = 0; j < enum_class->n_values - 1; j++) {
       enum_str = make_atom(env, enum_class->values[j].value_name);
       enum_int = enif_make_int(env, enum_class->values[j].value);
 
@@ -401,7 +397,7 @@ ERL_NIF_TERM nif_vips_enum_list(ErlNifEnv *env, int argc,
       enum_values = enif_make_list_cell(env, tuple, enum_values);
     }
 
-    name = enif_make_string(env, g_type_name(gtype), ERL_NIF_LATIN1);
+    name = enif_make_string(env, g_type_name(type), ERL_NIF_LATIN1);
     enums = enif_make_list_cell(env, enif_make_tuple2(env, name, enum_values),
                                 enums);
 
@@ -417,7 +413,7 @@ ERL_NIF_TERM nif_vips_flag_list(ErlNifEnv *env, int argc,
 
   assert_argc(argc, 0);
 
-  GType gtype;
+  GType type;
   GType *types;
   gpointer g_class;
   GFlagsClass *flag_class;
@@ -428,14 +424,14 @@ ERL_NIF_TERM nif_vips_flag_list(ErlNifEnv *env, int argc,
   flags = enif_make_list(env, 0);
 
   for (guint i = 0; i < count; i++) {
-    gtype = types[i];
+    type = types[i];
 
-    g_class = g_type_class_ref(gtype);
+    g_class = g_type_class_ref(type);
     flag_class = G_FLAGS_CLASS(g_class);
 
     flag_values = enif_make_list(env, 0);
 
-    for (unsigned int j = 0; j < flag_class->n_values - 1; j++) {
+    for (guint j = 0; j < flag_class->n_values - 1; j++) {
       flag_str = make_atom(env, flag_class->values[j].value_name);
       flag_int = enif_make_int(env, flag_class->values[j].value);
 
@@ -443,7 +439,7 @@ ERL_NIF_TERM nif_vips_flag_list(ErlNifEnv *env, int argc,
       flag_values = enif_make_list_cell(env, tuple, flag_values);
     }
 
-    name = enif_make_string(env, g_type_name(gtype), ERL_NIF_LATIN1);
+    name = enif_make_string(env, g_type_name(type), ERL_NIF_LATIN1);
     flags = enif_make_list_cell(env, enif_make_tuple2(env, name, flag_values),
                                 flags);
 
@@ -552,6 +548,10 @@ static void *load_operation(GType type, void *a) {
     goto unref_class_exit;
   if (VIPS_IS_OPERATION_CLASS(class) &&
       (VIPS_OPERATION_CLASS(class)->flags & VIPS_OPERATION_DEPRECATED))
+    goto unref_class_exit;
+  if (G_TYPE_IS_ABSTRACT(type))
+    goto unref_class_exit;
+  if (G_TYPE_CHECK_CLASS_TYPE(class, VIPS_TYPE_FOREIGN))
     goto unref_class_exit;
 
   op = vips_operation_new(vips_nickname_find(type));

@@ -7,12 +7,13 @@
 #include "g_type.h"
 
 static ERL_NIF_TERM g_type_to_erl_term(ErlNifEnv *env, GType type) {
-  GTypeResource *gtype_r =
-      enif_alloc_resource(G_TYPE_RT, sizeof(GTypeResource));
+  GTypeResource *gtype_r;
+  ERL_NIF_TERM term;
 
+  gtype_r = enif_alloc_resource(G_TYPE_RT, sizeof(GTypeResource));
   gtype_r->type = type;
 
-  ERL_NIF_TERM term = enif_make_resource(env, gtype_r);
+  term = enif_make_resource(env, gtype_r);
   enif_release_resource(gtype_r);
 
   return term;
