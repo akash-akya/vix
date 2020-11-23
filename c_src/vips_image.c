@@ -83,3 +83,75 @@ ERL_NIF_TERM nif_image_new_temp_file(ErlNifEnv *env, int argc,
 
   return make_ok(env, g_object_to_erl_term(env, (GObject *)image));
 }
+
+ERL_NIF_TERM nif_image_new_matrix_from_array(ErlNifEnv *env, int argc,
+                                             const ERL_NIF_TERM argv[]) {
+  assert_argc(argc, 5);
+
+  VipsImage *image;
+  int width, height;
+  double scale, offset;
+  double *array;
+  ERL_NIF_TERM list, head, ret;
+  guint size;
+
+  if (!enif_get_int(env, argv[0], &width)) {
+    error("failed to get width");
+    return enif_make_badarg(env);
+  }
+
+  if (!enif_get_int(env, argv[1], &height)) {
+    error("failed to get height");
+    return enif_make_badarg(env);
+  }
+
+  list = argv[2];
+
+  if (!enif_get_list_length(env, list, &size)) {
+    error("Failed to get list length");
+    return enif_make_badarg(env);
+  }
+
+  if (!enif_get_double(env, argv[3], &scale)) {
+    error("Failed to get scale");
+    return enif_make_badarg(env);
+  }
+
+  if (!enif_get_double(env, argv[4], &offset)) {
+    error("Failed to get offset");
+    return enif_make_badarg(env);
+  }
+
+  array = g_new(double, size);
+
+  for (guint i = 0; i < size; i++) {
+    if (!enif_get_list_cell(env, list, &head, &list)) {
+      ret = make_error(env, "Failed to get list entry");
+      goto exit;
+    }
+
+    if (!enif_get_double(env, head, &array[i])) {
+      ret = make_error(env, "Failed to get double");
+      goto exit;
+    }
+  }
+
+  image = vips_image_new_matrix_from_array(width, height, array, size);
+
+  if (!image) {
+    error("Failed to read image. error: %s", vips_error_buffer());
+    vips_error_clear();
+    ret = make_error(env, "Failed create matrix from array");
+    goto exit;
+  }
+
+  vips_image_set_double(image, "scale", scale);
+
+  vips_image_set_double(image, "offset", offset);
+
+  ret = make_ok(env, g_object_to_erl_term(env, (GObject *)image));
+
+exit:
+  g_free(array);
+  return ret;
+}

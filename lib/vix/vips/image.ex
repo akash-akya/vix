@@ -89,7 +89,38 @@ defmodule Vix.Vips.Image do
     Nif.nif_image_new_temp_file(normalize_string(format))
   end
 
+  @doc """
+  Make a VipsImage from list.
+
+  ```elixir
+  mask = Image.new_matrix_from_array(3, 3, [[0, 1, 0], [1, 1, 1], [0, 1, 0]])
+  ```
+
+  ## Optional
+  * scale - Default: 1
+  * offset - Default: 0
+  """
+  @spec new_matrix_from_array(integer, integer, list(list), keyword()) :: :ok | {:error, term()}
+  def new_matrix_from_array(width, height, list, optional \\ []) do
+    scale = to_double(optional[:scale], 1)
+    offset = to_double(optional[:offset], 0)
+
+    Nif.nif_image_new_matrix_from_array(width, height, flatten_list(list), scale, offset)
+  end
+
   defp normalize_string(str) when is_binary(str), do: to_charlist(str)
 
   defp normalize_string(str) when is_list(str), do: str
+
+  defp flatten_list(list) do
+    Enum.flat_map(list, fn p ->
+      Enum.map(p, &to_double/1)
+    end)
+  end
+
+  defp to_double(v) when is_integer(v), do: v * 1.0
+  defp to_double(v) when is_float(v), do: v
+
+  defp to_double(nil, default), do: to_double(default)
+  defp to_double(v, _default), do: to_double(v)
 end

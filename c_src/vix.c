@@ -4,10 +4,10 @@
 
 #include "utils.h"
 
-#include "g_object/g_type.h"
 #include "g_object/g_boxed.h"
 #include "g_object/g_object.h"
 #include "g_object/g_param_spec.h"
+#include "g_object/g_type.h"
 #include "vips_boxed.h"
 #include "vips_image.h"
 #include "vips_operation.h"
@@ -52,6 +52,8 @@ static ErlNifFunc nif_funcs[] = {
     {"nif_image_write_to_file", 2, nif_image_write_to_file, USE_DIRTY_IO},
     {"nif_image_new", 0, nif_image_new, USE_DIRTY_CPU},
     {"nif_image_new_temp_file", 1, nif_image_new_temp_file, USE_DIRTY_IO},
+    {"nif_image_new_matrix_from_array", 5, nif_image_new_matrix_from_array,
+     USE_DIRTY_CPU},
 
     /* VipsOperation */
     {"nif_vips_operation_call", 2, nif_vips_operation_call, USE_DIRTY_IO},

@@ -24,4 +24,9 @@ defmodule Vix.Vips.ImageTest do
     stat = File.stat!(out_path)
     assert stat.size > 0 and stat.type == :regular
   end
+
+  test "new_matrix_from_array", %{dir: _dir} do
+    assert {:ok, mat} =
+             Image.new_matrix_from_array(3, 3, [[-1, -1, -1], [-1, 16, -1], [-1, -1, -1]])
+  end
 end

@@ -27,6 +27,9 @@ defmodule Vix.Nif do
   def nif_image_new_temp_file(_format),
     do: :erlang.nif_error(:nif_library_not_loaded)
 
+  def nif_image_new_matrix_from_array(_height, _width, _list, _scale, _offset),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
   # VipsOperation
   def nif_vips_operation_call(_vips_operation_name, _input),
     do: :erlang.nif_error(:nif_library_not_loaded)
