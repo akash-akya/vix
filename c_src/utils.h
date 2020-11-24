@@ -4,14 +4,6 @@
 #include "erl_nif.h"
 #include <stdbool.h>
 
-#ifdef ERTS_DIRTY_SCHEDULERS
-#define USE_DIRTY_IO ERL_NIF_DIRTY_JOB_IO_BOUND
-#define USE_DIRTY_CPU ERL_NIF_DIRTY_JOB_CPU_BOUND
-#else
-#define USE_DIRTY_IO 0
-#define USE_DIRTY_CPU 0
-#endif
-
 /* #define DEBUG */
 
 #ifdef DEBUG

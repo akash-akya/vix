@@ -41,45 +41,46 @@ static int on_load(ErlNifEnv *env, void **priv, ERL_NIF_TERM load_info) {
 
 static ErlNifFunc nif_funcs[] = {
     /* GObject */
-    {"nif_g_object_type_name", 1, nif_g_object_type_name, USE_DIRTY_CPU},
+    {"nif_g_object_type_name", 1, nif_g_object_type_name, 0},
 
     /* GType */
-    {"nif_g_type_from_instance", 1, nif_g_type_from_instance, USE_DIRTY_CPU},
-    {"nif_g_type_name", 1, nif_g_type_name, USE_DIRTY_CPU},
+    {"nif_g_type_from_instance", 1, nif_g_type_from_instance, 0},
+    {"nif_g_type_name", 1, nif_g_type_name, 0},
 
     /* VipsImage */
-    {"nif_image_new_from_file", 1, nif_image_new_from_file, USE_DIRTY_IO},
-    {"nif_image_write_to_file", 2, nif_image_write_to_file, USE_DIRTY_IO},
-    {"nif_image_new", 0, nif_image_new, USE_DIRTY_CPU},
-    {"nif_image_new_temp_file", 1, nif_image_new_temp_file, USE_DIRTY_IO},
-    {"nif_image_new_matrix_from_array", 5, nif_image_new_matrix_from_array,
-     USE_DIRTY_CPU},
+    {"nif_image_new_from_file", 1, nif_image_new_from_file,
+     ERL_NIF_DIRTY_JOB_IO_BOUND},
+    {"nif_image_write_to_file", 2, nif_image_write_to_file,
+     ERL_NIF_DIRTY_JOB_IO_BOUND},
+    {"nif_image_new", 0, nif_image_new, ERL_NIF_DIRTY_JOB_CPU_BOUND},
+    {"nif_image_new_temp_file", 1, nif_image_new_temp_file,
+     ERL_NIF_DIRTY_JOB_IO_BOUND},
+    {"nif_image_new_matrix_from_array", 5, nif_image_new_matrix_from_array, 0},
 
     /* VipsOperation */
-    {"nif_vips_operation_call", 2, nif_vips_operation_call, USE_DIRTY_IO},
+    /* should these be ERL_NIF_DIRTY_JOB_IO_BOUND? */
+    {"nif_vips_operation_call", 2, nif_vips_operation_call,
+     ERL_NIF_DIRTY_JOB_CPU_BOUND},
     {"nif_vips_operation_get_arguments", 1, nif_vips_operation_get_arguments,
-     USE_DIRTY_IO},
-    {"nif_vips_operation_list", 0, nif_vips_operation_list, USE_DIRTY_IO},
-    {"nif_vips_enum_list", 0, nif_vips_enum_list, USE_DIRTY_IO},
-    {"nif_vips_flag_list", 0, nif_vips_flag_list, USE_DIRTY_IO},
+     ERL_NIF_DIRTY_JOB_CPU_BOUND},
+    {"nif_vips_operation_list", 0, nif_vips_operation_list,
+     ERL_NIF_DIRTY_JOB_CPU_BOUND},
+    {"nif_vips_enum_list", 0, nif_vips_enum_list, ERL_NIF_DIRTY_JOB_CPU_BOUND},
+    {"nif_vips_flag_list", 0, nif_vips_flag_list, ERL_NIF_DIRTY_JOB_CPU_BOUND},
 
-    /* Vips Configuration */
-    {"nif_vips_cache_set_max", 1, nif_vips_cache_set_max, USE_DIRTY_CPU},
-    {"nif_vips_cache_get_max", 0, nif_vips_cache_get_max, USE_DIRTY_CPU},
-    {"nif_vips_concurrency_set", 1, nif_vips_concurrency_set, USE_DIRTY_CPU},
-    {"nif_vips_concurrency_get", 0, nif_vips_concurrency_get, USE_DIRTY_CPU},
-    {"nif_vips_cache_set_max_files", 1, nif_vips_cache_set_max_files,
-     USE_DIRTY_CPU},
-    {"nif_vips_cache_get_max_files", 0, nif_vips_cache_get_max_files,
-     USE_DIRTY_CPU},
-    {"nif_vips_cache_set_max_mem", 1, nif_vips_cache_set_max_mem,
-     USE_DIRTY_CPU},
-    {"nif_vips_cache_get_max_mem", 0, nif_vips_cache_get_max_mem,
-     USE_DIRTY_CPU},
+    /* Vips */
+    {"nif_vips_cache_set_max", 1, nif_vips_cache_set_max, 0},
+    {"nif_vips_cache_get_max", 0, nif_vips_cache_get_max, 0},
+    {"nif_vips_concurrency_set", 1, nif_vips_concurrency_set, 0},
+    {"nif_vips_concurrency_get", 0, nif_vips_concurrency_get, 0},
+    {"nif_vips_cache_set_max_files", 1, nif_vips_cache_set_max_files, 0},
+    {"nif_vips_cache_get_max_files", 0, nif_vips_cache_get_max_files, 0},
+    {"nif_vips_cache_set_max_mem", 1, nif_vips_cache_set_max_mem, 0},
+    {"nif_vips_cache_get_max_mem", 0, nif_vips_cache_get_max_mem, 0},
 
     /* VipsBoxed */
-    {"nif_int_array", 1, nif_int_array, USE_DIRTY_CPU},
-    {"nif_image_array", 1, nif_image_array, USE_DIRTY_CPU},
-    {"nif_double_array", 1, nif_double_array, USE_DIRTY_CPU}};
+    {"nif_int_array", 1, nif_int_array, 0},
+    {"nif_image_array", 1, nif_image_array, 0},
+    {"nif_double_array", 1, nif_double_array, 0}};
 
 ERL_NIF_INIT(Elixir.Vix.Nif, nif_funcs, &on_load, NULL, NULL, NULL)
