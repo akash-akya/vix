@@ -7,7 +7,7 @@
 
 ErlNifResourceType *G_OBJECT_RT;
 
-typedef struct GObjectResource {
+typedef struct _GObjectResource {
   GObject *obj;
 } GObjectResource;
 

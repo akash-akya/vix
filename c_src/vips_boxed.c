@@ -92,11 +92,15 @@ ERL_NIF_TERM nif_int_array(ErlNifEnv *env, int argc,
   unsigned int len;
   int *array;
   VipsArrayInt *vips_array;
-  ERL_NIF_TERM term;
+  ERL_NIF_TERM ret;
+  ErlNifTime start;
+
+  start = enif_monotonic_time(ERL_NIF_USEC);
 
   if (!enif_get_list_length(env, argv[0], &len)) {
     error("Failed to get list length");
-    return enif_make_badarg(env);
+    ret = enif_make_badarg(env);
+    goto exit;
   }
 
   array = g_new(int, len);
@@ -107,11 +111,14 @@ ERL_NIF_TERM nif_int_array(ErlNifEnv *env, int argc,
   boxed_r->boxed_type = VIPS_TYPE_ARRAY_INT;
   boxed_r->boxed_ptr = vips_array;
 
-  term = enif_make_resource(env, boxed_r);
+  ret = enif_make_resource(env, boxed_r);
   enif_release_resource(boxed_r);
 
   g_free(array);
-  return term;
+
+exit:
+  notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
+  return ret;
 }
 
 ERL_NIF_TERM nif_double_array(ErlNifEnv *env, int argc,
@@ -122,11 +129,15 @@ ERL_NIF_TERM nif_double_array(ErlNifEnv *env, int argc,
   unsigned int len;
   double *array;
   VipsArrayDouble *vips_array;
-  ERL_NIF_TERM term;
+  ERL_NIF_TERM ret;
+  ErlNifTime start;
+
+  start = enif_monotonic_time(ERL_NIF_USEC);
 
   if (!enif_get_list_length(env, argv[0], &len)) {
     error("Failed to get list length");
-    return enif_make_badarg(env);
+    ret = enif_make_badarg(env);
+    goto exit;
   }
 
   array = g_new(double, len);
@@ -137,11 +148,14 @@ ERL_NIF_TERM nif_double_array(ErlNifEnv *env, int argc,
   boxed_r->boxed_type = VIPS_TYPE_ARRAY_DOUBLE;
   boxed_r->boxed_ptr = vips_array;
 
-  term = enif_make_resource(env, boxed_r);
+  ret = enif_make_resource(env, boxed_r);
   enif_release_resource(boxed_r);
 
   g_free(array);
-  return term;
+
+exit:
+  notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
+  return ret;
 }
 
 ERL_NIF_TERM nif_image_array(ErlNifEnv *env, int argc,
@@ -152,11 +166,15 @@ ERL_NIF_TERM nif_image_array(ErlNifEnv *env, int argc,
   unsigned int len;
   VipsImage **array;
   VipsArrayImage *vips_array;
-  ERL_NIF_TERM term;
+  ERL_NIF_TERM ret;
+  ErlNifTime start;
+
+  start = enif_monotonic_time(ERL_NIF_USEC);
 
   if (!enif_get_list_length(env, argv[0], &len)) {
     error("Failed to get list length");
-    return enif_make_badarg(env);
+    ret = enif_make_badarg(env);
+    goto exit;
   }
 
   array = g_new(VipsImage *, len);
@@ -167,9 +185,12 @@ ERL_NIF_TERM nif_image_array(ErlNifEnv *env, int argc,
   boxed_r->boxed_type = VIPS_TYPE_ARRAY_IMAGE;
   boxed_r->boxed_ptr = vips_array;
 
-  term = enif_make_resource(env, boxed_r);
+  ret = enif_make_resource(env, boxed_r);
   enif_release_resource(boxed_r);
 
   g_free(array);
-  return term;
+
+exit:
+  notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
+  return ret;
 }

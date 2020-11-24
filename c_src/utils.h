@@ -1,5 +1,5 @@
-#ifndef UTILS_H
-#define UTILS_H
+#ifndef VIX_UTILS_H
+#define VIX_UTILS_H
 
 #include "erl_nif.h"
 #include <stdbool.h>
@@ -36,11 +36,6 @@
     return enif_make_badarg(env);                                              \
   }
 
-#define return_if_exception(env, exception)                                    \
-  if (enif_is_exception(env, exception)) {                                     \
-    return exception;                                                          \
-  }
-
 extern ERL_NIF_TERM ATOM_OK;
 
 extern ERL_NIF_TERM ATOM_ERROR;
@@ -59,4 +54,6 @@ ERL_NIF_TERM make_atom(ErlNifEnv *env, const char *name);
 
 int utils_init(ErlNifEnv *env);
 
+void notify_consumed_timeslice(ErlNifEnv *env, ErlNifTime start,
+                               ErlNifTime stop);
 #endif

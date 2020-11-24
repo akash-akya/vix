@@ -40,3 +40,15 @@ int utils_init(ErlNifEnv *env) {
 
   return 0;
 }
+
+void notify_consumed_timeslice(ErlNifEnv *env, ErlNifTime start,
+                               ErlNifTime stop) {
+  ErlNifTime pct;
+
+  pct = (ErlNifTime)((stop - start) / 10);
+  if (pct > 100)
+    pct = 100;
+  else if (pct == 0)
+    pct = 1;
+  enif_consume_timeslice(env, pct);
+}

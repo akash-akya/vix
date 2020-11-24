@@ -7,7 +7,7 @@
 
 ErlNifResourceType *G_BOXED_RT;
 
-typedef struct GBoxedResource {
+typedef struct _GBoxedResource {
   GType boxed_type;
   gpointer boxed_ptr;
 } GBoxedResource;

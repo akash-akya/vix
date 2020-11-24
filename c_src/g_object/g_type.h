@@ -7,7 +7,7 @@
 ErlNifResourceType *G_TYPE_RT;
 
 /* Not really need, since GType is mostly an int */
-typedef struct GTypeResource {
+typedef struct _GTypeResource {
   GType type;
 } GTypeResource;
 

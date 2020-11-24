@@ -7,7 +7,7 @@
 
 ErlNifResourceType *G_PARAM_SPEC_RT;
 
-typedef struct GParamSpecResource {
+typedef struct _GParamSpecResource {
   GParamSpec *pspec;
 } GParamSpecResource;
 
