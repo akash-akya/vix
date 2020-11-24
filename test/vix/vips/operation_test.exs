@@ -42,4 +42,16 @@ defmodule Vix.Vips.OperationTest do
 
     assert_files_equal(img_path("gravity_puppies.jpg"), out_path)
   end
+
+  test "conv with simple edge detection kernel", %{dir: dir} do
+    {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
+    {:ok, mask} = Image.new_matrix_from_array(3, 3, [[-1, -1, -1], [-1, 8, -1], [-1, -1, -1]])
+
+    out = Operation.conv(im, mask, precision: :VIPS_PRECISION_FLOAT)
+
+    out_path = Temp.path!(suffix: ".jpg", basedir: dir)
+    :ok = Image.write_to_file(out, out_path)
+
+    assert_files_equal(img_path("conv_puppies.jpg"), out_path)
+  end
 end
