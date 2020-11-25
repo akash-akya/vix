@@ -92,6 +92,8 @@ defmodule Vix.Vips.Image do
   @doc """
   Make a VipsImage from list.
 
+  This convenience function makes an image which is a matrix: a one-band VIPS_FORMAT_DOUBLE image held in memory. Useful for vips operations such as `conv`.
+
   ```elixir
   mask = Image.new_matrix_from_array(3, 3, [[0, 1, 0], [1, 1, 1], [0, 1, 0]])
   ```
