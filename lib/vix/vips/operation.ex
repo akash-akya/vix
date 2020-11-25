@@ -5,7 +5,7 @@ defmodule Vix.Vips.OperationHelper do
   alias Vix.Type
   alias Vix.GObject.GParamSpec
 
-  def prepare_doc(desc, required, optional) do
+  def prepare_doc(desc, required, optional, output) do
     doc_required_args =
       Enum.map_join(required, "\n", fn pspec ->
         "  * #{pspec.param_name} - #{pspec.desc}"
@@ -17,7 +17,9 @@ defmodule Vix.Vips.OperationHelper do
     ## Arguments
     #{doc_required_args}
 
-    #{optional_args(optional)}
+    #{optional_args_doc(optional)}
+
+    #{output_values_doc(output)}
     """
   end
 
@@ -60,12 +62,19 @@ defmodule Vix.Vips.OperationHelper do
   end
 
   def output_typespec(pspec_list) do
-    if length(pspec_list) == 1 do
-      typespec(hd(pspec_list))
-    else
-      quote do
-        list(term())
-      end
+    cond do
+      length(pspec_list) == 0 ->
+        quote do
+          :ok
+        end
+
+      length(pspec_list) == 1 ->
+        typespec(hd(pspec_list))
+
+      true ->
+        quote do
+          list(term())
+        end
     end
   end
 
@@ -108,17 +117,33 @@ defmodule Vix.Vips.OperationHelper do
     end
   end
 
-  defp optional_args([]), do: ""
+  defp optional_args_doc([]), do: ""
 
-  defp optional_args(optional) do
-    doc_optional_args =
+  defp optional_args_doc(optional) do
+    optional_args =
       Enum.map_join(optional, "\n", fn pspec ->
         "* #{pspec.param_name} - #{pspec.desc}. #{default(pspec)}"
       end)
 
     """
     ## Optional
-    #{doc_optional_args}
+    #{optional_args}
+    """
+  end
+
+  def output_values_doc([]), do: ""
+  def output_values_doc([_]), do: ""
+
+  def output_values_doc(output) do
+    output_values =
+      Enum.map_join(output, "\n", fn pspec ->
+        "* #{pspec.param_name} - #{pspec.desc}. (`#{Macro.to_string(typespec(pspec))}`)"
+      end)
+
+    """
+    ## Return value
+    List of terms
+    #{output_values}
     """
   end
 
@@ -182,7 +207,7 @@ defmodule Vix.Vips.Operation do
       end)
 
     @doc """
-    #{prepare_doc(desc, required, optional)}
+    #{prepare_doc(desc, required, optional, output)}
     """
     @spec unquote(typespec(func_name, required, optional, output))
     def unquote(func_name)(unquote_splicing(func_args), optional \\ []) do
@@ -204,10 +229,15 @@ defmodule Vix.Vips.Operation do
           nif_args
         )
 
-      if unquote(length(output)) == 1 do
-        hd(result)
+      # few operation are in-place, such as draw* operations
+      if unquote(length(output)) == 0 do
+        :ok
       else
-        result
+        if unquote(length(output)) == 1 do
+          hd(result)
+        else
+          result
+        end
       end
     end
   end)
