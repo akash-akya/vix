@@ -65,26 +65,57 @@ defmodule Vix.Vips.OperationHelper do
     cond do
       length(pspec_list) == 0 ->
         quote do
-          :ok
+          :ok | {:error, term()}
         end
 
       length(pspec_list) == 1 ->
-        typespec(hd(pspec_list))
+        quote do
+          {:ok, unquote(typespec(hd(pspec_list)))} | {:error, term()}
+        end
 
       true ->
         quote do
-          list(term())
+          {:ok, list(term())} | {:error, term()}
         end
     end
   end
 
-  def typespec(func_name, required, optional, output) do
+  def bang_output_typespec(pspec_list) do
+    cond do
+      length(pspec_list) == 0 ->
+        quote do
+          :ok | no_return()
+        end
+
+      length(pspec_list) == 1 ->
+        quote do
+          unquote(typespec(hd(pspec_list))) | no_return()
+        end
+
+      true ->
+        quote do
+          list(term()) | no_return()
+        end
+    end
+  end
+
+  def func_typespec(func_name, required, optional, output) do
     quote do
       unquote(func_name)(
         unquote_splicing(input_typespec(required)),
         unquote(optional_args_typespec(optional))
       ) ::
         unquote(output_typespec(output))
+    end
+  end
+
+  def bang_func_typespec(func_name, required, optional, output) do
+    quote do
+      unquote(func_name)(
+        unquote_splicing(input_typespec(required)),
+        unquote(optional_args_typespec(optional))
+      ) ::
+        unquote(bang_output_typespec(output))
     end
   end
 
@@ -209,7 +240,7 @@ defmodule Vix.Vips.Operation do
     @doc """
     #{prepare_doc(desc, required, optional, output)}
     """
-    @spec unquote(typespec(func_name, required, optional, output))
+    @spec unquote(func_typespec(func_name, required, optional, output))
     def unquote(func_name)(unquote_splicing(func_args), optional \\ []) do
       nif_optional_args =
         Enum.map(optional, fn {name, value} ->
@@ -229,15 +260,26 @@ defmodule Vix.Vips.Operation do
           nif_args
         )
 
-      # few operation are in-place, such as draw* operations
-      if unquote(length(output)) == 0 do
-        :ok
-      else
-        if unquote(length(output)) == 1 do
-          hd(result)
-        else
-          result
-        end
+      case result do
+        # few operation are in-place, such as draw* operations
+        {:ok, []} -> :ok
+        {:ok, [term]} -> {:ok, term}
+        {:ok, list} -> {:ok, list}
+        {:error, term} -> {:error, term}
+      end
+    end
+
+    bang_func_name = function_name(String.to_atom("#{name}!"))
+
+    @doc """
+    Same as `#{func_name}/#{length(func_args) + 1}`, except it returns only the value (not a tuple) and raises on error.
+    """
+    @spec unquote(bang_func_typespec(bang_func_name, required, optional, output))
+    def unquote(bang_func_name)(unquote_splicing(func_args), optional \\ []) do
+      case __MODULE__.unquote(func_name)(unquote_splicing(func_args), optional) do
+        :ok -> :ok
+        {:ok, result} -> result
+        {:error, reason} -> raise reason
       end
     end
   end)

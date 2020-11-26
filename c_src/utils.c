@@ -33,6 +33,16 @@ ERL_NIF_TERM make_atom(ErlNifEnv *env, const char *name) {
   return enif_make_atom(env, name);
 }
 
+VixResult vix_error(ErlNifEnv *env, const char *reason) {
+  error(reason);
+  return (VixResult){.is_success = false,
+                     .result = enif_make_string(env, reason, ERL_NIF_LATIN1)};
+}
+
+VixResult vix_result(ERL_NIF_TERM term) {
+  return (VixResult){.is_success = true, .result = term};
+}
+
 int utils_init(ErlNifEnv *env) {
   ATOM_OK = make_atom(env, "ok");
   ATOM_ERROR = make_atom(env, "error");

@@ -25,10 +25,10 @@ def example(path) do
   # make the other pixels in the image by mirroring im up / down /
   # left / right, see
   # https://libvips.github.io/libvips/API/current/libvips-conversion.html#vips-embed
-  im = Operation.embed(im, 100, 100, 3000, 3000, extend: :VIPS_EXTEND_MIRROR)
+  {:ok, im} = Operation.embed(im, 100, 100, 3000, 3000, extend: :VIPS_EXTEND_MIRROR)
 
   # multiply the green (middle) band by 2, leave the other two alone
-  im = Operation.linear(im, [1, 2, 1], [0])
+  {:ok, im} = Operation.linear(im, [1, 2, 1], [0])
 
   # make an image from an array constant, convolve with it
   {:ok, mask} =
@@ -41,7 +41,7 @@ def example(path) do
       scale: 8
     )
 
-  im = Operation.conv(im, mask, precision: :VIPS_PRECISION_INTEGER)
+  {:ok, im} = Operation.conv(im, mask, precision: :VIPS_PRECISION_INTEGER)
 
   # finally, write the result back to a file on disk
   :ok = Vix.Vips.Image.write_to_file(im, "out.jpg")

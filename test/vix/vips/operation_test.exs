@@ -13,7 +13,7 @@ defmodule Vix.Vips.OperationTest do
 
   test "invert", %{dir: dir} do
     {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
-    out = Operation.invert(im)
+    assert {:ok, out} = Operation.invert(im)
 
     out_path = Temp.path!(suffix: ".jpg", basedir: dir)
     :ok = Image.write_to_file(out, out_path)
@@ -23,7 +23,7 @@ defmodule Vix.Vips.OperationTest do
 
   test "affine", %{dir: dir} do
     {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
-    out = Operation.affine(im, [1, 0, 0, 0.5])
+    assert {:ok, out} = Operation.affine(im, [1, 0, 0, 0.5])
 
     out_path = Temp.path!(suffix: ".jpg", basedir: dir)
     :ok = Image.write_to_file(out, out_path)
@@ -34,8 +34,10 @@ defmodule Vix.Vips.OperationTest do
   test "gravity", %{dir: dir} do
     {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
 
-    out =
-      Operation.gravity(im, :VIPS_COMPASS_DIRECTION_CENTRE, 650, 500, extend: :VIPS_EXTEND_COPY)
+    assert {:ok, out} =
+             Operation.gravity(im, :VIPS_COMPASS_DIRECTION_CENTRE, 650, 500,
+               extend: :VIPS_EXTEND_COPY
+             )
 
     out_path = Temp.path!(suffix: ".jpg", basedir: dir)
     :ok = Image.write_to_file(out, out_path)
@@ -47,7 +49,7 @@ defmodule Vix.Vips.OperationTest do
     {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
     {:ok, mask} = Image.new_matrix_from_array(3, 3, [[-1, -1, -1], [-1, 8, -1], [-1, -1, -1]])
 
-    out = Operation.conv(im, mask, precision: :VIPS_PRECISION_FLOAT)
+    assert {:ok, out} = Operation.conv(im, mask, precision: :VIPS_PRECISION_FLOAT)
 
     out_path = Temp.path!(suffix: ".jpg", basedir: dir)
     :ok = Image.write_to_file(out, out_path)

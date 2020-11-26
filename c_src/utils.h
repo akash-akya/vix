@@ -36,6 +36,11 @@
     return enif_make_badarg(env);                                              \
   }
 
+typedef struct _VixResult {
+  bool is_success;
+  ERL_NIF_TERM result;
+} VixResult;
+
 extern ERL_NIF_TERM ATOM_OK;
 
 extern ERL_NIF_TERM ATOM_ERROR;
@@ -51,6 +56,10 @@ ERL_NIF_TERM make_ok(ErlNifEnv *env, ERL_NIF_TERM term);
 ERL_NIF_TERM make_error(ErlNifEnv *env, const char *reason);
 
 ERL_NIF_TERM make_atom(ErlNifEnv *env, const char *name);
+
+VixResult vix_error(ErlNifEnv *env, const char *reason);
+
+VixResult vix_result(ERL_NIF_TERM term);
 
 int utils_init(ErlNifEnv *env);
 
