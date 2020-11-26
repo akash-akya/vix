@@ -199,13 +199,17 @@ defmodule Vix.Vips.Operation do
   @moduledoc """
   Vips Operations
 
-  NOTE: Vips operation functions are generated using GObject-introspection, So the bindings are up-to-date with vips version installed. Documentation in the hexdocs might *not* match for you.
+  NOTE: Vips operation functions are generated using GObject-introspection, so the bindings are up-to-date with vips version installed. Documentation in the hexdocs might *not* match for you.
   """
 
   import Vix.Vips.OperationHelper
 
   alias Vix.Type
   alias Vix.Nif
+
+  defmodule Error do
+    defexception [:message]
+  end
 
   Vix.Nif.nif_vips_enum_list()
   |> Enum.map(fn {name, enum} ->
@@ -279,7 +283,8 @@ defmodule Vix.Vips.Operation do
       case __MODULE__.unquote(func_name)(unquote_splicing(func_args), optional) do
         :ok -> :ok
         {:ok, result} -> result
-        {:error, reason} -> raise reason
+        {:error, reason} when is_list(reason) -> raise Error, message: to_string(reason)
+        {:error, reason} -> raise Error, message: inspect(reason)
       end
     end
   end)
