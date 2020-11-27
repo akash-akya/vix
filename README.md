@@ -2,7 +2,7 @@
 
 Vix is Elixir extension for [vips](https://libvips.github.io/libvips/).
 
-Vix is a **NIF bindings** for libvips. It uses dirty IO scheduler to avoid blocking VM. Operation binding are  auto generated using GObject introspection, so documentation and bindings are up-to-date with the vips version installed.
+Vix is a **NIF bindings** for libvips. Operation binding are generated using GObject introspection, so documentation and bindings are up-to-date with the vips version installed. It uses dirty IO scheduler to avoid blocking schedulers.
 
 ### What is Vips
 
@@ -48,7 +48,7 @@ def example(path) do
 end
 ```
 
-The [libvips reference manual](https://libvips.github.io/libvips/API/current/) has a complete explanation of every method
+The [libvips reference manual](https://libvips.github.io/libvips/API/current/) has a complete explanation of every method.
 
 ### Simple *unscientific* comparison
 
@@ -62,7 +62,7 @@ Generating thumbnail for a sample image
 | 4 | 31.339ms  | 604.712ms |
 | 5 | 32.526ms  | 605.553ms |
 
-Notice that the gain is significant for the subsequent repetition of the operation for Vix since vips  [caches the operations](https://libvips.github.io/libvips/API/current/VipsOperation.html).
+Notice that the gain is significant for the subsequent calls to the operation since vips [caches the operations](https://libvips.github.io/libvips/API/current/VipsOperation.html).
 
 ### Warning
 
