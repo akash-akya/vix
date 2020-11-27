@@ -135,6 +135,8 @@ static VixResult get_operation_properties(ErlNifEnv *env, VipsOperation *op) {
       if (vips_object_get_argument(VIPS_OBJECT(op), names[i], &pspec,
                                    &arg_class, &arg_instance)) {
         error("failed to get argument: %s", names[i]);
+        // early exit is fine, for already reffed output GObjects
+        // since `g_object_dtor` takes care of unreffing
         return vix_error(env, "failed to get output argument");
       }
 
@@ -142,7 +144,12 @@ static VixResult get_operation_properties(ErlNifEnv *env, VipsOperation *op) {
       g_object_get_property(G_OBJECT(op), names[i], &gvalue);
 
       obj = g_value_get_object(&gvalue);
+
+      // explicitly get a ref for the output property so that we can
+      // unref all output objects of the operation at once
+      g_object_ref(obj);
       list = enif_make_list_cell(env, g_object_to_erl_term(env, obj), list);
+
       g_value_unset(&gvalue);
     }
   }
@@ -234,6 +241,8 @@ ERL_NIF_TERM nif_vips_operation_call(ErlNifEnv *env, int argc,
     goto free_and_exit;
 
 free_and_exit:
+  // Always unref all used objects, since we are explicitly getting
+  // references for output objects
   vips_object_unref_outputs(VIPS_OBJECT(op));
   g_object_unref(op);
 
@@ -544,6 +553,13 @@ ERL_NIF_TERM nif_vips_cache_get_max_mem(ErlNifEnv *env, int argc,
   return make_ok(env, enif_make_uint64(env, vips_cache_get_max_mem()));
 }
 
+ERL_NIF_TERM nif_vips_shutdown(ErlNifEnv *env, int argc,
+                               const ERL_NIF_TERM argv[]) {
+  assert_argc(argc, 0);
+  vips_object_print_all();
+  vips_shutdown();
+  return ATOM_OK;
+}
 static void *load_operation(GType type, void *a) {
   const char **names;
   gpointer g_class;
