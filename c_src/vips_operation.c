@@ -110,17 +110,15 @@ static ERL_NIF_TERM vips_argument_flags_to_erl_terms(ErlNifEnv *env,
 
 static VixResult get_operation_properties(ErlNifEnv *env, VipsOperation *op) {
 
-  GValue gvalue = {0};
-  GObject *obj;
-
   const char **names;
   int *flags;
   int n_args = 0;
 
-  ERL_NIF_TERM list;
+  ERL_NIF_TERM list, name, entry;
   GParamSpec *pspec;
   VipsArgumentClass *arg_class;
   VipsArgumentInstance *arg_instance;
+  VixResult res;
 
   if (get_vips_operation_args(op, &names, &flags, &n_args)) {
     error("failed to get args. error: %s", vips_error_buffer());
@@ -140,17 +138,14 @@ static VixResult get_operation_properties(ErlNifEnv *env, VipsOperation *op) {
         return vix_error(env, "failed to get output argument");
       }
 
-      g_value_init(&gvalue, G_PARAM_SPEC_VALUE_TYPE(pspec));
-      g_object_get_property(G_OBJECT(op), names[i], &gvalue);
+      res = get_erl_term_from_g_value(env, G_OBJECT(op), names[i], pspec);
 
-      obj = g_value_get_object(&gvalue);
+      if (!res.is_success)
+        return res;
 
-      // explicitly get a ref for the output property so that we can
-      // unref all output objects of the operation at once
-      g_object_ref(obj);
-      list = enif_make_list_cell(env, g_object_to_erl_term(env, obj), list);
-
-      g_value_unset(&gvalue);
+      name = enif_make_string(env, names[i], ERL_NIF_LATIN1);
+      entry = enif_make_tuple2(env, name, res.result);
+      list = enif_make_list_cell(env, entry, list);
     }
   }
 

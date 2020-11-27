@@ -26,6 +26,9 @@ defmodule Vix.Vips.Image do
   @impl Type
   def cast(value, _data), do: value
 
+  @impl Type
+  def to_erl_term(value), do: value
+
   @doc """
   Opens `path` for reading, returns an instance of `t:Vix.Vips.Image.t/0`
 

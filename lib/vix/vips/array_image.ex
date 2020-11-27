@@ -21,4 +21,10 @@ defmodule Vix.Vips.ArrayImage do
     |> Enum.map(&Vix.Vips.Image.cast(&1, data))
     |> Vix.Nif.nif_image_array()
   end
+
+  @impl Type
+  def to_erl_term(value) do
+    {:ok, list} = Vix.Nif.nif_vips_image_array_to_erl_list(value)
+    list
+  end
 end

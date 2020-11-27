@@ -194,3 +194,155 @@ exit:
   notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
   return ret;
 }
+
+ERL_NIF_TERM nif_vips_int_array_to_erl_list(ErlNifEnv *env, int argc,
+                                            const ERL_NIF_TERM argv[]) {
+  assert_argc(argc, 1);
+
+  VipsArrayInt *int_array;
+  ERL_NIF_TERM list;
+  ERL_NIF_TERM vips_array_term;
+  GType type;
+  int *arr;
+  int n;
+  ErlNifTime start;
+  VixResult res;
+
+  start = enif_monotonic_time(ERL_NIF_USEC);
+
+  vips_array_term = argv[0];
+
+  if (!erl_term_boxed_type(env, vips_array_term, &type)) {
+    res = vix_error(env, "failed to get type of boxed term");
+    goto exit;
+  }
+
+  if (type != VIPS_TYPE_ARRAY_INT) {
+    res = vix_error(env, "term is not a VIPS_TYPE_ARRAY_INT");
+    goto exit;
+  }
+
+  if (!erl_term_to_g_boxed(env, vips_array_term, (gpointer *)&int_array)) {
+    res = vix_error(env, "failed to get boxed term");
+    goto exit;
+  }
+
+  arr = vips_array_int_get(int_array, &n);
+
+  list = enif_make_list(env, 0);
+
+  for (int i = 0; i < n; i++) {
+    list = enif_make_list_cell(env, enif_make_int(env, arr[i]), list);
+  }
+  res = vix_result(list);
+
+exit:
+  notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
+  if (res.is_success)
+    return make_ok(env, res.result);
+  else
+    return enif_make_tuple2(env, ATOM_ERROR, res.result);
+}
+
+ERL_NIF_TERM nif_vips_double_array_to_erl_list(ErlNifEnv *env, int argc,
+                                               const ERL_NIF_TERM argv[]) {
+  assert_argc(argc, 1);
+
+  VipsArrayDouble *double_array;
+  ERL_NIF_TERM list;
+  ERL_NIF_TERM vips_array_term;
+  GType type;
+  double *arr;
+  int n;
+  ErlNifTime start;
+  VixResult res;
+
+  start = enif_monotonic_time(ERL_NIF_USEC);
+
+  vips_array_term = argv[0];
+
+  if (!erl_term_boxed_type(env, vips_array_term, &type)) {
+    res = vix_error(env, "failed to get type of boxed term");
+    goto exit;
+  }
+
+  if (type != VIPS_TYPE_ARRAY_DOUBLE) {
+    res = vix_error(env, "term is not a VIPS_TYPE_ARRAY_DOUBLE");
+    goto exit;
+  }
+
+  if (!erl_term_to_g_boxed(env, vips_array_term, (gpointer *)&double_array)) {
+    res = vix_error(env, "failed to get boxed term");
+    goto exit;
+  }
+
+  arr = vips_array_double_get(double_array, &n);
+
+  list = enif_make_list(env, 0);
+
+  for (int i = 0; i < n; i++) {
+    list = enif_make_list_cell(env, enif_make_double(env, arr[i]), list);
+  }
+
+  res = vix_result(list);
+
+exit:
+  notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
+  if (res.is_success)
+    return make_ok(env, res.result);
+  else
+    return enif_make_tuple2(env, ATOM_ERROR, res.result);
+}
+
+ERL_NIF_TERM nif_vips_image_array_to_erl_list(ErlNifEnv *env, int argc,
+                                              const ERL_NIF_TERM argv[]) {
+  assert_argc(argc, 1);
+
+  VipsArrayImage *image_array;
+  ERL_NIF_TERM list;
+  ERL_NIF_TERM vips_array_term;
+  GType type;
+  VipsImage **arr;
+  VipsImage *image;
+  int n;
+  ErlNifTime start;
+  VixResult res;
+
+  start = enif_monotonic_time(ERL_NIF_USEC);
+
+  vips_array_term = argv[0];
+
+  if (!erl_term_boxed_type(env, vips_array_term, &type)) {
+    res = vix_error(env, "failed to get type of boxed term");
+    goto exit;
+  }
+
+  if (type != VIPS_TYPE_ARRAY_IMAGE) {
+    res = vix_error(env, "term is not a VIPS_TYPE_ARRAY_IMAGE");
+    goto exit;
+  }
+
+  if (!erl_term_to_g_boxed(env, vips_array_term, (gpointer *)&image_array)) {
+    res = vix_error(env, "failed to get boxed term");
+    goto exit;
+  }
+
+  arr = vips_array_image_get(image_array, &n);
+
+  list = enif_make_list(env, 0);
+
+  for (int i = 0; i < n; i++) {
+    image = arr[i];
+    g_object_ref(image);
+    list = enif_make_list_cell(env, g_object_to_erl_term(env, (GObject *)image), list);
+  }
+
+  res = vix_result(list);
+
+exit:
+  notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
+  if (res.is_success)
+    return make_ok(env, res.result);
+  else
+    return enif_make_tuple2(env, ATOM_ERROR, res.result);
+}

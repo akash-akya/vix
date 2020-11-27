@@ -20,4 +20,7 @@ defmodule Vix.Vips.Blob do
 
   @impl Type
   def cast(_value, _data), do: raise("VipsBlob is not implemented yet")
+
+  @impl Type
+  def to_erl_term(_value), do: raise("VipsBlob is not implemented yet")
 end

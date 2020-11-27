@@ -26,6 +26,9 @@ defmodule Vix.GObject.Int do
     end
   end
 
+  @impl Type
+  def to_erl_term(value), do: value
+
   defp validate_number_limits!(_value, nil), do: :ok
 
   defp validate_number_limits!(value, {min, max, _default}) do

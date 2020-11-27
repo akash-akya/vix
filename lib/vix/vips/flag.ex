@@ -45,10 +45,22 @@ defmodule Vix.Vips.FlagHelper do
           end)
         end
 
+        @impl Type
+        def to_erl_term(value) do
+          Integer.to_string(value, 2)
+          |> String.codepoints()
+          |> Enum.map(fn v ->
+            {v, ""} = Integer.parse(v, 2)
+            erl_term(v)
+          end)
+        end
+
         unquote(
           Enum.map(flag, fn {name, value} ->
             quote do
               defp cast(unquote(name)), do: unquote(value)
+
+              defp erl_term(unquote(value)), do: unquote(name)
             end
           end)
         )

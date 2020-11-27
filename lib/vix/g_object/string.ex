@@ -14,6 +14,9 @@ defmodule Vix.GObject.String do
   def default(default), do: default
 
   @impl Type
+  def to_erl_term(value), do: to_string(value)
+
+  @impl Type
   def cast(value, _data) do
     case value do
       value when is_binary(value) -> to_charlist(value)

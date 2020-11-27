@@ -9,6 +9,8 @@ defmodule Vix.Type do
 
   @callback cast(term, term) :: term()
 
+  @callback to_erl_term(term) :: term()
+
   def typespec(pspec) do
     impl(pspec).typespec()
   end
@@ -19,6 +21,10 @@ defmodule Vix.Type do
 
   def cast(value, pspec) do
     impl(pspec).cast(value, pspec.data)
+  end
+
+  def to_erl_term(value, pspec) do
+    impl(pspec).to_erl_term(value)
   end
 
   def supported?(pspec), do: impl(pspec) != :unsupported

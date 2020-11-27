@@ -5,6 +5,8 @@
 ERL_NIF_TERM ATOM_OK;
 ERL_NIF_TERM ATOM_ERROR;
 ERL_NIF_TERM ATOM_NIL;
+ERL_NIF_TERM ATOM_TRUE;
+ERL_NIF_TERM ATOM_FALSE;
 
 ERL_NIF_TERM make_ok(ErlNifEnv *env, ERL_NIF_TERM term) {
   return enif_make_tuple2(env, ATOM_OK, term);
@@ -47,6 +49,8 @@ int utils_init(ErlNifEnv *env) {
   ATOM_OK = make_atom(env, "ok");
   ATOM_ERROR = make_atom(env, "error");
   ATOM_NIL = make_atom(env, "nil");
+  ATOM_TRUE = make_atom(env, "true");
+  ATOM_FALSE = make_atom(env, "false");
 
   return 0;
 }

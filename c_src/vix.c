@@ -20,6 +20,8 @@ static int on_load(ErlNifEnv *env, void **priv, ERL_NIF_TERM load_info) {
 
 #ifdef DEBUG
   vips_leak_set(true);
+  // when checking for leaks disable cache
+  vips_cache_set_max(0);
 #endif
 
   if (utils_init(env))
@@ -86,6 +88,11 @@ static ErlNifFunc nif_funcs[] = {
     /* VipsBoxed */
     {"nif_int_array", 1, nif_int_array, 0},
     {"nif_image_array", 1, nif_image_array, 0},
-    {"nif_double_array", 1, nif_double_array, 0}};
+    {"nif_double_array", 1, nif_double_array, 0},
+    {"nif_vips_int_array_to_erl_list", 1, nif_vips_int_array_to_erl_list, 0},
+    {"nif_vips_double_array_to_erl_list", 1, nif_vips_double_array_to_erl_list,
+     0},
+    {"nif_vips_image_array_to_erl_list", 1, nif_vips_image_array_to_erl_list,
+     0}};
 
 ERL_NIF_INIT(Elixir.Vix.Nif, nif_funcs, &on_load, NULL, NULL, NULL)

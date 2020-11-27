@@ -20,4 +20,7 @@ defmodule Vix.Vips.Target do
 
   @impl Type
   def cast(_value, _data), do: raise("VipsTarget is not implemented yet")
+
+  @impl Type
+  def to_erl_term(_value), do: raise("VipsTarget is not implemented yet")
 end

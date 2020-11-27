@@ -42,6 +42,9 @@ defmodule Vix.Vips.EnumHelper do
             quote do
               @impl Type
               def cast(unquote(name), _data), do: unquote(value)
+
+              @impl Type
+              def to_erl_term(unquote(value)), do: unquote(name)
             end
           end)
         )

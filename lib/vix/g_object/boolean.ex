@@ -24,4 +24,7 @@ defmodule Vix.GObject.Boolean do
               "value must be boolean. given: #{inspect(value)}"
     end
   end
+
+  @impl Type
+  def to_erl_term(value), do: value
 end

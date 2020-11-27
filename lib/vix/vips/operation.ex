@@ -235,6 +235,7 @@ defmodule Vix.Vips.Operation do
     func_name = function_name(name)
     func_args = Enum.map(required, &Macro.var(&1.param_name, __MODULE__))
     input_args = Map.new(required ++ optional, &{&1.param_name, &1})
+    output_args = Map.new(output, &{&1.param_name, &1})
 
     nif_args =
       Enum.map(required, fn pspec ->
@@ -265,11 +266,22 @@ defmodule Vix.Vips.Operation do
         )
 
       case result do
-        # few operation are in-place, such as draw* operations
-        {:ok, []} -> :ok
-        {:ok, [term]} -> {:ok, term}
-        {:ok, list} -> {:ok, list}
-        {:error, term} -> {:error, term}
+        {:ok, nif_output_terms} ->
+          res =
+            Enum.map(nif_output_terms, fn {name, out} ->
+              param_spec = Map.get(unquote(Macro.escape(output_args)), List.to_atom(name))
+              Type.to_erl_term(out, param_spec)
+            end)
+
+          case res do
+            # few operation are in-place, such as draw* operations
+            [] -> :ok
+            [term] -> {:ok, term}
+            list -> {:ok, list}
+          end
+
+        {:error, term} ->
+          {:error, term}
       end
     end
 

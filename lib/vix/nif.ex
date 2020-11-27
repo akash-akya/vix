@@ -82,4 +82,13 @@ defmodule Vix.Nif do
 
   def nif_double_array(_double_list),
     do: :erlang.nif_error(:nif_library_not_loaded)
+
+  def nif_vips_int_array_to_erl_list(_vips_int_array),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
+  def nif_vips_double_array_to_erl_list(_vips_double_array),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
+  def nif_vips_image_array_to_erl_list(_vips_image_array),
+    do: :erlang.nif_error(:nif_library_not_loaded)
 end
