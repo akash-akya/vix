@@ -18,6 +18,10 @@ static int on_load(ErlNifEnv *env, void **priv, ERL_NIF_TERM load_info) {
     return 1;
   }
 
+#ifdef DEBUG
+  vips_leak_set(true);
+#endif
+
   if (utils_init(env))
     return 1;
 
