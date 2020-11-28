@@ -231,7 +231,7 @@ ERL_NIF_TERM nif_vips_int_array_to_erl_list(ErlNifEnv *env, int argc,
 
   list = enif_make_list(env, 0);
 
-  for (int i = 0; i < n; i++) {
+  for (int i = n - 1; i >= 0; i--) {
     list = enif_make_list_cell(env, enif_make_int(env, arr[i]), list);
   }
   res = vix_result(list);
@@ -280,7 +280,7 @@ ERL_NIF_TERM nif_vips_double_array_to_erl_list(ErlNifEnv *env, int argc,
 
   list = enif_make_list(env, 0);
 
-  for (int i = 0; i < n; i++) {
+  for (int i = n - 1; i >= 0; i--) {
     list = enif_make_list_cell(env, enif_make_double(env, arr[i]), list);
   }
 
@@ -331,10 +331,11 @@ ERL_NIF_TERM nif_vips_image_array_to_erl_list(ErlNifEnv *env, int argc,
 
   list = enif_make_list(env, 0);
 
-  for (int i = 0; i < n; i++) {
+  for (int i = n - 1; i >= 0; i--) {
     image = arr[i];
     g_object_ref(image);
-    list = enif_make_list_cell(env, g_object_to_erl_term(env, (GObject *)image), list);
+    list = enif_make_list_cell(env, g_object_to_erl_term(env, (GObject *)image),
+                               list);
   }
 
   res = vix_result(list);
