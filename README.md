@@ -1,4 +1,4 @@
-# Vix
+# Vix [![Hex.pm](https://img.shields.io/hexpm/v/vix.svg)](https://hex.pm/packages/vix)
 
 Vix is Elixir extension for [vips](https://libvips.github.io/libvips/).
 
@@ -74,11 +74,9 @@ This library is experimental, untested, and unstable. Interface might change sig
 
 * libvips
 * pkg-config
+* c compiler
 
-### Installation
-
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `vix` to your list of dependencies in `mix.exs`:
+## Installation
 
 ```elixir
 def deps do
@@ -87,10 +85,6 @@ def deps do
   ]
 end
 ```
-
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/vix](https://hexdocs.pm/vix).
 
 ### TODO
 - [ ] support `VipsConnection`

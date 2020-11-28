@@ -42,7 +42,11 @@ defmodule Vix.MixProject do
     [
       maintainers: ["Akash Hiremath"],
       licenses: ["MIT"],
-      links: %{GitHub: "https://github.com/akash-akya/vix"}
+      files: ~w(lib .formatter.exs mix.exs README* LICENSE* c_src Makefile),
+      links: %{
+        GitHub: "https://github.com/akash-akya/vix",
+        libvips: "https://libvips.github.io/libvips"
+      }
     ]
   end
 
