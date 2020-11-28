@@ -26,4 +26,6 @@ eips-*.tar
 
 /*.jpg
 
+/*.png
+
 .dir-locals.el

@@ -6,7 +6,7 @@ defmodule Vix.GObject.String do
   @impl Type
   def typespec do
     quote do
-      charlist()
+      String.t()
     end
   end
 
