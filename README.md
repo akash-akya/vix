@@ -4,6 +4,8 @@ Vix is Elixir extension for [vips](https://libvips.github.io/libvips/).
 
 Vix is a **NIF bindings** for libvips. Operation binding are generated using GObject introspection, so documentation and bindings are up-to-date with the vips version installed. It uses dirty IO scheduler to avoid blocking schedulers.
 
+Check [vips operation documentation](https://hexdocs.pm/vix/Vix.Vips.Operation.html) for the list of available operations and spec.
+
 ### What is Vips
 
 *(from vips documentation)*
@@ -50,9 +52,9 @@ end
 
 The [libvips reference manual](https://libvips.github.io/libvips/API/current/) has a complete explanation of every method.
 
-### Simple *unscientific* comparison
+### Simple *unscientific* comparison with mogrify
 
-Generating thumbnail for a sample image
+For generating thumbnail
 
 |   | Vix       | Mogrify   |
 |---|-----------|-----------|
@@ -93,3 +95,4 @@ be found at [https://hexdocs.pm/vix](https://hexdocs.pm/vix).
 ### TODO
 - [ ] support `VipsConnection`
 - [ ] move GObject-introspection to a separate library
+- [ ] support all remaining vips types

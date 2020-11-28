@@ -11,7 +11,19 @@ defmodule Vix.MixProject do
       compilers: [:elixir_make] ++ Mix.compilers(),
       make_targets: ["all"],
       make_clean: ["clean"],
-      deps: deps()
+      deps: deps(),
+
+      # Package
+      package: package(),
+      description: description(),
+
+      # Docs
+      source_url: "https://github.com/akash-akya/vix",
+      homepage_url: "https://github.com/akash-akya/vix",
+      docs: [
+        main: "readme",
+        extras: ["README.md"]
+      ]
     ]
   end
 
@@ -19,6 +31,18 @@ defmodule Vix.MixProject do
   def application do
     [
       extra_applications: [:logger]
+    ]
+  end
+
+  defp description do
+    "NIF based bindings for Vips"
+  end
+
+  defp package do
+    [
+      maintainers: ["Akash Hiremath"],
+      licenses: ["MIT"],
+      links: %{GitHub: "https://github.com/akash-akya/vix"}
     ]
   end
 
