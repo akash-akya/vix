@@ -5,9 +5,51 @@ defmodule Vix.Vips.OperationHelper do
   alias Vix.Type
   alias Vix.GObject.GParamSpec
 
-  def prepare_doc(desc, required, optional, output) do
-    doc_required_args =
-      Enum.map_join(required, "\n", fn pspec ->
+  def normalize_output(nif_out_args, required_out, optional_out) do
+    res =
+      nif_out_args
+      |> Enum.reduce({[], []}, fn {name, value}, {required, optional} ->
+        param = List.to_atom(name)
+
+        cond do
+          Map.has_key?(required_out, param) ->
+            param_spec = Map.get(required_out, param)
+            value = Type.to_erl_term(value, param_spec)
+            {[value | required], optional}
+
+          Map.has_key?(optional_out, param) ->
+            param_spec = Map.get(optional_out, param)
+            value = Type.to_erl_term(value, param_spec)
+            {required, [{param, value} | optional]}
+
+          true ->
+            raise "Invalid operation output"
+        end
+      end)
+
+    case res do
+      # few operation are in-place, such as draw* operations
+      # TODO: in-place operations does not align well with immutability
+      {[], []} ->
+        :ok
+
+      # if it is single value then unwrap and return as single term
+      {[term], []} ->
+        {:ok, term}
+
+      {required, optional} ->
+        out =
+          [optional | required]
+          |> Enum.reverse()
+          |> List.to_tuple()
+
+        {:ok, out}
+    end
+  end
+
+  def prepare_doc(desc, required_in, optional_in, required_out, optional_out) do
+    doc_required_in =
+      Enum.map_join(required_in, "\n", fn pspec ->
         "  * #{pspec.param_name} - #{pspec.desc}"
       end)
 
@@ -15,11 +57,11 @@ defmodule Vix.Vips.OperationHelper do
     #{String.capitalize(to_string(desc))}
 
     ## Arguments
-    #{doc_required_args}
+    #{doc_required_in}
 
-    #{optional_args_doc(optional)}
+    #{optional_in_doc(optional_in)}
 
-    #{output_values_doc(output)}
+    #{output_values_doc(required_out, optional_out)}
     """
   end
 
@@ -36,16 +78,22 @@ defmodule Vix.Vips.OperationHelper do
         :vips_argument_output in flags
       end)
 
-    {required, optional} =
+    {required_input, optional_input} =
       Enum.split_with(input, fn %{flags: flags} ->
         :vips_argument_required in flags
       end)
 
-    # TODO: support VipsInterpolate and other types
-    optional = Enum.filter(optional, &Type.supported?/1)
+    {required_output, optional_output} =
+      Enum.split_with(output, fn %{flags: flags} ->
+        :vips_argument_required in flags
+      end)
 
-    required = Enum.sort_by(required, & &1.priority)
-    {desc, required, optional, output}
+    # TODO: support VipsInterpolate and other types
+    optional_input = Enum.filter(optional_input, &Type.supported?/1)
+
+    required_input = Enum.sort_by(required_input, & &1.priority)
+    required_output = Enum.sort_by(required_output, & &1.priority)
+    {desc, required_input, optional_input, required_output, optional_output}
   end
 
   def function_name(name), do: to_string(name) |> String.downcase() |> String.to_atom()
@@ -57,65 +105,66 @@ defmodule Vix.Vips.OperationHelper do
     |> Macro.var(__MODULE__)
   end
 
-  def input_typespec(pspec_list) do
-    Enum.map(pspec_list, &typespec/1)
-  end
-
-  def output_typespec(pspec_list) do
-    cond do
-      length(pspec_list) == 0 ->
+  def output_typespec(required, optional) do
+    case {required, optional} do
+      {[], []} ->
         quote do
           :ok | {:error, term()}
         end
 
-      length(pspec_list) == 1 ->
+      {[pspec], []} ->
         quote do
-          {:ok, unquote(typespec(hd(pspec_list)))} | {:error, term()}
+          {:ok, unquote(typespec(pspec))} | {:error, term()}
         end
 
-      true ->
+      {pspec_list, optional} ->
+        optional_out = optional_args_typespec(optional)
+
         quote do
-          {:ok, list(term())} | {:error, term()}
+          {:ok, {unquote_splicing(typespec(pspec_list)), unquote(optional_out)}}
+          | {:error, term()}
         end
     end
   end
 
-  def bang_output_typespec(pspec_list) do
-    cond do
-      length(pspec_list) == 0 ->
+  def bang_output_typespec(required, optional) do
+    case {required, optional} do
+      {[], []} ->
         quote do
           :ok | no_return()
         end
 
-      length(pspec_list) == 1 ->
+      {[pspec], []} ->
         quote do
-          unquote(typespec(hd(pspec_list))) | no_return()
+          unquote(typespec(pspec)) | no_return()
         end
 
-      true ->
+      {pspec_list, optional} ->
+        optional_out = optional_args_typespec(optional)
+
         quote do
-          list(term()) | no_return()
+          {unquote_splicing(typespec(pspec_list)), unquote(optional_out)} | no_return()
         end
     end
   end
 
-  def func_typespec(func_name, required, optional, output) do
+  def func_typespec(func_name, required_in, optional_in, required_out, optional_out) do
     quote do
       unquote(func_name)(
-        unquote_splicing(input_typespec(required)),
-        unquote(optional_args_typespec(optional))
+        unquote_splicing(typespec(required_in)),
+        unquote(optional_args_typespec(optional_in))
       ) ::
-        unquote(output_typespec(output))
+        unquote(output_typespec(required_out, optional_out))
     end
   end
 
-  def bang_func_typespec(func_name, required, optional, output) do
+  def bang_func_typespec(func_name, required_in, optional_in, required_out, optional_out) do
     quote do
       unquote(func_name)(
-        unquote_splicing(input_typespec(required)),
-        unquote(optional_args_typespec(optional))
+        unquote_splicing(typespec(required_in)),
+        unquote(optional_args_typespec(optional_in))
       ) ::
-        unquote(bang_output_typespec(output))
+        unquote(bang_output_typespec(required_out, optional_out))
     end
   end
 
@@ -148,11 +197,11 @@ defmodule Vix.Vips.OperationHelper do
     end
   end
 
-  defp optional_args_doc([]), do: ""
+  defp optional_in_doc([]), do: ""
 
-  defp optional_args_doc(optional) do
+  defp optional_in_doc(optional_in) do
     optional_args =
-      Enum.map_join(optional, "\n", fn pspec ->
+      Enum.map_join(optional_in, "\n", fn pspec ->
         "* #{pspec.param_name} - #{pspec.desc}. #{default(pspec)}"
       end)
 
@@ -162,19 +211,28 @@ defmodule Vix.Vips.OperationHelper do
     """
   end
 
-  def output_values_doc([]), do: ""
-  def output_values_doc([_]), do: ""
+  def output_values_doc([], []), do: ""
+  def output_values_doc([_], []), do: ""
 
-  def output_values_doc(output) do
-    output_values =
-      Enum.map_join(output, "\n", fn pspec ->
+  def output_values_doc(required_out, optional_out) do
+    required_out_values =
+      Enum.map_join(required_out, "\n", fn pspec ->
+        "* #{pspec.param_name} - #{pspec.desc}. (`#{Macro.to_string(typespec(pspec))}`)"
+      end)
+
+    optional_out_values =
+      Enum.map_join(optional_out, "\n", fn pspec ->
         "* #{pspec.param_name} - #{pspec.desc}. (`#{Macro.to_string(typespec(pspec))}`)"
       end)
 
     """
-    ## Return value
-    List of terms
-    #{output_values}
+    ## Returns
+    Ordered values in the returned tuple
+    #{required_out_values}
+
+    ## Additional
+    Last value of the returned tuple, as keyword list
+    #{optional_out_values}
     """
   end
 
@@ -184,6 +242,10 @@ defmodule Vix.Vips.OperationHelper do
 
   defp typespec(%GParamSpec{spec_type: "GParamFlags"} = pspec) do
     type_name(pspec.value_type)
+  end
+
+  defp typespec(pspec_list) when is_list(pspec_list) do
+    Enum.map(pspec_list, &typespec/1)
   end
 
   defp typespec(pspec), do: Type.typespec(pspec)
@@ -230,55 +292,57 @@ defmodule Vix.Vips.Operation do
   Nif.nif_vips_operation_list()
   |> Enum.uniq()
   |> Enum.map(fn name ->
-    {desc, required, optional, output} = operation_args(name)
+    {desc, required_in, optional_in, required_out, optional_out} = operation_args(name)
 
     func_name = function_name(name)
-    func_args = Enum.map(required, &Macro.var(&1.param_name, __MODULE__))
-    input_args = Map.new(required ++ optional, &{&1.param_name, &1})
-    output_args = Map.new(output, &{&1.param_name, &1})
+    func_args = Enum.map(required_in, &Macro.var(&1.param_name, __MODULE__))
+    input_args = Map.new(required_in ++ optional_in, &{&1.param_name, &1})
+    required_out_args = Map.new(required_out, &{&1.param_name, &1})
+    optional_out_args = Map.new(optional_out, &{&1.param_name, &1})
 
-    nif_args =
-      Enum.map(required, fn pspec ->
+    nif_required_in_args =
+      Enum.map(required_in, fn pspec ->
         {Atom.to_charlist(pspec.param_name), Macro.var(pspec.param_name, __MODULE__)}
       end)
 
     @doc """
-    #{prepare_doc(desc, required, optional, output)}
+    #{prepare_doc(desc, required_in, optional_in, required_out, optional_out)}
     """
-    @spec unquote(func_typespec(func_name, required, optional, output))
+    @spec unquote(
+            func_typespec(
+              func_name,
+              required_in,
+              optional_in,
+              required_out,
+              optional_out
+            )
+          )
     def unquote(func_name)(unquote_splicing(func_args), optional \\ []) do
-      nif_optional_args =
+      nif_optional_in_args =
         Enum.map(optional, fn {name, value} ->
           {Atom.to_charlist(name), value}
         end)
 
-      nif_args =
-        (unquote(nif_args) ++ nif_optional_args)
-        |> Enum.map(fn {name, value} ->
-          param_spec = Map.get(unquote(Macro.escape(input_args)), List.to_atom(name))
-          {name, Type.cast(value, param_spec)}
-        end)
+      nif_in_args =
+        Enum.map(
+          unquote(nif_required_in_args) ++ nif_optional_in_args,
+          fn {name, value} ->
+            param_spec = Map.get(unquote(Macro.escape(input_args)), List.to_atom(name))
+            {name, Type.cast(value, param_spec)}
+          end
+        )
 
       result =
         Vix.Nif.nif_vips_operation_call(
           unquote(name),
-          nif_args
+          nif_in_args
         )
 
       case result do
-        {:ok, nif_output_terms} ->
-          res =
-            Enum.map(nif_output_terms, fn {name, out} ->
-              param_spec = Map.get(unquote(Macro.escape(output_args)), List.to_atom(name))
-              Type.to_erl_term(out, param_spec)
-            end)
-
-          case res do
-            # few operation are in-place, such as draw* operations
-            [] -> :ok
-            [term] -> {:ok, term}
-            list -> {:ok, list}
-          end
+        {:ok, nif_out_args} ->
+          required_out_args = unquote(Macro.escape(required_out_args))
+          optional_out_args = unquote(Macro.escape(optional_out_args))
+          normalize_output(nif_out_args, required_out_args, optional_out_args)
 
         {:error, term} ->
           {:error, term}
@@ -290,7 +354,15 @@ defmodule Vix.Vips.Operation do
     @doc """
     Same as `#{func_name}/#{length(func_args) + 1}`, except it returns only the value (not a tuple) and raises on error.
     """
-    @spec unquote(bang_func_typespec(bang_func_name, required, optional, output))
+    @spec unquote(
+            bang_func_typespec(
+              bang_func_name,
+              required_in,
+              optional_in,
+              required_out,
+              optional_out
+            )
+          )
     def unquote(bang_func_name)(unquote_splicing(func_args), optional \\ []) do
       case __MODULE__.unquote(func_name)(unquote_splicing(func_args), optional) do
         :ok -> :ok
