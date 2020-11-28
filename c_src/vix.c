@@ -83,6 +83,7 @@ static ErlNifFunc nif_funcs[] = {
     {"nif_vips_cache_get_max_files", 0, nif_vips_cache_get_max_files, 0},
     {"nif_vips_cache_set_max_mem", 1, nif_vips_cache_set_max_mem, 0},
     {"nif_vips_cache_get_max_mem", 0, nif_vips_cache_get_max_mem, 0},
+    {"nif_vips_version", 0, nif_vips_version, 0},
     {"nif_vips_shutdown", 0, nif_vips_shutdown, 0},
 
     /* VipsBoxed */

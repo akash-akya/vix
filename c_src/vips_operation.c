@@ -551,10 +551,23 @@ ERL_NIF_TERM nif_vips_cache_get_max_mem(ErlNifEnv *env, int argc,
 ERL_NIF_TERM nif_vips_shutdown(ErlNifEnv *env, int argc,
                                const ERL_NIF_TERM argv[]) {
   assert_argc(argc, 0);
-  vips_object_print_all();
   vips_shutdown();
   return ATOM_OK;
 }
+
+ERL_NIF_TERM nif_vips_version(ErlNifEnv *env, int argc,
+                              const ERL_NIF_TERM argv[]) {
+  assert_argc(argc, 0);
+  int major, minor, micro;
+
+  major = vips_version(0);
+  minor = vips_version(1);
+  micro = vips_version(2);
+
+  return enif_make_tuple3(env, enif_make_int(env, major),
+                          enif_make_int(env, minor), enif_make_int(env, micro));
+}
+
 static void *load_operation(GType type, void *a) {
   const char **names;
   gpointer g_class;

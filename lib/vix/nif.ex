@@ -70,6 +70,9 @@ defmodule Vix.Nif do
   def nif_vips_cache_get_max_mem(),
     do: :erlang.nif_error(:nif_library_not_loaded)
 
+  def nif_vips_version(),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
   def nif_vips_shutdown(),
     do: :erlang.nif_error(:nif_library_not_loaded)
 

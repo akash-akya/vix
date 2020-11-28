@@ -72,4 +72,13 @@ defmodule Vix.Vips do
   def cache_get_max_mem do
     Nif.nif_vips_cache_get_max_mem()
   end
+
+  @doc """
+  Get installed vips version
+  """
+  @spec version() :: String.t()
+  def version do
+    {major, minor, micro} = Nif.nif_vips_version()
+    "#{major}.#{minor}.#{micro}"
+  end
 end
