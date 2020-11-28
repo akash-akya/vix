@@ -24,7 +24,7 @@ defmodule Vix.Vips.Image do
   def default(nil), do: :unsupported
 
   @impl Type
-  def cast(value, _data), do: value
+  def to_nif_term(value, _data), do: value
 
   @impl Type
   def to_erl_term(value), do: value

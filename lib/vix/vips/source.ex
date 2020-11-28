@@ -19,7 +19,7 @@ defmodule Vix.Vips.Source do
   def default(nil), do: :unsupported
 
   @impl Type
-  def cast(_value, _data), do: raise("VipsSource is not implemented yet")
+  def to_nif_term(_value, _data), do: raise("VipsSource is not implemented yet")
 
   @impl Type
   def to_erl_term(_value), do: raise("VipsSource is not implemented yet")

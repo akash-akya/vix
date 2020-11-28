@@ -39,9 +39,9 @@ defmodule Vix.Vips.FlagHelper do
         def default(default), do: default
 
         @impl Type
-        def cast(flags, _data) do
+        def to_nif_term(flags, _data) do
           Enum.reduce(flags, 0, fn flag, value ->
-            value ||| cast(flag)
+            value ||| to_nif_term(flag)
           end)
         end
 
@@ -58,7 +58,7 @@ defmodule Vix.Vips.FlagHelper do
         unquote(
           Enum.map(flag, fn {name, value} ->
             quote do
-              defp cast(unquote(name)), do: unquote(value)
+              defp to_nif_term(unquote(name)), do: unquote(value)
 
               defp erl_term(unquote(value)), do: unquote(name)
             end

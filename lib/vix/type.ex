@@ -7,7 +7,7 @@ defmodule Vix.Type do
 
   @callback default(term) :: term()
 
-  @callback cast(term, term) :: term()
+  @callback to_nif_term(term, term) :: term()
 
   @callback to_erl_term(term) :: term()
 
@@ -19,8 +19,8 @@ defmodule Vix.Type do
     impl(pspec).default(pspec.data)
   end
 
-  def cast(value, pspec) do
-    impl(pspec).cast(value, pspec.data)
+  def to_nif_term(value, pspec) do
+    impl(pspec).to_nif_term(value, pspec.data)
   end
 
   def to_erl_term(value, pspec) do

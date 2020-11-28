@@ -41,7 +41,7 @@ defmodule Vix.Vips.EnumHelper do
           Enum.map(enum, fn {name, value} ->
             quote do
               @impl Type
-              def cast(unquote(name), _data), do: unquote(value)
+              def to_nif_term(unquote(name), _data), do: unquote(value)
 
               @impl Type
               def to_erl_term(unquote(value)), do: unquote(name)

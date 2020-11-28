@@ -14,7 +14,7 @@ defmodule Vix.GObject.Boolean do
   def default(default), do: default
 
   @impl Type
-  def cast(value, _data) do
+  def to_nif_term(value, _data) do
     case value do
       value when is_boolean(value) ->
         value

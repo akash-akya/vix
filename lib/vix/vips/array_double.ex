@@ -16,9 +16,9 @@ defmodule Vix.Vips.ArrayDouble do
   def default(nil), do: :unsupported
 
   @impl Type
-  def cast(value, data) do
+  def to_nif_term(value, data) do
     value
-    |> Enum.map(&Vix.GObject.Double.cast(&1, data))
+    |> Enum.map(&Vix.GObject.Double.to_nif_term(&1, data))
     |> Vix.Nif.nif_double_array()
   end
 

@@ -14,7 +14,7 @@ defmodule Vix.GObject.UInt64 do
   def default({_min, _max, default}), do: default
 
   @impl Type
-  def cast(value, data) do
+  def to_nif_term(value, data) do
     case value do
       value when is_integer(value) and value >= 0 ->
         validate_number_limits!(value, data)

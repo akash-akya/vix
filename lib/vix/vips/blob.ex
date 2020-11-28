@@ -19,7 +19,7 @@ defmodule Vix.Vips.Blob do
   def default(nil), do: :unsupported
 
   @impl Type
-  def cast(_value, _data), do: raise("VipsBlob is not implemented yet")
+  def to_nif_term(_value, _data), do: raise("VipsBlob is not implemented yet")
 
   @impl Type
   def to_erl_term(_value), do: raise("VipsBlob is not implemented yet")
