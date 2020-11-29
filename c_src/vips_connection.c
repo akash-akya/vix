@@ -8,81 +8,52 @@
 const int STATUS_PENDING = 0;
 const int STATUS_DONE = 1;
 
-typedef struct _VixCallback {
-  ErlNifPid *pid;
-  ErlNifMutex *lock;
-  ErlNifCond *cond;
-} VixCallback;
-
-static ERL_NIF_TERM new_vix_cb_result_term(ErlNifEnv *env, void *ptr,
-                                           int *status) {
-  ERL_NIF_TERM term;
-  VixCallbackResultResource *cb_r;
-
-  cb_r = enif_alloc_resource(VIX_CALLBACK_RESULT_RT,
-                             sizeof(VixCallbackResultResource));
-
-  status = STATUS_PENDING;
-
-  cb_r->status = status;
-  cb_r->result = ptr;
-
-  term = enif_make_resource(env, cb_r);
-  enif_release_resource(cb_r);
-
-  return term;
-}
-
-static int send_read_msg(ErlNifPid *pid, gint64 length, void *buffer,
-                         int *status) {
-  ErlNifEnv *env;
-  ERL_NIF_TERM term;
-  int res;
-
-  env = enif_alloc_env();
-
-  term = new_vix_cb_result_term(env, buffer, status);
-
-  msg = enif_make_tuple3(env, make_atom(env, "read"),
-                         enif_make_int64(env, length) term);
-
-  res = enif_send(NULL, pid, env, msg);
-
-  enif_free_env(env);
-  return res;
-}
-
 static gint64 read_from_erl(VipsSourceCustom *source, void *buffer,
                             gint64 length, void *user) {
-  size_t items;
-  VixCallback *cb;
+  ErlNifEnv *env;
+  VixCallbackResource *cb;
   ERL_NIF_TERM msg;
-  int res;
-  int status = STATUS_PENDING;
+  ErlNifPid *pid;
+  gint64 read_length;
 
-  cb = (VixCallback *)user;
+  pid = (ErlNifPid *)user;
+  env = enif_alloc_env();
+
+  cb = enif_alloc_resource(VIX_CALLBACK_RT, sizeof(VixCallbackResource));
+
+  cb->lock = enif_mutex_create("vix:source_mutex");
+  cb->cond = enif_cond_create("vix:source_cond");
+  cb->status = STATUS_PENDING;
+  cb->result = buffer;
 
   enif_mutex_lock(cb->lock);
 
-  debug("size: %d", length);
+  msg = enif_make_tuple3(env, make_atom(env, "read"),
+                         enif_make_int64(env, length),
+                         enif_make_resource(env, cb));
 
-  res = send_read_msg(pid, length, buffer, &status);
-
-  if (!res) {
+  if (!enif_send(NULL, pid, env, msg)) {
     error("failed to send message");
-    goto exit;
+    enif_release_resource(cb);
+    return -1;
   }
 
-  debug("sent msg", items);
-
-  while (status == PENDING)
+  while (cb->status == STATUS_PENDING)
     enif_cond_wait(cb->cond, cb->lock);
 
-  debug("read", items);
+  read_length = cb->size;
 
-exit:
   enif_mutex_unlock(cb->lock);
-  return (items);
+
+  if (read_length < length) {
+    enif_send(NULL, pid, env, make_atom(env, "close"));
+    g_free(pid);
+  }
+
+  enif_release_resource(cb);
+  enif_free_env(env);
+
+  return read_length;
 }
 
 static gint64 seek_from_erl(VipsSourceCustom *source, gint64 pos, int whence,
@@ -95,62 +66,61 @@ ERL_NIF_TERM nif_vips_source_new(ErlNifEnv *env, int argc,
   assert_argc(argc, 0);
 
   VipsSourceCustom *source;
-  ErlNifPid pid;
-  VixCallback *cb;
-  ErlNifMutex *lock;
+  ErlNifPid *pid;
 
-  if (!enif_self(env, &pid))
+  pid = g_new(ErlNifPid, 1);
+
+  if (!enif_self(env, pid))
     return make_error(env, "failed to create vips source");
-
-  lock = enif_mutex_create("vix:source");
-
-  cb = g_new(VixCallback, 1);
-
-  cb->pid = pid;
-  cb->lock = lock;
 
   source = vips_source_custom_new();
 
-  g_signal_connect(source, "read", G_CALLBACK(read_from_erl), cb);
-  g_signal_connect(source, "seek", G_CALLBACK(seek_from_erl), conn);
+  g_signal_connect(source, "read", G_CALLBACK(read_from_erl), pid);
+  g_signal_connect(source, "seek", G_CALLBACK(seek_from_erl), pid);
 
-  return make_ok(env, g_object_to_erl_term(env, source));
+  return make_ok(env, g_object_to_erl_term(env, (GObject *)source));
 }
 
 ERL_NIF_TERM nif_vips_conn_write_result(ErlNifEnv *env, int argc,
                                         const ERL_NIF_TERM argv[]) {
   assert_argc(argc, 2);
 
-  VipsSourceCustom *source;
-  ErlNifPid pid;
-  VixCallback *cb;
-  ErlNifMutex *lock;
+  VixCallbackResource *cb;
+  ErlNifBinary bin;
 
-  if (!enif_self(env, &pid))
-    return make_error(env, "failed to create vips source");
+  if (!enif_inspect_binary(env, argv[0], &bin)) {
+    return make_error(env, "failed to get binary");
+  }
 
-  lock = enif_mutex_create("vix:source");
+  if (!enif_get_resource(env, argv[1], VIX_CALLBACK_RT, (void **)&cb)) {
+    return make_error(env, "failed to get result term");
+  }
 
-  cb = g_new(VixCallback, 1);
+  enif_mutex_lock(cb->lock);
 
-  cb->pid = pid;
-  cb->lock = lock;
+  memcpy(cb->result, bin.data, bin.size);
 
-  return make_ok(env, g_object_to_erl_term(env, source));
+  cb->size = bin.size;
+  cb->status = STATUS_DONE;
+
+  enif_cond_signal(cb->cond);
+  enif_mutex_unlock(cb->lock);
+
+  return ATOM_OK;
 }
 
 static void vix_callback_dtor(ErlNifEnv *env, void *obj) {
-  debug("VixCallbackResultResource dtor");
+  debug("VixCallbackResource dtor");
 }
 
 int nif_vips_connection_init(ErlNifEnv *env) {
-  VIX_CALLBACK_RESULT_RT =
-      enif_open_resource_type(env, NULL, "vix_callback_result_resource",
+  VIX_CALLBACK_RT =
+      enif_open_resource_type(env, NULL, "vix_callback_resource",
                               (ErlNifResourceDtor *)vix_callback_dtor,
                               ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER, NULL);
 
-  if (!VIX_CALLBACK_RESULT_RT) {
-    error("Failed to open vix_callback_result_resource);
+  if (!VIX_CALLBACK_RT) {
+    error("Failed to open vix_callback_resource");
     return 1;
   }
 

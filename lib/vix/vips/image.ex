@@ -113,6 +113,10 @@ defmodule Vix.Vips.Image do
     Nif.nif_image_new_matrix_from_array(width, height, flatten_list(list), scale, offset)
   end
 
+  def new_from_source(source) do
+    Nif.nif_image_new_from_source(source)
+  end
+
   defp normalize_string(str) when is_binary(str), do: to_charlist(str)
 
   defp normalize_string(str) when is_list(str), do: str

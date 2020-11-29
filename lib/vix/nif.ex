@@ -18,6 +18,8 @@ defmodule Vix.Nif do
   # VipsImage
   def nif_image_new_from_file(_src), do: :erlang.nif_error(:nif_library_not_loaded)
 
+  def nif_image_new_from_source(_source), do: :erlang.nif_error(:nif_library_not_loaded)
+
   def nif_image_write_to_file(_vips_image, _dst),
     do: :erlang.nif_error(:nif_library_not_loaded)
 
@@ -28,6 +30,9 @@ defmodule Vix.Nif do
     do: :erlang.nif_error(:nif_library_not_loaded)
 
   def nif_image_new_matrix_from_array(_height, _width, _list, _scale, _offset),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
+  def nif_image_write_to_file_thread(_vips_image, _dst),
     do: :erlang.nif_error(:nif_library_not_loaded)
 
   # VipsOperation
@@ -93,5 +98,12 @@ defmodule Vix.Nif do
     do: :erlang.nif_error(:nif_library_not_loaded)
 
   def nif_vips_image_array_to_erl_list(_vips_image_array),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
+  # VipsConnection
+  def nif_vips_source_new(),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
+  def nif_vips_conn_write_result(_bin, _result),
     do: :erlang.nif_error(:nif_library_not_loaded)
 end

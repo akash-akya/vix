@@ -9,6 +9,7 @@
 #include "g_object/g_param_spec.h"
 #include "g_object/g_type.h"
 #include "vips_boxed.h"
+#include "vips_connection.h"
 #include "vips_image.h"
 #include "vips_operation.h"
 
@@ -42,6 +43,9 @@ static int on_load(ErlNifEnv *env, void **priv, ERL_NIF_TERM load_info) {
   if (nif_vips_operation_init(env))
     return 1;
 
+  if (nif_vips_connection_init(env))
+    return 1;
+
   return 0;
 }
 
@@ -56,10 +60,14 @@ static ErlNifFunc nif_funcs[] = {
     /* VipsImage */
     {"nif_image_new_from_file", 1, nif_image_new_from_file,
      ERL_NIF_DIRTY_JOB_IO_BOUND},
+    {"nif_image_new_from_source", 1, nif_image_new_from_source,
+     ERL_NIF_DIRTY_JOB_IO_BOUND},
     {"nif_image_write_to_file", 2, nif_image_write_to_file,
      ERL_NIF_DIRTY_JOB_IO_BOUND},
     {"nif_image_new", 0, nif_image_new, ERL_NIF_DIRTY_JOB_CPU_BOUND},
     {"nif_image_new_temp_file", 1, nif_image_new_temp_file,
+     ERL_NIF_DIRTY_JOB_IO_BOUND},
+    {"nif_image_write_to_file_thread", 2, nif_image_write_to_file_thread,
      ERL_NIF_DIRTY_JOB_IO_BOUND},
     {"nif_image_new_matrix_from_array", 5, nif_image_new_matrix_from_array, 0},
 
@@ -94,6 +102,10 @@ static ErlNifFunc nif_funcs[] = {
     {"nif_vips_double_array_to_erl_list", 1, nif_vips_double_array_to_erl_list,
      0},
     {"nif_vips_image_array_to_erl_list", 1, nif_vips_image_array_to_erl_list,
-     0}};
+     0},
+
+    /* VipsConnection */
+    {"nif_vips_source_new", 0, nif_vips_source_new, 0},
+    {"nif_vips_conn_write_result", 2, nif_vips_conn_write_result, 0}};
 
 ERL_NIF_INIT(Elixir.Vix.Nif, nif_funcs, &on_load, NULL, NULL, NULL)

@@ -37,6 +37,35 @@ exit:
   return ret;
 }
 
+ERL_NIF_TERM nif_image_new_from_source(ErlNifEnv *env, int argc,
+                                       const ERL_NIF_TERM argv[]) {
+  assert_argc(argc, 1);
+
+  VipsImage *image;
+  VipsSource *source;
+  ErlNifTime start;
+  ERL_NIF_TERM ret;
+
+  start = enif_monotonic_time(ERL_NIF_USEC);
+
+  if (!erl_term_to_g_object(env, argv[0], (GObject **)&source)) {
+    ret = make_error(env, "Failed to get VipsSource");
+    goto exit;
+  }
+
+  if (!(image = vips_image_new_from_source(VIPS_SOURCE(source), "", "access",
+                                           VIPS_ACCESS_SEQUENTIAL, NULL))) {
+    ret = make_error(env, "unable to read image");
+    goto exit;
+  }
+
+  ret = make_ok(env, g_object_to_erl_term(env, (GObject *)image));
+
+exit:
+  notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
+  return ret;
+}
+
 ERL_NIF_TERM nif_image_write_to_file(ErlNifEnv *env, int argc,
                                      const ERL_NIF_TERM argv[]) {
   assert_argc(argc, 2);

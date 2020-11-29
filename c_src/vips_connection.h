@@ -3,11 +3,23 @@
 
 #include "erl_nif.h"
 
-ErlNifResourceType *VIX_CALLBACK_RESULT_RT;
+ErlNifResourceType *VIX_CALLBACK_RT;
 
-typedef struct _VixCallbackResultResource {
-  int *status;
+typedef struct _VixCallbackResource {
+  ErlNifMutex *lock;
+  ErlNifCond *cond;
+
+  gint64 size;
   void *result;
-} VixCallbackResultResource;
+  int status;
+} VixCallbackResource;
+
+ERL_NIF_TERM nif_vips_source_new(ErlNifEnv *env, int argc,
+                                 const ERL_NIF_TERM argv[]);
+
+ERL_NIF_TERM nif_vips_conn_write_result(ErlNifEnv *env, int argc,
+                                        const ERL_NIF_TERM argv[]);
+
+int nif_vips_connection_init(ErlNifEnv *env);
 
 #endif
