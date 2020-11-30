@@ -242,38 +242,3 @@ exit:
   notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
   return ret;
 }
-
-ERL_NIF_TERM nif_image_write_to_file_thread(ErlNifEnv *env, int argc,
-                                            const ERL_NIF_TERM argv[]) {
-  assert_argc(argc, 2);
-
-  char dst[VIPS_PATH_MAX];
-  VipsImage *image;
-  ErlNifTime start;
-  ERL_NIF_TERM ret;
-
-  start = enif_monotonic_time(ERL_NIF_USEC);
-
-  if (!erl_term_to_g_object(env, argv[0], (GObject **)&image)) {
-    ret = make_error(env, "Failed to get VipsImage");
-    goto exit;
-  }
-
-  if (enif_get_string(env, argv[1], dst, VIPS_PATH_MAX, ERL_NIF_LATIN1) < 0) {
-    ret = make_error(env, "Failed to get destination path");
-    goto exit;
-  }
-
-  if (vips_image_write_to_file(image, dst, NULL)) {
-    error("Failed to write VipsImage. error: %s", vips_error_buffer());
-    vips_error_clear();
-    ret = make_error(env, "Failed to write VipsImage");
-    goto exit;
-  }
-
-  ret = ATOM_OK;
-
-exit:
-  notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
-  return ret;
-}

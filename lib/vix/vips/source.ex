@@ -9,7 +9,7 @@ defmodule Vix.Vips.Source do
 
     alias Vix.Nif
 
-    # TODO: unblock
+    # TODO: unblock caller if its waiting for callback to write
     def start_link(state) do
       GenServer.start(__MODULE__, state)
     end
@@ -48,7 +48,8 @@ defmodule Vix.Vips.Source do
       end
     end
 
-    # Note that this does *NOT always* gauratee cleanup, for true cleanup we have to monitor or link
+    # Note that this does *NOT always* gauratee cleanup, for gaurateed
+    # cleanup we have to monitor or link
     @impl true
     def terminate(_reason, %{after_fun: after_fun, acc: acc} = state) do
       _acc = after_fun.(acc)
