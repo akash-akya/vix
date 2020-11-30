@@ -105,7 +105,7 @@ static ErlNifFunc nif_funcs[] = {
      0},
 
     /* VipsConnection */
-    {"nif_vips_source_new", 0, nif_vips_source_new, 0},
+    {"nif_vips_source_new", 1, nif_vips_source_new, 0},
     {"nif_vips_conn_write_result", 2, nif_vips_conn_write_result, 0}};
 
 ERL_NIF_INIT(Elixir.Vix.Nif, nif_funcs, &on_load, NULL, NULL, NULL)

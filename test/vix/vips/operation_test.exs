@@ -1,5 +1,5 @@
 defmodule Vix.Vips.OperationTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   alias Vix.Vips.Image
   alias Vix.Vips.Operation
 
@@ -57,7 +57,7 @@ defmodule Vix.Vips.OperationTest do
     assert_files_equal(img_path("conv_puppies.jpg"), out_path)
   end
 
-  test "additional return values", %{dir: dir} do
+  test "additional return values", %{dir: _dir} do
     {:ok, im} = Image.new_from_file(img_path("black_on_white.jpg"))
 
     assert {:ok, {0, [x: _, y: _, "out-array": [0.0], "x-array": [_ | _], "y-array": [_ | _]]}} =

@@ -15,8 +15,8 @@ static ERL_NIF_TERM build_read_message(ErlNifEnv *env, gint64 length,
                           enif_make_resource(env, cb));
 }
 
-static gint64 read_from_erl(VipsSourceCustom *source, void *buffer,
-                            gint64 length, void *user) {
+static gint64 read_data(VipsSourceCustom *source, void *buffer, gint64 length,
+                        void *user) {
   ErlNifEnv *env;
   VixCallbackResource *cb;
   gint64 read;
@@ -43,7 +43,6 @@ static gint64 read_from_erl(VipsSourceCustom *source, void *buffer,
   enif_mutex_unlock(cb->lock);
 
   if (read < length) {
-    enif_send(NULL, &cb->pid, env, make_atom(env, "close"));
     enif_release_resource(cb);
   }
 
@@ -58,32 +57,10 @@ error_exit:
   return -1;
 }
 
-static gint64 seek_from_erl(VipsSourceCustom *source, gint64 pos, int whence,
-                            void *user) {
+// We dont support seek for any source
+static gint64 seek_data(VipsSourceCustom *source, gint64 pos, int whence,
+                        void *user) {
   return -1;
-}
-
-ERL_NIF_TERM nif_vips_source_new(ErlNifEnv *env, int argc,
-                                 const ERL_NIF_TERM argv[]) {
-  assert_argc(argc, 0);
-
-  VipsSourceCustom *source;
-  VixCallbackResource *cb;
-
-  cb = enif_alloc_resource(VIX_CALLBACK_RT, sizeof(VixCallbackResource));
-
-  cb->lock = enif_mutex_create("vix:vips_source_mutex");
-  cb->cond = enif_cond_create("vix:vips_source_cond");
-
-  if (!enif_self(env, &cb->pid))
-    return make_error(env, "failed to create vips source");
-
-  source = vips_source_custom_new();
-
-  g_signal_connect(source, "read", G_CALLBACK(read_from_erl), cb);
-  g_signal_connect(source, "seek", G_CALLBACK(seek_from_erl), cb);
-
-  return make_ok(env, g_object_to_erl_term(env, (GObject *)source));
 }
 
 ERL_NIF_TERM nif_vips_conn_write_result(ErlNifEnv *env, int argc,
@@ -112,6 +89,51 @@ ERL_NIF_TERM nif_vips_conn_write_result(ErlNifEnv *env, int argc,
   enif_mutex_unlock(cb->lock);
 
   return ATOM_OK;
+}
+
+/*
+  VipsConnection requires blocking c callbacks to implemented. If we want to
+  hook it up with elixir streams, we need a way to synchronously call elixir
+  function from c function.
+
+     void func() {
+       ...
+       result = call_elixir_function();
+       ...
+       return result;
+     }
+
+  We try to acheive this using the combination of mutex, conditional-variables
+  and process-message:
+   - have a designated beam-process tied to the vips-connection
+   - lock the mutex and send a message from vips thread with a c-pointer as
+  resource, wait for beam-process to handle and write result
+   - upon receiving message, beam-process calls the callback and writes the
+  result using a nif call
+   - caller thread gets notified and returns the result
+*/
+ERL_NIF_TERM nif_vips_source_new(ErlNifEnv *env, int argc,
+                                 const ERL_NIF_TERM argv[]) {
+  assert_argc(argc, 1);
+
+  VipsSourceCustom *source;
+  VixCallbackResource *cb;
+
+  cb = enif_alloc_resource(VIX_CALLBACK_RT, sizeof(VixCallbackResource));
+
+  if (!enif_get_local_pid(env, argv[0], &cb->pid)) {
+    return make_error(env, "failed to get pid");
+  }
+
+  cb->lock = enif_mutex_create("vix:vips_source_mutex");
+  cb->cond = enif_cond_create("vix:vips_source_cond");
+
+  source = vips_source_custom_new();
+
+  g_signal_connect(source, "read", G_CALLBACK(read_data), cb);
+  g_signal_connect(source, "seek", G_CALLBACK(seek_data), cb);
+
+  return make_ok(env, g_object_to_erl_term(env, (GObject *)source));
 }
 
 static void vix_callback_dtor(ErlNifEnv *env, void *obj) {
