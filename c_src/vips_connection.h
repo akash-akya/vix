@@ -6,6 +6,7 @@
 ErlNifResourceType *VIX_CALLBACK_RT;
 
 typedef struct _VixCallbackResource {
+  ErlNifPid pid;
   ErlNifMutex *lock;
   ErlNifCond *cond;
 

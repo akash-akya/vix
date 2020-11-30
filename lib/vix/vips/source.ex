@@ -64,7 +64,6 @@ defmodule Vix.Vips.Source do
   @impl true
   def handle_info({:read, length, result}, state) do
     {:ok, data} = :file.read(state.handle, length)
-    # IO.puts("--> writing #{length} - #{IO.iodata_length(data)}")
     :ok = Nif.nif_vips_conn_write_result(data, result)
     {:noreply, state}
   end
