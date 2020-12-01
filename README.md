@@ -2,7 +2,7 @@
 
 Vix is Elixir extension for [vips](https://libvips.github.io/libvips/).
 
-Vix is a **NIF bindings** for libvips. Operation binding are generated using GObject introspection, so documentation and bindings are up-to-date with the vips version installed. It uses dirty IO scheduler to avoid blocking schedulers.
+Vix is a **NIF bindings** for libvips. Operation binding are generated using vips introspection, so documentation and bindings are up-to-date with the vips version installed. It uses dirty IO scheduler to avoid blocking schedulers.
 
 Check [vips operation documentation](https://hexdocs.pm/vix/Vix.Vips.Operation.html) for the list of available operations and spec.
 
@@ -88,5 +88,5 @@ end
 
 ### TODO
 - [ ] support `VipsConnection`
-- [ ] move GObject-introspection to a separate library
+- [ ] move GObject related functionality to a separate library
 - [ ] support all remaining vips types

@@ -271,7 +271,7 @@ defmodule Vix.Vips.Operation do
   @moduledoc """
   Vips Operations
 
-  NOTE: Vips operation functions are generated using GObject-introspection, so the bindings are up-to-date with vips version installed. Documentation in the hexdocs might *not* match for you.
+  NOTE: Vips operation functions are generated using vips-introspection, so the bindings are up-to-date with vips version installed. Documentation in the hexdocs might *not* match for you.
   """
 
   import Vix.Vips.OperationHelper
