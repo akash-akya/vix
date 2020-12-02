@@ -6,8 +6,13 @@ defmodule Vix.Vips.Source do
   defmodule Callback do
     @moduledoc false
     use GenServer
+    require Logger
 
     alias Vix.Nif
+
+    defmodule State do
+      defstruct [:read_fun, :after_fun, :source, :acc]
+    end
 
     # TODO: unblock caller if its waiting for callback to write
     def start_link(state) do
@@ -15,49 +20,64 @@ defmodule Vix.Vips.Source do
     end
 
     @impl true
-    def init(state) do
-      Process.flag(:trap_exit, true)
-      {:ok, state, {:continue, nil}}
-    end
-
-    @impl true
-    def handle_continue(nil, %{start_fun: start_fun} = state) do
+    def init(%{start_fun: start_fun, read_fun: read_fun, after_fun: after_fun}) do
+      {:ok, source} = Nif.nif_vips_source_new(self())
       acc = start_fun.()
-      {:noreply, Map.put(state, :acc, acc)}
+
+      state = %State{
+        read_fun: read_fun,
+        after_fun: after_fun,
+        source: source,
+        acc: acc
+      }
+
+      {:ok, state}
     end
 
     @impl true
-    def handle_info({:read, length, cb_term}, %{read_fun: read_fun, acc: acc} = state) do
-      case read_fun.(acc, length) do
-        {:halt, acc} ->
-          :ok = Nif.nif_vips_conn_write_result(<<>>, cb_term)
-          {:stop, :normal, %{state | acc: acc}}
+    def handle_call(:source, _from, %State{source: source} = state) do
+      {:reply, source, state}
+    end
 
-        {bin, acc} when is_binary(bin) ->
-          # if returned data is < request then we assume its eof
-          if IO.iodata_length(bin) < length do
-            :ok = Nif.nif_vips_conn_write_result(bin, cb_term)
-            {:stop, :normal, %{state | acc: acc}}
-          else
-            :ok = Nif.nif_vips_conn_write_result(bin, cb_term)
-            {:noreply, %{state | acc: acc}}
-          end
-
-        {_term, acc} ->
-          {:stop, :invalid_return_value, %{state | acc: acc}}
-      end
+    @impl true
+    def handle_info(cmd, %State{} = state) do
+      handle_cmd(cmd, state)
     end
 
     # Note that this does *NOT always* gauratee cleanup, for gaurateed
     # cleanup we have to monitor or link
     @impl true
-    def terminate(_reason, %{after_fun: after_fun, acc: acc} = state) do
-      _acc = after_fun.(acc)
-      state
+    def terminate(_reason, state) do
+      state.after_fun.(state.acc)
     end
 
-    @impl true
-    def terminate(_reason, state), do: state
+    defp handle_cmd(:close, state) do
+      {:stop, :normal, state}
+    end
+
+    defp handle_cmd(
+           {:read, length, cb_state},
+           %State{read_fun: read_fun, acc: acc} = state
+         ) do
+      case read_fun.(acc, length) do
+        {:halt, acc} ->
+          :ok = Nif.nif_vips_conn_write_result(<<>>, cb_state)
+          {:stop, :normal, %State{state | acc: acc}}
+
+        {bin, acc} when is_binary(bin) ->
+          # if returned data is < request then we assume its eof
+          if IO.iodata_length(bin) < length do
+            :ok = Nif.nif_vips_conn_write_result(bin, cb_state)
+            {:stop, :normal, %State{state | acc: acc}}
+          else
+            :ok = Nif.nif_vips_conn_write_result(bin, cb_state)
+            {:noreply, %State{state | acc: acc}}
+          end
+
+        {_term, acc} ->
+          {:stop, :invalid_return_value, %State{state | acc: acc}}
+      end
+    end
   end
 
   alias Vix.Type
@@ -86,13 +106,7 @@ defmodule Vix.Vips.Source do
     {:ok, pid} =
       Callback.start_link(%{start_fun: start_fun, read_fun: read_fun, after_fun: after_fun})
 
-    case Nif.nif_vips_source_new(pid) do
-      {:ok, source} ->
-        {:ok, source}
-
-      error ->
-        :ok = GenServer.stop(pid, :normal)
-        error
-    end
+    source = GenServer.call(pid, :source)
+    {:ok, source}
   end
 end

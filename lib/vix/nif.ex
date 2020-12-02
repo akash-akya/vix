@@ -101,6 +101,6 @@ defmodule Vix.Nif do
   def nif_vips_source_new(_callback_pid),
     do: :erlang.nif_error(:nif_library_not_loaded)
 
-  def nif_vips_conn_write_result(_bin, _result),
+  def nif_vips_conn_write_result(_bin, _cb_state),
     do: :erlang.nif_error(:nif_library_not_loaded)
 end

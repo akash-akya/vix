@@ -21,7 +21,7 @@ ERL_NIF_TERM nif_image_new_from_file(ErlNifEnv *env, int argc,
     goto exit;
   }
 
-  image = vips_image_new_from_file(src, NULL);
+  image = vips_image_new_from_file(src, "fail", TRUE, NULL);
 
   if (!image) {
     error("Failed to read image. error: %s", vips_error_buffer());
@@ -54,7 +54,8 @@ ERL_NIF_TERM nif_image_new_from_source(ErlNifEnv *env, int argc,
   }
 
   if (!(image = vips_image_new_from_source(VIPS_SOURCE(source), "", "access",
-                                           VIPS_ACCESS_SEQUENTIAL, NULL))) {
+                                           VIPS_ACCESS_SEQUENTIAL, "fail", TRUE,
+                                           NULL))) {
     ret = make_error(env, "unable to read image");
     goto exit;
   }
