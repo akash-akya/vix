@@ -15,7 +15,7 @@ jobs:
         with:
           otp-version: ${{matrix.otp}}
           elixir-version: ${{matrix.elixir}}
-
+      - run: elixir -v
       - name: Checkout vix
         uses: actions/checkout@v2
 
