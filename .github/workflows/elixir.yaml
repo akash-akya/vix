@@ -11,7 +11,7 @@ jobs:
         otp: [22.2]
         elixir: [1.9.4]
     steps:
-      - uses: actions/setup-elixir@v1
+      - uses: erlef/setup-beam@v1
         with:
           otp-version: ${{matrix.otp}}
           elixir-version: ${{matrix.elixir}}
