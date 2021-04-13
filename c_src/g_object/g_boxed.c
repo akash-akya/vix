@@ -5,6 +5,8 @@
 #include "g_boxed.h"
 #include "g_object.h"
 
+ErlNifResourceType *G_BOXED_RT;
+
 bool erl_term_to_g_boxed(ErlNifEnv *env, ERL_NIF_TERM term, gpointer *ptr) {
   GBoxedResource *boxed_r = NULL;
 

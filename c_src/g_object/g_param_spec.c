@@ -6,6 +6,8 @@
 
 #include "g_param_spec.h"
 
+ErlNifResourceType *G_PARAM_SPEC_RT;
+
 /* elixir/erlang does not support infinity, use extreme values
    instead */
 static double clamp_double(double value) {
