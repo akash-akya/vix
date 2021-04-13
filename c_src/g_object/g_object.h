@@ -5,7 +5,7 @@
 #include <glib-object.h>
 #include <stdbool.h>
 
-ErlNifResourceType *G_OBJECT_RT;
+extern ErlNifResourceType *G_OBJECT_RT;
 
 typedef struct _GObjectResource {
   GObject *obj;

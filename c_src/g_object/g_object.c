@@ -4,6 +4,8 @@
 
 #include "g_object.h"
 
+ErlNifResourceType *G_OBJECT_RT;
+
 // Ownership is traferred to beam resource, `obj` must *not* be freed
 // by the caller
 ERL_NIF_TERM g_object_to_erl_term(ErlNifEnv *env, GObject *obj) {

@@ -5,7 +5,7 @@
 #include <glib-object.h>
 #include <stdbool.h>
 
-ErlNifResourceType *G_PARAM_SPEC_RT;
+extern ErlNifResourceType *G_PARAM_SPEC_RT;
 
 typedef struct _GParamSpecResource {
   GParamSpec *pspec;

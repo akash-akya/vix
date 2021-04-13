@@ -4,7 +4,7 @@
 #include "erl_nif.h"
 #include <glib-object.h>
 
-ErlNifResourceType *G_TYPE_RT;
+extern ErlNifResourceType *G_TYPE_RT;
 
 /* Not really need, since GType is mostly an int */
 typedef struct _GTypeResource {

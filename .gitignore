@@ -29,3 +29,9 @@ eips-*.tar
 /*.png
 
 .dir-locals.el
+
+# Ignore compilation files
+
+/priv
+
+*.o

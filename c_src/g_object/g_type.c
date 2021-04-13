@@ -6,6 +6,8 @@
 #include "g_object.h"
 #include "g_type.h"
 
+ErlNifResourceType *G_TYPE_RT;
+
 static ERL_NIF_TERM g_type_to_erl_term(ErlNifEnv *env, GType type) {
   GTypeResource *gtype_r;
   ERL_NIF_TERM term;

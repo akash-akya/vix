@@ -5,7 +5,7 @@
 #include <glib-object.h>
 #include <stdbool.h>
 
-ErlNifResourceType *G_BOXED_RT;
+extern ErlNifResourceType *G_BOXED_RT;
 
 typedef struct _GBoxedResource {
   GType boxed_type;
