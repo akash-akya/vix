@@ -62,6 +62,9 @@ static ErlNifFunc nif_funcs[] = {
     {"nif_image_new_temp_file", 1, nif_image_new_temp_file,
      ERL_NIF_DIRTY_JOB_IO_BOUND},
     {"nif_image_new_matrix_from_array", 5, nif_image_new_matrix_from_array, 0},
+    {"nif_image_get_fields", 1, nif_image_get_fields, 0},
+    {"nif_image_get_header", 2, nif_image_get_header, 0},
+    {"nif_image_get_as_string", 2, nif_image_get_as_string, 0},
 
     /* VipsOperation */
     /* should these be ERL_NIF_DIRTY_JOB_IO_BOUND? */

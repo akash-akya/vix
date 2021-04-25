@@ -29,4 +29,41 @@ defmodule Vix.Vips.ImageTest do
     assert {:ok, mat} =
              Image.new_matrix_from_array(3, 3, [[-1, -1, -1], [-1, 16, -1], [-1, -1, -1]])
   end
+
+  test "get_fields", %{dir: _dir} do
+    {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
+    assert {:ok, fields} = Image.header_field_names(im)
+
+    assert Enum.all?(
+             [
+               "vips-loader",
+               "filename",
+               "yres",
+               "xres",
+               "yoffset",
+               "xoffset",
+               "bands",
+               "height",
+               "width"
+             ],
+             &Enum.member?(fields, &1)
+           )
+  end
+
+  test "get_header", %{dir: _dir} do
+    {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
+    assert {:ok, 518} = Image.header_value(im, "width")
+  end
+
+  test "get_as_string", %{dir: _dir} do
+    {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
+
+    assert {:ok, "((VipsInterpretation) VIPS_INTERPRETATION_sRGB)"} =
+             Image.header_value_as_string(im, "interpretation")
+  end
+
+  test "macro generated function", %{dir: _dir} do
+    {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
+    assert {:ok, 518} = Image.width(im)
+  end
 end

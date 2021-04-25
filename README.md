@@ -2,7 +2,7 @@
 
 Vix is Elixir extension for [vips](https://libvips.github.io/libvips/).
 
-Vix is a **NIF bindings** for libvips. Operation binding are generated using vips introspection, so documentation and bindings are up-to-date with the vips version installed. It uses dirty IO scheduler to avoid blocking schedulers.
+Vix is a **NIF bindings** for libvips. Image Operation binding are generated using vips introspection, so documentation and bindings will be in-sync with the vips version installed. It uses dirty IO scheduler to avoid blocking main schedulers.
 
 Check [vips operation documentation](https://hexdocs.pm/vix/Vix.Vips.Operation.html) for the list of available operations and spec.
 
@@ -64,11 +64,11 @@ For generating thumbnail
 | 4 | 31.339ms  | 604.712ms |
 | 5 | 32.526ms  | 605.553ms |
 
-Notice that the gain is significant for the subsequent calls to the operation since vips [caches the operations](https://libvips.github.io/libvips/API/current/VipsOperation.html).
+The significant reduction in operation-time for subsequent calls is because of [operation caching](https://libvips.github.io/libvips/API/current/VipsOperation.html) in vips.
 
 ### Warning
 
-This library is experimental, untested, and unstable. Interface might change significantly in the future versions. The code is not well tested or optimized, so you might experience crashes.
+This library is experimental. Interface might change significantly in the future versions. The code is not well tested, so you might experience crashes.
 
 ### Requirements
 
@@ -87,6 +87,5 @@ end
 ```
 
 ### TODO
-- [ ] support `VipsConnection`
-- [ ] move GObject related functionality to a separate library
+- [ ] support `VipsConnection`(?)
 - [ ] support all remaining vips types
