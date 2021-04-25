@@ -126,9 +126,9 @@ defmodule Vix.Vips.Image do
   @doc """
   Get image header value.
 
-  This is generic method to get header value.
+  This is a generic function to get header value.
 
-  Returned value is casted to appropriate type. Currently only supports values of type integer, float, string and list of integer values. Use `Vix.Vips.Image.header_value_as_string/2` to get any value as string
+  Casts the value to appropriate type. Currently it only supports values of type integer, float, string and list of integer values. Use `Vix.Vips.Image.header_value_as_string/2` to get string representation of any header value.
 
   ```elixir
   {:ok, width} = Image.header_value(vips_image, "width")
@@ -143,7 +143,7 @@ defmodule Vix.Vips.Image do
   @doc """
   Get image header value as string.
 
-  This is generic method to get header value. It always returns value as string. If value is VipsBlob, then it returns base64 encoded data.
+  This is generic method to get string representation of a header value. If value is VipsBlob, then it returns base64 encoded data.
 
   See: https://libvips.github.io/libvips/API/current/libvips-header.html#vips-image-get-as-string
   """
