@@ -113,6 +113,62 @@ defmodule Vix.Vips.Image do
     Nif.nif_image_new_matrix_from_array(width, height, flatten_list(list), scale, offset)
   end
 
+  @doc """
+  Get all image header field names.
+
+  See https://libvips.github.io/libvips/API/current/libvips-header.html#vips-image-get-fields for more details
+  """
+  @spec header_field_names(__MODULE__.t()) :: {:ok, [String.t()]} | {:error, term()}
+  def header_field_names(vips_image) do
+    Nif.nif_image_get_fields(vips_image)
+  end
+
+  @doc """
+  Get image header value.
+
+  This is generic method to get header value.
+
+  Returned value is casted to appropriate type. Currently only supports values of type integer, float, string and list of integer values. Use `Vix.Vips.Image.header_value_as_string/2` to get any value as string
+
+  ```elixir
+  {:ok, width} = Image.header_value(vips_image, "width")
+  ```
+  """
+  @spec header_value(__MODULE__.t(), String.t()) ::
+          {:ok, integer() | float() | String.t() | [integer()]} | {:error, term()}
+  def header_value(vips_image, name) do
+    Nif.nif_image_get_header(vips_image, normalize_string(name))
+  end
+
+  @doc """
+  Get image header value as string.
+
+  This is generic method to get header value. It always returns value as string. If value is VipsBlob, then it returns base64 encoded data.
+
+  See: https://libvips.github.io/libvips/API/current/libvips-header.html#vips-image-get-as-string
+  """
+  @spec header_value_as_string(__MODULE__.t(), String.t()) :: {:ok, String.t()} | {:error, term()}
+  def header_value_as_string(vips_image, name) do
+    Nif.nif_image_get_as_string(vips_image, normalize_string(name))
+  end
+
+  for name <-
+        ~w/width height bands xres yres xoffset yoffset filename mode scale offset page_height n_pages orientation/ do
+    func_name = String.to_atom(name)
+
+    @doc """
+    Get #{name}
+
+    see: https://libvips.github.io/libvips/API/current/libvips-header.html#vips-image-get-#{
+      String.replace(name, "_", "-")
+    }
+    """
+    @spec unquote(func_name)(__MODULE__.t()) :: {:ok, term()} | {:error, term()}
+    def unquote(func_name)(vips_image) do
+      header_value(vips_image, unquote(name))
+    end
+  end
+
   defp normalize_string(str) when is_binary(str), do: to_charlist(str)
 
   defp normalize_string(str) when is_list(str), do: str

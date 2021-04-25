@@ -30,6 +30,15 @@ defmodule Vix.Nif do
   def nif_image_new_matrix_from_array(_height, _width, _list, _scale, _offset),
     do: :erlang.nif_error(:nif_library_not_loaded)
 
+  def nif_image_get_fields(_vips_image),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
+  def nif_image_get_header(_vips_image, _name),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
+  def nif_image_get_as_string(_vips_image, _name),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
   # VipsOperation
   def nif_vips_operation_call(_vips_operation_name, _input),
     do: :erlang.nif_error(:nif_library_not_loaded)
