@@ -157,15 +157,18 @@ defmodule Vix.Vips.Image do
     func_name = String.to_atom(name)
 
     @doc """
-    Get #{name}
+    Get #{name} of the the image
 
     see: https://libvips.github.io/libvips/API/current/libvips-header.html#vips-image-get-#{
       String.replace(name, "_", "-")
     }
     """
-    @spec unquote(func_name)(__MODULE__.t()) :: {:ok, term()} | {:error, term()}
+    @spec unquote(func_name)(__MODULE__.t()) :: term() | no_return()
     def unquote(func_name)(vips_image) do
-      header_value(vips_image, unquote(name))
+      case header_value(vips_image, unquote(name)) do
+        {:ok, value} -> value
+        {:error, error} -> raise error
+      end
     end
   end
 

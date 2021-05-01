@@ -26,7 +26,7 @@ defmodule Vix.Vips.ImageTest do
   end
 
   test "new_matrix_from_array", %{dir: _dir} do
-    assert {:ok, mat} =
+    assert {:ok, _} =
              Image.new_matrix_from_array(3, 3, [[-1, -1, -1], [-1, 16, -1], [-1, -1, -1]])
   end
 
@@ -64,6 +64,6 @@ defmodule Vix.Vips.ImageTest do
 
   test "macro generated function", %{dir: _dir} do
     {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
-    assert {:ok, 518} = Image.width(im)
+    assert 518 == Image.width(im)
   end
 end
