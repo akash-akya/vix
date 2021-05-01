@@ -66,4 +66,10 @@ defmodule Vix.Vips.ImageTest do
     {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
     assert 518 == Image.width(im)
   end
+
+  test "write image to buffer", %{dir: _dir} do
+    {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
+    {:ok, _bin} = Image.write_to_buffer(im, ".jpg[Q=90]")
+  end
+
 end

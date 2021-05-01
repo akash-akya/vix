@@ -70,15 +70,58 @@ ERL_NIF_TERM nif_image_write_to_file(ErlNifEnv *env, int argc,
   }
 
   if (vips_image_write_to_file(image, dst, NULL)) {
-    error("Failed to write VipsImage. error: %s", vips_error_buffer());
+    error("Failed to write VipsImage to file. error: %s", vips_error_buffer());
     vips_error_clear();
-    ret = make_error(env, "Failed to write VipsImage");
+    ret = make_error(env, "Failed to write VipsImage to file");
     goto exit;
   }
 
   ret = ATOM_OK;
 
 exit:
+  notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
+  return ret;
+}
+
+ERL_NIF_TERM nif_image_write_to_buffer(ErlNifEnv *env, int argc,
+                                       const ERL_NIF_TERM argv[]) {
+  assert_argc(argc, 2);
+
+  char suffix[VIPS_PATH_MAX];
+  VipsImage *image;
+  ErlNifTime start;
+  ERL_NIF_TERM ret;
+  ERL_NIF_TERM bin_term;
+  void *temp;
+  void *bin;
+  size_t size;
+
+  start = enif_monotonic_time(ERL_NIF_USEC);
+
+  if (!erl_term_to_g_object(env, argv[0], (GObject **)&image)) {
+    ret = make_error(env, "Failed to get VipsImage");
+    goto exit;
+  }
+
+  if (enif_get_string(env, argv[1], suffix, VIPS_PATH_MAX, ERL_NIF_LATIN1) < 0) {
+    ret = make_error(env, "Failed to get suffix");
+    goto exit;
+  }
+
+  if (vips_image_write_to_buffer(image, suffix, &temp, &size, NULL)) {
+    error("Failed to write VipsImage to buffer. error: %s", vips_error_buffer());
+    vips_error_clear();
+    ret = make_error(env, "Failed to write VipsImage to buffer");
+    goto exit;
+  }
+
+  bin = enif_make_new_binary(env, size, &bin_term);
+  memcpy(bin, temp, size);
+  g_free(temp);
+
+  ret = make_ok(env, bin_term);
+
+ exit:
   notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
   return ret;
 }

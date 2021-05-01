@@ -77,6 +77,27 @@ defmodule Vix.Vips.Image do
   end
 
   @doc """
+  Returns `vips_image` as binary based on the format specified by `suffix`. This function is similar to `write_to_file` but instead of writing the output to the file, it returns it as a binary.
+
+  Save options may be encoded in the filename or given as a hash. For example:
+
+  ```elixir
+  Image.write_to_buffer(vips_image, ".jpg[Q=90]")
+  ```
+
+  The full set of save options depend on the selected saver. You can get list of available options for the saver
+
+  ```shell
+  $ vips jpegsave
+  ```
+  """
+  @spec write_to_buffer(__MODULE__.t(), String.t()) ::
+          {:ok, binary()} | {:error, term()}
+  def write_to_buffer(vips_image, suffix) do
+    Nif.nif_image_write_to_buffer(vips_image, normalize_string(suffix))
+  end
+
+  @doc """
   Make a VipsImage which, when written to, will create a temporary file on disc.
 
   The file will be automatically deleted when the image is destroyed. format is something like `"%s.v"` for a vips file.
