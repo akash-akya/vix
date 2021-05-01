@@ -173,6 +173,58 @@ defmodule Vix.Vips.Image do
     Nif.nif_image_get_as_string(vips_image, normalize_string(name))
   end
 
+  @supported_suffix [".jpg", ".png"]
+
+  @doc """
+  **EXPERIMENTAL**
+
+  Writes image to terminal using [iTerm2 proprietary escape sequence protocol](https://iterm2.com/documentation-images.html).
+
+  Returns the input image similar to `IO.inspect/1`
+
+  Note that currently this is not supported in the `iex`, this is intended to be used with patched Livebook.
+
+  ## Optional
+  * height - maximum height of the image. if image size is more than this, it will be scaled down to match this height keeping aspect ratio same. value should not be more than 500. Default: 300
+  * label - label for the image. If not set - it will use `filename` header from the image metadata
+  * suffix - image will be converted to this format for displaying. See `write_to_buffer` function suffix option. only supports `.jpg` and `.png` as of now. Default: `.jpg[Q=90]`
+  """
+  @spec display(__MODULE__.t(), keyword()) :: __MODULE__.t() | {:error, term()}
+  def display(image, opts \\ []) do
+    opts =
+      Keyword.merge(
+        [height: 300, suffix: ".jpg[Q=90]", label: "unnamed", io_device: :stdio],
+        opts
+      )
+
+    max_height = min(500, opts[:height])
+
+    ext =
+      case Regex.named_captures(~r/^(?<ext>\.[a-zA-Z]+)/, opts[:suffix]) do
+        %{"ext" => ext} when ext in @supported_suffix -> ext
+        _ -> raise "Invalid suffix: #{inspect(opts[:suffix])}"
+      end
+
+    filename = opts[:label] <> ext
+
+    height = height(image)
+
+    scale =
+      if height > max_height do
+        max_height / height
+      else
+        1.0
+      end
+
+    {:ok, image_bin} =
+      Vix.Vips.Operation.resize!(image, scale)
+      |> write_to_buffer(ext)
+
+    write_image_to_terminal(filename, image_bin, opts[:io_device])
+
+    image
+  end
+
   for name <-
         ~w/width height bands xres yres xoffset yoffset filename mode scale offset page_height n_pages orientation/ do
     func_name = String.to_atom(name)
@@ -191,6 +243,21 @@ defmodule Vix.Vips.Image do
         {:error, error} -> raise error
       end
     end
+  end
+
+  # Proprietary escape sequences mainly used by iTerm2 and some other terminals.
+  # see: https://iterm2.com/documentation-images.html
+  @image_escape_sequence "\e]1337"
+
+  defp write_image_to_terminal(filename, image_bin, io_device) do
+    encoded = Base.encode64(image_bin)
+
+    args =
+      [name: Base.encode64(filename), size: byte_size(encoded), inline: 1]
+      |> Enum.map(fn {name, value} -> "#{name}=#{value}" end)
+      |> Enum.join(";")
+
+    :ok = IO.write(io_device, [@image_escape_sequence, ";File=", args, ":", encoded, "\a"])
   end
 
   defp normalize_string(str) when is_binary(str), do: to_charlist(str)
