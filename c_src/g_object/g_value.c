@@ -245,14 +245,19 @@ static VixResult get_double(ErlNifEnv *env, GValue *gvalue) {
   double double_value;
 
   double_value = g_value_get_double(gvalue);
-  return vix_result(enif_make_int(env, double_value));
+
+  /*
+   * NOTE: erlang does not support NaN & infinity, we only handle finite double
+   * value. see: https://erlang.org/doc/man/erl_nif.html#enif_make_double
+   */
+  return vix_result(enif_make_double(env, double_value));
 }
 
 static VixResult get_boxed(ErlNifEnv *env, GValue *gvalue) {
   gpointer ptr;
   GType type;
 
-  // duplicate value so that we we can free it ourselves
+  // duplicate value so that we can free it ourselves
   ptr = g_value_dup_boxed(gvalue);
   type = G_VALUE_TYPE(gvalue);
 
