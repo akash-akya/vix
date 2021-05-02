@@ -65,6 +65,7 @@ defmodule Vix.Vips.ImageTest do
   test "macro generated function", %{dir: _dir} do
     {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
     assert 518 == Image.width(im)
+    assert :VIPS_INTERPRETATION_sRGB == Image.interpretation(im)
   end
 
   test "write image to buffer", %{dir: _dir} do

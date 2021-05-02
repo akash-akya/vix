@@ -189,11 +189,61 @@ static VixResult get_enum(ErlNifEnv *env, GValue *gvalue) {
   return vix_result(enif_make_int(env, enum_int));
 }
 
+static VixResult get_enum_as_atom(ErlNifEnv *env, GValue *gvalue) {
+  gint enum_int;
+  ERL_NIF_TERM enum_term;
+  GEnumClass *enum_class;
+  GEnumValue *enum_value;
+
+  enum_class = g_type_class_ref(G_VALUE_TYPE(gvalue));
+
+  enum_int = g_value_get_enum(gvalue);
+  enum_value = g_enum_get_value(enum_class, enum_int);
+  enum_term = enif_make_atom(env, enum_value->value_name);
+
+  g_type_class_unref(enum_class);
+  return vix_result(enum_term);
+}
+
 static VixResult get_flags(ErlNifEnv *env, GValue *gvalue) {
   gint flags_int;
 
   flags_int = g_value_get_flags(gvalue);
   return vix_result(enif_make_int(env, flags_int));
+}
+
+static VixResult get_flags_as_atoms(ErlNifEnv *env, GValue *gvalue) {
+  guint flags;
+  guint flag;
+  ERL_NIF_TERM flags_list;
+  ERL_NIF_TERM flag_term;
+  GFlagsClass *flags_class;
+  GFlagsValue *flags_value;
+  int bit_pos;
+
+  flags_list = enif_make_list(env, 0);
+
+  flags_class = g_type_class_ref(G_VALUE_TYPE(gvalue));
+  flags = g_value_get_flags(gvalue);
+
+  bit_pos = 0;
+
+  while (flags > 0) {
+    if (flags & 0x01) {
+      flag = 1 << bit_pos;
+
+      flags_value = g_flags_get_first_value(flags_class, flag);
+      flag_term = enif_make_atom(env, flags_value->value_name);
+
+      flags_list = enif_make_list_cell(env, flag_term, flags_list);
+    }
+
+    bit_pos++;
+    flags = flags >> 1;
+  }
+
+  g_type_class_unref(flags_class);
+  return vix_result(flags_list);
 }
 
 static VixResult get_boolean(ErlNifEnv *env, GValue *gvalue) {
@@ -232,6 +282,21 @@ static VixResult get_string(ErlNifEnv *env, GValue *gvalue) {
 
   str = g_value_get_string(gvalue);
   return vix_result(enif_make_string(env, str, ERL_NIF_LATIN1));
+}
+
+static VixResult get_string_as_binary(ErlNifEnv *env, GValue *gvalue) {
+  const gchar *str;
+  ERL_NIF_TERM bin;
+  ssize_t length;
+  unsigned char *temp;
+
+  str = g_value_get_string(gvalue);
+
+  length = strlen(str);
+  temp = enif_make_new_binary(env, length, &bin);
+  memcpy(temp, str, length);
+
+  return vix_result(bin);
 }
 
 static VixResult get_uint64(ErlNifEnv *env, GValue *gvalue) {
@@ -276,8 +341,9 @@ static VixResult get_g_object(ErlNifEnv *env, GValue *gvalue) {
   return vix_result(g_object_to_erl_term(env, obj));
 }
 
-VixResult get_erl_term_from_g_value(ErlNifEnv *env, GObject *obj,
-                                    const char *name, GParamSpec *pspec) {
+VixResult get_erl_term_from_g_object_property(ErlNifEnv *env, GObject *obj,
+                                              const char *name,
+                                              GParamSpec *pspec) {
   GValue gvalue = {0};
   VixResult res;
 
@@ -308,6 +374,43 @@ VixResult get_erl_term_from_g_value(ErlNifEnv *env, GObject *obj,
     res = get_flags(env, &gvalue);
   else
     res = vix_error(env, "Unknown pspec");
+
+  g_value_unset(&gvalue);
+  return res;
+}
+
+VixResult g_value_to_erl_term(ErlNifEnv *env, GValue gvalue) {
+  VixResult res;
+  GType type;
+
+  type = G_VALUE_TYPE(&gvalue);
+
+  debug("G_VALUE_TYPE: %s", g_type_name(type));
+
+  if (type == G_TYPE_BOOLEAN)
+    res = get_boolean(env, &gvalue);
+  else if (type == G_TYPE_UINT64)
+    res = get_uint64(env, &gvalue);
+  else if (type == G_TYPE_DOUBLE)
+    res = get_double(env, &gvalue);
+  else if (type == G_TYPE_INT)
+    res = get_int(env, &gvalue);
+  else if (type == G_TYPE_UINT)
+    res = get_uint(env, &gvalue);
+  else if (type == G_TYPE_INT64)
+    res = get_int64(env, &gvalue);
+  else if (type == G_TYPE_STRING)
+    res = get_string_as_binary(env, &gvalue);
+  else if (G_TYPE_IS_BOXED(type))
+    res = get_boxed(env, &gvalue);
+  else if (G_TYPE_IS_ENUM(type))
+    res = get_enum_as_atom(env, &gvalue);
+  else if (G_TYPE_IS_OBJECT(type))
+    res = get_g_object(env, &gvalue);
+  else if (G_TYPE_IS_FLAGS(type))
+    res = get_flags_as_atoms(env, &gvalue);
+  else
+    res = vix_error(env, "Specified GValue type is not supported");
 
   g_value_unset(&gvalue);
   return res;

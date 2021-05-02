@@ -138,7 +138,8 @@ static VixResult get_operation_properties(ErlNifEnv *env, VipsOperation *op) {
         return vix_error(env, "failed to get output argument");
       }
 
-      res = get_erl_term_from_g_value(env, G_OBJECT(op), names[i], pspec);
+      res = get_erl_term_from_g_object_property(env, G_OBJECT(op), names[i],
+                                                pspec);
 
       if (!res.is_success)
         return res;

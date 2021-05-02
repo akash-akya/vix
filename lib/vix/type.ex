@@ -53,9 +53,11 @@ defmodule Vix.Type do
         Vips.Target
 
       {"GParamEnum", enum_type} ->
+        # TODO: convert type in nif itself, see `get_enum_as_atom`
         Module.concat(Vix.Vips.Enum, String.to_atom(enum_type))
 
       {"GParamFlags", flag_type} ->
+        # TODO: convert type in nif itself, see `get_flags_as_atoms`
         Module.concat(Vix.Vips.Flag, String.to_atom(flag_type))
 
       {_, "gint"} ->

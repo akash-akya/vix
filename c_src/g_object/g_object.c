@@ -13,6 +13,9 @@ ERL_NIF_TERM g_object_to_erl_term(ErlNifEnv *env, GObject *obj) {
   GObjectResource *gobject_r;
 
   gobject_r = enif_alloc_resource(G_OBJECT_RT, sizeof(GObjectResource));
+
+  // TODO: Keep gtype name and use elixir-struct instead of c-struct,
+  // so that type information is visible in elixir.
   gobject_r->obj = obj;
 
   term = enif_make_resource(env, gobject_r);

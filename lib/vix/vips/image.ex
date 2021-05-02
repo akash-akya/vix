@@ -226,7 +226,7 @@ defmodule Vix.Vips.Image do
   end
 
   for name <-
-        ~w/width height bands xres yres xoffset yoffset filename mode scale offset page_height n_pages orientation/ do
+        ~w/width height bands xres yres xoffset yoffset filename mode scale offset page_height n_pages orientation interpretation coding format/ do
     func_name = String.to_atom(name)
 
     @doc """

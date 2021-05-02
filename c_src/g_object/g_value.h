@@ -9,7 +9,10 @@
 VixResult set_g_value_from_erl_term(ErlNifEnv *env, GParamSpec *pspec,
                                     ERL_NIF_TERM term, GValue *gvalue);
 
-VixResult get_erl_term_from_g_value(ErlNifEnv *env, GObject *obj,
-                                    const char *name, GParamSpec *pspec);
+VixResult get_erl_term_from_g_object_property(ErlNifEnv *env, GObject *obj,
+                                              const char *name,
+                                              GParamSpec *pspec);
+
+VixResult g_value_to_erl_term(ErlNifEnv *env, GValue gvalue);
 
 #endif

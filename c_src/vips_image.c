@@ -2,18 +2,39 @@
 #include <vips/vips.h>
 
 #include "g_object/g_object.h"
+#include "g_object/g_value.h"
 #include "utils.h"
 #include "vips_image.h"
 
 const int MAX_HEADER_NAME_LENGTH = 100;
 
 static ERL_NIF_TERM vips_image_header_read_error(ErlNifEnv *env,
-                                                   const char *name,
-                                                   const char *type) {
+                                                 const char *name,
+                                                 const char *type) {
   error("Failed to read image metadata %s of type %s. error: %s", name, type,
         vips_error_buffer());
   vips_error_clear();
   return make_error(env, "Failed to read image metadata");
+}
+
+static int get_ref_string(ErlNifEnv *env, VipsImage *image, const char *name,
+                          ERL_NIF_TERM *value) {
+  const char *str;
+  unsigned char *temp;
+  ssize_t length;
+
+  if (vips_image_get_string(image, name, &str)) {
+    error("Failed to get string. error: %s", vips_error_buffer());
+    vips_error_clear();
+    *value = make_error(env, "Failed to get string");
+    return -1;
+  }
+
+  length = strlen(str);
+  temp = enif_make_new_binary(env, length, value);
+  memcpy(temp, str, length);
+
+  return 0;
 }
 
 ERL_NIF_TERM nif_image_new_from_file(ErlNifEnv *env, int argc,
@@ -103,13 +124,15 @@ ERL_NIF_TERM nif_image_write_to_buffer(ErlNifEnv *env, int argc,
     goto exit;
   }
 
-  if (enif_get_string(env, argv[1], suffix, VIPS_PATH_MAX, ERL_NIF_LATIN1) < 0) {
+  if (enif_get_string(env, argv[1], suffix, VIPS_PATH_MAX, ERL_NIF_LATIN1) <
+      0) {
     ret = make_error(env, "Failed to get suffix");
     goto exit;
   }
 
   if (vips_image_write_to_buffer(image, suffix, &temp, &size, NULL)) {
-    error("Failed to write VipsImage to buffer. error: %s", vips_error_buffer());
+    error("Failed to write VipsImage to buffer. error: %s",
+          vips_error_buffer());
     vips_error_clear();
     ret = make_error(env, "Failed to write VipsImage to buffer");
     goto exit;
@@ -121,7 +144,7 @@ ERL_NIF_TERM nif_image_write_to_buffer(ErlNifEnv *env, int argc,
 
   ret = make_ok(env, bin_term);
 
- exit:
+exit:
   notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
   return ret;
 }
@@ -315,7 +338,10 @@ ERL_NIF_TERM nif_image_get_header(ErlNifEnv *env, int argc,
   char header_name[MAX_HEADER_NAME_LENGTH];
   GType type;
   ERL_NIF_TERM ret;
+  ERL_NIF_TERM value;
   ErlNifTime start;
+  GValue gvalue = {0};
+  VixResult res;
 
   start = enif_monotonic_time(ERL_NIF_USEC);
 
@@ -337,61 +363,29 @@ ERL_NIF_TERM nif_image_get_header(ErlNifEnv *env, int argc,
     goto exit;
   }
 
-  if (type == G_TYPE_DOUBLE) {
-    double double_value;
-
-    if (vips_image_get_double(image, header_name, &double_value) != 0) {
-      ret = vips_image_header_read_error(env, header_name, "double");
-      goto exit;
-    }
-    ret = make_ok(env, enif_make_double(env, double_value));
-
-  } else if (type == G_TYPE_INT) {
-    int int_value;
-
-    if (vips_image_get_int(image, header_name, &int_value) != 0) {
-      ret = vips_image_header_read_error(env, header_name, "int");
-      goto exit;
-    }
-    ret = make_ok(env, enif_make_int(env, int_value));
-
-  } else if (type == G_TYPE_STRING || type == VIPS_TYPE_REF_STRING) {
-    const char *bin_data;
-    ERL_NIF_TERM bin;
-    ssize_t length;
-    unsigned char *temp;
-
-    if (vips_image_get_string(image, header_name, &bin_data) != 0) {
-      ret = vips_image_header_read_error(env, header_name, "string");
-      goto exit;
-    }
-
-    length = strlen(bin_data);
-    temp = enif_make_new_binary(env, length, &bin);
-    memcpy(temp, bin_data, length);
-
-    ret = make_ok(env, bin);
-  } else if (type == VIPS_TYPE_ARRAY_INT) {
-    int *arr;
-    int n;
-    ERL_NIF_TERM list;
-
-    if (vips_image_get_array_int(image, header_name, &arr, &n) != 0) {
-      ret = vips_image_header_read_error(env, header_name, "int_array");
-      goto exit;
-    }
-
-    list = enif_make_list(env, 0);
-
-    for (int i = n - 1; i >= 0; i--) {
-      list = enif_make_list_cell(env, enif_make_int(env, arr[i]), list);
-    }
-
-    ret = make_ok(env, list);
-  } else {
-    debug("GType %s is not supported", g_type_name(type));
-    ret = make_error(env, "Invalid image metadata type");
+  if (vips_image_get(image, header_name, &gvalue)) {
+    g_value_unset(&gvalue);
+    error("Failed to get GValue. error: %s", vips_error_buffer());
+    vips_error_clear();
+    ret = make_error(env, "Failed to get GValue");
     goto exit;
+  }
+
+  res = g_value_to_erl_term(env, gvalue);
+
+  if (res.is_success) {
+
+    if (type == VIPS_TYPE_REF_STRING) {
+      if (get_ref_string(env, image, header_name, &value))
+        ret = enif_make_tuple2(env, ATOM_ERROR, value);
+      else
+        ret = make_ok(env, value);
+    } else {
+      ret = make_ok(env, res.result);
+    }
+
+  } else {
+    ret = enif_make_tuple2(env, ATOM_ERROR, res.result);
   }
 
 exit:
