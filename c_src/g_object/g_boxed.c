@@ -35,6 +35,8 @@ ERL_NIF_TERM boxed_to_erl_term(ErlNifEnv *env, gpointer ptr, GType type) {
 
   boxed_r = enif_alloc_resource(G_BOXED_RT, sizeof(GBoxedResource));
 
+  // TODO: use elixir-struct instead of c-struct, so that type
+  // information is visible in elixir
   boxed_r->boxed_type = type;
   boxed_r->boxed_ptr = ptr;
 

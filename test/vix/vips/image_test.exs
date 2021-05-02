@@ -26,7 +26,7 @@ defmodule Vix.Vips.ImageTest do
   end
 
   test "new_matrix_from_array", %{dir: _dir} do
-    assert {:ok, mat} =
+    assert {:ok, _} =
              Image.new_matrix_from_array(3, 3, [[-1, -1, -1], [-1, 16, -1], [-1, -1, -1]])
   end
 
@@ -64,6 +64,55 @@ defmodule Vix.Vips.ImageTest do
 
   test "macro generated function", %{dir: _dir} do
     {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
-    assert {:ok, 518} = Image.width(im)
+    assert 518 == Image.width(im)
+    assert :VIPS_INTERPRETATION_sRGB == Image.interpretation(im)
+  end
+
+  test "write image to buffer", %{dir: _dir} do
+    {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
+    {:ok, _bin} = Image.write_to_buffer(im, ".jpg[Q=90]")
+  end
+
+  test "display" do
+    {:ok, io_device} = StringIO.open("")
+
+    {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
+    assert ^im = Image.display(im, io_device: io_device)
+
+    {:ok, {"", image_data}} = StringIO.close(io_device)
+
+    assert_output_to_terminal("unnamed.jpg", image_data)
+  end
+
+  test "display options" do
+    {:ok, io_device} = StringIO.open("")
+
+    {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
+    im = Vix.Vips.Operation.invert!(im)
+
+    assert ^im = Image.display(im, io_device: io_device, label: "cute_puppies", suffix: ".png")
+
+    {:ok, {"", image_data}} = StringIO.close(io_device)
+
+    assert_output_to_terminal("cute_puppies.png", image_data)
+  end
+
+  defp assert_output_to_terminal(expected_name, image_data) do
+    assert "\e]1337;File=" <> data = image_data
+    [args, image_data] = String.split(data, ":", parts: 2)
+
+    args =
+      String.split(args, ";")
+      |> Map.new(fn kv ->
+        [key, value] = String.split(kv, "=", parts: 2)
+        {key, value}
+      end)
+
+    assert %{"name" => encoded_name, "size" => size, "inline" => "1"} = args
+
+    assert expected_name == Base.decode64!(encoded_name)
+    assert {size, ""} = Integer.parse(size)
+
+    assert <<_::binary-size(size), "\a">> = image_data
   end
 end

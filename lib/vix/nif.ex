@@ -21,6 +21,9 @@ defmodule Vix.Nif do
   def nif_image_write_to_file(_vips_image, _dst),
     do: :erlang.nif_error(:nif_library_not_loaded)
 
+  def nif_image_write_to_buffer(_vips_image, _suffix),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
   def nif_image_new(),
     do: :erlang.nif_error(:nif_library_not_loaded)
 
