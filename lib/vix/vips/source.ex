@@ -1,7 +1,5 @@
 defmodule Vix.Vips.Source do
-  @moduledoc """
-  *NOT supported yet*
-  """
+  @moduledoc false
 
   alias Vix.Type
 

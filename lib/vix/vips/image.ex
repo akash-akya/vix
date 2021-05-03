@@ -91,6 +91,8 @@ defmodule Vix.Vips.Image do
   @doc """
   Returns `vips_image` as binary based on the format specified by `suffix`. This function is similar to `write_to_file` but instead of writing the output to the file, it returns it as a binary.
 
+  Currently only TIFF, JPEG and PNG formats are supported.
+
   Save options may be encoded in the filename or given as a hash. For example:
 
   ```elixir

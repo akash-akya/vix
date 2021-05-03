@@ -76,9 +76,12 @@ defmodule Vix.Vips.OperationHelper do
   def reject_unsupported_operations(op_name) do
     {_desc, args} = vips_operation_arguments(op_name)
 
-    # we do not support mutable operations yet
-    Enum.any?(args, fn %{flags: flags} ->
-      :vips_argument_modify in flags
+    Enum.any?(args, fn %{flags: flags, value_type: value_type} ->
+      # we do not support mutable operations yet. Skip operations which use un-supported types as arguments
+      :vips_argument_modify in flags ||
+        value_type == "VipsSource" ||
+        value_type == "VipsTarget" ||
+        value_type == "VipsBlob"
     end)
   end
 

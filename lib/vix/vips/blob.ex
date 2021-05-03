@@ -1,7 +1,5 @@
 defmodule Vix.Vips.Blob do
-  @moduledoc """
-  *NOT supported yet*
-  """
+  @moduledoc false
 
   alias Vix.Type
 
