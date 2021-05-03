@@ -57,6 +57,14 @@ defmodule Vix.Vips.Image do
   end
 
   @doc """
+  Copy an image to a memory area.
+  """
+  @spec copy_memory(__MODULE__.t()) :: {:ok, __MODULE__.t()} | {:error, term()}
+  def copy_memory(vips_image) do
+    Nif.nif_image_copy_memory(vips_image)
+  end
+
+  @doc """
   Write `vips_image` to a file.
 
   Save options may be encoded in the filename or given as a hash. For example:
