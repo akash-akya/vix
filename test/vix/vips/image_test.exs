@@ -115,4 +115,13 @@ defmodule Vix.Vips.ImageTest do
 
     assert <<_::binary-size(size), "\a">> = image_data
   end
+
+  test "new image from other image", %{dir: _dir} do
+    {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
+    {:ok, new_im} = Image.new_from_image(im, [250])
+
+    assert Image.width(im) == Image.width(new_im)
+    assert Image.height(im) == Image.height(new_im)
+    assert Image.bands(new_im) == 1
+  end
 end

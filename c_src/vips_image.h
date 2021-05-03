@@ -6,6 +6,9 @@
 ERL_NIF_TERM nif_image_new_from_file(ErlNifEnv *env, int argc,
                                      const ERL_NIF_TERM argv[]);
 
+ERL_NIF_TERM nif_image_new_from_image(ErlNifEnv *env, int argc,
+                                      const ERL_NIF_TERM argv[]);
+
 ERL_NIF_TERM nif_image_copy_memory(ErlNifEnv *env, int argc,
                                    const ERL_NIF_TERM argv[]);
 

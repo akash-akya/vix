@@ -17,14 +17,7 @@ defmodule Vix.GObject.Double do
   def to_nif_term(value, data) do
     case value do
       value when is_number(value) ->
-        value =
-          if !is_float(value) do
-            # convert to float
-            value * 1.0
-          else
-            value
-          end
-
+        value = normalize(value)
         validate_number_limits!(value, data)
         value
 
@@ -36,6 +29,9 @@ defmodule Vix.GObject.Double do
 
   @impl Type
   def to_erl_term(value), do: value
+
+  def normalize(num) when is_float(num), do: num
+  def normalize(num) when is_integer(num), do: num * 1.0
 
   defp validate_number_limits!(_value, nil), do: :ok
 

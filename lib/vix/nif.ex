@@ -8,17 +8,25 @@ defmodule Vix.Nif do
   end
 
   # GObject
-  def nif_g_object_type_name(_obj), do: :erlang.nif_error(:nif_library_not_loaded)
+  def nif_g_object_type_name(_obj),
+    do: :erlang.nif_error(:nif_library_not_loaded)
 
   # GType
-  def nif_g_type_from_instance(_instance), do: :erlang.nif_error(:nif_library_not_loaded)
+  def nif_g_type_from_instance(_instance),
+    do: :erlang.nif_error(:nif_library_not_loaded)
 
-  def nif_g_type_name(_type), do: :erlang.nif_error(:nif_library_not_loaded)
+  def nif_g_type_name(_type),
+    do: :erlang.nif_error(:nif_library_not_loaded)
 
   # VipsImage
-  def nif_image_new_from_file(_src), do: :erlang.nif_error(:nif_library_not_loaded)
+  def nif_image_new_from_file(_src),
+    do: :erlang.nif_error(:nif_library_not_loaded)
 
-  def nif_image_copy_memory(_vips_image), do: :erlang.nif_error(:nif_library_not_loaded)
+  def nif_image_new_from_image(_vips_image, _value),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
+  def nif_image_copy_memory(_vips_image),
+    do: :erlang.nif_error(:nif_library_not_loaded)
 
   def nif_image_write_to_file(_vips_image, _dst),
     do: :erlang.nif_error(:nif_library_not_loaded)
