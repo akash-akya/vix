@@ -75,6 +75,15 @@ defmodule Vix.Vips.OperationHelper do
     """
   end
 
+  def reject_unsupported_operations(op_name) do
+    {_desc, args} = vips_operation_arguments(op_name)
+
+    # we do not support mutable operations yet
+    Enum.any?(args, fn %{flags: flags} ->
+      :vips_argument_modify in flags
+    end)
+  end
+
   def operation_args(name) do
     {desc, args} = vips_operation_arguments(name)
 
@@ -300,6 +309,7 @@ defmodule Vix.Vips.Operation do
 
   Nif.nif_vips_operation_list()
   |> Enum.uniq()
+  |> Enum.reject(&reject_unsupported_operations/1)
   |> Enum.map(fn name ->
     {desc, required_in, optional_in, required_out, optional_out} = operation_args(name)
 
