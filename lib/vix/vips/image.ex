@@ -52,6 +52,7 @@ defmodule Vix.Vips.Image do
   """
   @spec new_from_file(String.t()) :: {:ok, __MODULE__.t()} | {:error, term()}
   def new_from_file(path) do
+    path = Path.expand(path)
     Nif.nif_image_new_from_file(normalize_string(path))
   end
 
@@ -240,7 +241,7 @@ defmodule Vix.Vips.Image do
     def unquote(func_name)(vips_image) do
       case header_value(vips_image, unquote(name)) do
         {:ok, value} -> value
-        {:error, error} -> raise error
+        {:error, error} -> raise to_string(error)
       end
     end
   end
