@@ -69,6 +69,38 @@ exit:
   return ret;
 }
 
+ERL_NIF_TERM nif_image_copy_memory(ErlNifEnv *env, int argc,
+                                   const ERL_NIF_TERM argv[]) {
+  assert_argc(argc, 1);
+
+  VipsImage *image;
+  VipsImage *copy;
+  ErlNifTime start;
+  ERL_NIF_TERM ret;
+
+  start = enif_monotonic_time(ERL_NIF_USEC);
+
+  if (!erl_term_to_g_object(env, argv[0], (GObject **)&image)) {
+    ret = make_error(env, "Failed to get VipsImage");
+    goto exit;
+  }
+
+  copy = vips_image_copy_memory(image);
+
+  if (!copy) {
+    error("Failed to memory copy image. error: %s", vips_error_buffer());
+    vips_error_clear();
+    ret = make_error(env, "Failed to memory copy image");
+    goto exit;
+  }
+
+  ret = make_ok(env, g_object_to_erl_term(env, (GObject *)copy));
+
+exit:
+  notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
+  return ret;
+}
+
 ERL_NIF_TERM nif_image_write_to_file(ErlNifEnv *env, int argc,
                                      const ERL_NIF_TERM argv[]) {
   assert_argc(argc, 2);

@@ -38,8 +38,6 @@ defmodule Vix.Vips.OperationHelper do
       end)
 
     case res do
-      # few operation are in-place, such as draw* operations
-      # TODO: in-place operations does not align well with immutability
       {[], []} ->
         :ok
 
@@ -75,8 +73,24 @@ defmodule Vix.Vips.OperationHelper do
     """
   end
 
+  def reject_unsupported_operations(op_name) do
+    {_desc, args} = vips_operation_arguments(op_name)
+
+    # we do not support mutable operations yet
+    Enum.any?(args, fn %{flags: flags} ->
+      :vips_argument_modify in flags
+    end)
+  end
+
   def operation_args(name) do
     {desc, args} = vips_operation_arguments(name)
+
+    args =
+      Enum.reject(args, fn %{flags: flags} ->
+        # skip required deprecated arguments, but allow optional deprecated arguments.
+        # This is similar to ruby-vips.
+        :vips_argument_required in flags && :vips_argument_deprecated in flags
+      end)
 
     {input, rest} =
       Enum.split_with(args, fn %{flags: flags} ->
@@ -241,7 +255,7 @@ defmodule Vix.Vips.OperationHelper do
     #{required_out_values}
 
     ## Additional
-    Last value of the returned tuple, as keyword list
+    Last value of the the output tuple is a keyword list of additional optional output values
     #{optional_out_values}
     """
   end
@@ -300,6 +314,7 @@ defmodule Vix.Vips.Operation do
 
   Nif.nif_vips_operation_list()
   |> Enum.uniq()
+  |> Enum.reject(&reject_unsupported_operations/1)
   |> Enum.map(fn name ->
     {desc, required_in, optional_in, required_out, optional_out} = operation_args(name)
 
