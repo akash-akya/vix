@@ -56,9 +56,12 @@ defmodule Vix.Vips.Image do
     Nif.nif_image_new_from_file(normalize_string(path))
   end
 
-  @doc """
-  Copy an image to a memory area.
-  """
+  # Copy an image to a memory area.
+  # If image is already a memory buffer, just ref and return. If it's
+  # a file on disc or a partial, allocate memory and copy the image to
+  # it. Intented to be used with draw operations when they are
+  # properly supported
+  @doc false
   @spec copy_memory(__MODULE__.t()) :: {:ok, __MODULE__.t()} | {:error, term()}
   def copy_memory(vips_image) do
     Nif.nif_image_copy_memory(vips_image)

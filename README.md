@@ -87,5 +87,6 @@ end
 ```
 
 ### TODO
+- [ ] support mutable operations such as draw*
 - [ ] support `VipsConnection`(?)
 - [ ] support all remaining vips types

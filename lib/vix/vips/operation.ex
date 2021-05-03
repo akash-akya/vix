@@ -38,8 +38,6 @@ defmodule Vix.Vips.OperationHelper do
       end)
 
     case res do
-      # few operation are in-place, such as draw* operations
-      # TODO: in-place operations does not align well with immutability
       {[], []} ->
         :ok
 
@@ -257,7 +255,7 @@ defmodule Vix.Vips.OperationHelper do
     #{required_out_values}
 
     ## Additional
-    Last value of the returned tuple, as keyword list
+    Last value of the the output tuple is a keyword list of additional optional output values
     #{optional_out_values}
     """
   end
