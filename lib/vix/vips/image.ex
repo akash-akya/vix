@@ -56,6 +56,15 @@ defmodule Vix.Vips.Image do
     Nif.nif_image_new_from_file(normalize_string(path))
   end
 
+  @doc """
+  Creates a new image with width, height, format, interpretation, resolution and offset taken from the input image, but with each band set from `value`.
+  """
+  @spec new_from_image(__MODULE__.t(), [float()]) :: {:ok, __MODULE__.t()} | {:error, term()}
+  def new_from_image(vips_image, value) do
+    float_value = Enum.map(value, &Vix.GObject.Double.normalize/1)
+    Nif.nif_image_new_from_image(vips_image, float_value)
+  end
+
   # Copy an image to a memory area.
   # If image is already a memory buffer, just ref and return. If it's
   # a file on disc or a partial, allocate memory and copy the image to

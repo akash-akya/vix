@@ -56,6 +56,8 @@ static ErlNifFunc nif_funcs[] = {
     /* VipsImage */
     {"nif_image_new_from_file", 1, nif_image_new_from_file,
      ERL_NIF_DIRTY_JOB_IO_BOUND},
+    {"nif_image_new_from_image", 2, nif_image_new_from_image,
+     ERL_NIF_DIRTY_JOB_IO_BOUND},
     {"nif_image_copy_memory", 1, nif_image_copy_memory,
      ERL_NIF_DIRTY_JOB_IO_BOUND},
     {"nif_image_write_to_file", 2, nif_image_write_to_file,

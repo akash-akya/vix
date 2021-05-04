@@ -69,6 +69,66 @@ exit:
   return ret;
 }
 
+ERL_NIF_TERM nif_image_new_from_image(ErlNifEnv *env, int argc,
+                                     const ERL_NIF_TERM argv[]) {
+  assert_argc(argc, 2);
+
+  VipsImage *image;
+  VipsImage *copy;
+  ErlNifTime start;
+  ERL_NIF_TERM list, head;
+  double *array;
+  guint size;
+  ERL_NIF_TERM ret;
+
+  start = enif_monotonic_time(ERL_NIF_USEC);
+
+  if (!erl_term_to_g_object(env, argv[0], (GObject **)&image)) {
+    ret = make_error(env, "Failed to get VipsImage");
+    goto exit;
+  }
+
+  list = argv[1];
+
+  if (!enif_get_list_length(env, list, &size)) {
+    error("Failed to get list length");
+    ret = enif_make_badarg(env);
+    goto exit;
+  }
+
+  array = g_new(double, size);
+
+  for (guint i = 0; i < size; i++) {
+    if (!enif_get_list_cell(env, list, &head, &list)) {
+      ret = make_error(env, "Failed to get list entry");
+      goto free_and_exit;
+    }
+
+    if (!enif_get_double(env, head, &array[i])) {
+      ret = make_error(env, "Failed to get double");
+      goto free_and_exit;
+    }
+  }
+
+  copy = vips_image_new_from_image(image, array, size);
+
+  if (!copy) {
+    error("Failed to create new image. error: %s", vips_error_buffer());
+    vips_error_clear();
+    ret = make_error(env, "Failed to create new image");
+    goto free_and_exit;
+  }
+
+  ret = make_ok(env, g_object_to_erl_term(env, (GObject *)copy));
+  
+free_and_exit:
+  g_free(array);
+  
+exit:
+  notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
+  return ret;
+}
+
 ERL_NIF_TERM nif_image_copy_memory(ErlNifEnv *env, int argc,
                                    const ERL_NIF_TERM argv[]) {
   assert_argc(argc, 1);
