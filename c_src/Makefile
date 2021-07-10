@@ -14,17 +14,17 @@ C_SRC_OUTPUT ?= $(CURDIR)/../priv/$(PROJECT).so
 UNAME_SYS := $(shell uname -s)
 ifeq ($(UNAME_SYS), Darwin)
 	CC ?= cc
-	CFLAGS ?= -O3 -std=c11 -arch x86_64 -finline-functions -Wall -Werror -Wmissing-prototypes
-	CXXFLAGS ?= -O3 -arch x86_64 -finline-functions -Wall -Werror
-	LDFLAGS ?= -arch x86_64 -flat_namespace -undefined suppress
+	CFLAGS += -O3 -std=c11 -arch x86_64 -finline-functions -Wall -Werror -Wmissing-prototypes
+	CXXFLAGS += -O3 -arch x86_64 -finline-functions -Wall -Werror
+	LDFLAGS += -arch x86_64 -flat_namespace -undefined suppress
 else ifeq ($(UNAME_SYS), FreeBSD)
 	CC ?= cc
-	CFLAGS ?= -O3 -std=c11 -finline-functions -Wall -Werror -Wmissing-prototypes
-	CXXFLAGS ?= -O3 -finline-functions -Wall -Werror
+	CFLAGS += -O3 -std=c11 -finline-functions -Wall -Werror -Wmissing-prototypes
+	CXXFLAGS += -O3 -finline-functions -Wall -Werror
 else ifeq ($(UNAME_SYS), Linux)
 	CC ?= gcc
-	CFLAGS ?= -O3 -std=c11 -finline-functions -Wall -Werror -Wmissing-prototypes
-	CXXFLAGS ?= -O3 -finline-functions -Wall -Werror
+	CFLAGS += -O3 -std=c11 -finline-functions -Wall -Werror -Wmissing-prototypes
+	CXXFLAGS += -O3 -finline-functions -Wall -Werror
 endif
 
 CFLAGS += -D_POSIX_C_SOURCE=200809L -fPIC -I $(ERTS_INCLUDE_DIR) -I $(ERL_INTERFACE_INCLUDE_DIR) `pkg-config vips --cflags`
