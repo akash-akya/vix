@@ -14,10 +14,11 @@ defmodule Vix.GObject.String do
   def default(default), do: default
 
   @impl Type
-  def to_nif_term(value, _data) do
-    case value do
-      value when is_binary(value) -> to_charlist(value)
-      value when is_list(value) -> value
+  def to_nif_term(str, _data) when is_binary(str) do
+    if String.valid?(str) do
+      [str, <<"\0">>]
+    else
+      raise ArgumentError, "value must be a valid UTF-8 string"
     end
   end
 
