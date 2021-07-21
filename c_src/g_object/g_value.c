@@ -92,14 +92,15 @@ static VixResult set_int64(ErlNifEnv *env, ERL_NIF_TERM term, GValue *gvalue) {
 }
 
 static VixResult set_string(ErlNifEnv *env, ERL_NIF_TERM term, GValue *gvalue) {
-  char value[512];
+  ErlNifBinary bin;
 
-  if (enif_get_string(env, term, (char *)&value, 511, ERL_NIF_LATIN1) < 0) {
+  if (!enif_inspect_iolist_as_binary(env, term, &bin)) {
     error("failed to get string from erl term");
     return vix_error(env, "failed to get string from erl term");
   }
 
-  g_value_set_string(gvalue, value);
+  // we always ensure that data is appended with NULL
+  g_value_set_string(gvalue, (const gchar *)bin.data);
   return vix_result(ATOM_OK);
 }
 
