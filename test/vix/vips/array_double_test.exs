@@ -6,7 +6,7 @@ defmodule Vix.Vips.ArrayDoubleTest do
     obj = ArrayDouble.to_nif_term([1, 2, 3, 4.1], nil)
 
     {:ok, gtype} = Vix.Nif.nif_g_type_from_instance(obj)
-    assert Vix.Nif.nif_g_type_name(gtype) == {:ok, 'VipsArrayDouble'}
+    assert Vix.Nif.nif_g_type_name(gtype) == {:ok, "VipsArrayDouble"}
   end
 
   test "to_erl_term" do

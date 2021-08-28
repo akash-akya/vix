@@ -59,7 +59,7 @@ ERL_NIF_TERM nif_g_type_name(ErlNifEnv *env, int argc,
   if (!erl_term_to_g_type(env, argv[0], &type))
     return make_error(env, "Failed to get GType");
 
-  return make_ok(env, enif_make_string(env, g_type_name(type), ERL_NIF_LATIN1));
+  return make_ok(env, make_binary(env, g_type_name(type)));
 }
 
 static void g_type_dtor(ErlNifEnv *env, void *obj) {

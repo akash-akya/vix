@@ -9,35 +9,38 @@ defmodule Vix.Vips.OperationHelper do
     Enum.map(
       args,
       fn {name, value} ->
-        param_spec = Map.get(in_pspec, List.to_atom(name))
+        param_spec = Map.get(in_pspec, name)
         {name, Type.to_nif_term(value, param_spec)}
       end
     )
   end
 
   def output_to_erl_terms(nif_out_args, required_out_pspec, optional_out_pspec) do
-    res =
+    {required, optional} =
       nif_out_args
-      |> Enum.reduce({[], []}, fn {name, value}, {required, optional} ->
-        param = List.to_atom(name)
-
+      |> Enum.reduce({[], []}, fn {param, value}, {required, optional} ->
         cond do
           Map.has_key?(required_out_pspec, param) ->
             param_spec = Map.get(required_out_pspec, param)
             value = Type.to_erl_term(value, param_spec)
-            {[value | required], optional}
+            {[{param_spec.priority, value} | required], optional}
 
           Map.has_key?(optional_out_pspec, param) ->
             param_spec = Map.get(optional_out_pspec, param)
             value = Type.to_erl_term(value, param_spec)
-            {required, [{param, value} | optional]}
+            {required, [{String.to_atom(param), value} | optional]}
 
           true ->
             raise "Invalid operation output"
         end
       end)
 
-    case res do
+    required =
+      required
+      |> Enum.sort_by(fn {priority, _} -> priority end)
+      |> Enum.map(fn {_, value} -> value end)
+
+    case {required, optional} do
       {[], []} ->
         :ok
 
@@ -46,12 +49,7 @@ defmodule Vix.Vips.OperationHelper do
         {:ok, term}
 
       {required, optional} ->
-        out =
-          [optional | required]
-          |> Enum.reverse()
-          |> List.to_tuple()
-
-        {:ok, out}
+        {:ok, List.to_tuple(required ++ [optional])}
     end
   end
 
@@ -203,7 +201,7 @@ defmodule Vix.Vips.OperationHelper do
         {desc, spec_type, value_type, data} = spec_details
 
         %GParamSpec{
-          param_name: List.to_atom(name),
+          param_name: name,
           desc: desc,
           spec_type: to_string(spec_type),
           value_type: to_string(value_type),
@@ -279,7 +277,7 @@ defmodule Vix.Vips.OperationHelper do
 
   defp optional_args_typespec(optional) do
     Enum.map(optional, fn pspec ->
-      {pspec.param_name, typespec(pspec)}
+      {String.to_atom(pspec.param_name), typespec(pspec)}
     end)
   end
 end
@@ -322,15 +320,19 @@ defmodule Vix.Vips.Operation do
     {desc, required_in, optional_in, required_out, optional_out} = operation_args(name)
 
     func_name = function_name(name)
-    func_params = Enum.map(required_in, &Macro.var(&1.param_name, __MODULE__))
+
+    func_params =
+      Enum.map(required_in, fn param ->
+        Macro.var(String.to_atom(param.param_name), __MODULE__)
+      end)
 
     in_pspec = Map.new(required_in ++ optional_in, &{&1.param_name, &1})
     required_out_pspec = Map.new(required_out, &{&1.param_name, &1})
     optional_out_pspec = Map.new(optional_out, &{&1.param_name, &1})
 
     func_required_in_values =
-      Enum.map(required_in, fn pspec ->
-        {Atom.to_charlist(pspec.param_name), Macro.var(pspec.param_name, __MODULE__)}
+      Enum.map(required_in, fn %{param_name: param_name} ->
+        {param_name, Macro.var(String.to_atom(param_name), __MODULE__)}
       end)
 
     @doc """
@@ -348,7 +350,7 @@ defmodule Vix.Vips.Operation do
     def unquote(func_name)(unquote_splicing(func_params), optional \\ []) do
       func_optional_in_values =
         Enum.map(optional, fn {name, value} ->
-          {Atom.to_charlist(name), value}
+          {Atom.to_string(name), value}
         end)
 
       in_args = unquote(func_required_in_values) ++ func_optional_in_values
@@ -373,7 +375,7 @@ defmodule Vix.Vips.Operation do
       end
     end
 
-    bang_func_name = function_name(String.to_atom("#{name}!"))
+    bang_func_name = function_name(String.to_atom(name <> "!"))
 
     @doc """
     Same as `#{func_name}/#{length(func_params) + 1}`, except it returns only the value (not a tuple) and raises on error.

@@ -61,6 +61,10 @@ ERL_NIF_TERM make_error(ErlNifEnv *env, const char *reason);
 
 ERL_NIF_TERM make_atom(ErlNifEnv *env, const char *name);
 
+ERL_NIF_TERM make_binary(ErlNifEnv *env, const char *str);
+
+bool get_binary(ErlNifEnv *env, ERL_NIF_TERM bin_term, char *str, ssize_t size);
+
 VixResult vix_error(ErlNifEnv *env, const char *reason);
 
 VixResult vix_result(ERL_NIF_TERM term);

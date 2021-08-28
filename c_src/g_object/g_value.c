@@ -278,13 +278,6 @@ static VixResult get_int64(ErlNifEnv *env, GValue *gvalue) {
   return vix_result(enif_make_int(env, int64_value));
 }
 
-static VixResult get_string(ErlNifEnv *env, GValue *gvalue) {
-  const gchar *str;
-
-  str = g_value_get_string(gvalue);
-  return vix_result(enif_make_string(env, str, ERL_NIF_LATIN1));
-}
-
 static VixResult get_string_as_binary(ErlNifEnv *env, GValue *gvalue) {
   const gchar *str;
   ERL_NIF_TERM bin;
@@ -366,7 +359,7 @@ VixResult get_erl_term_from_g_object_property(ErlNifEnv *env, GObject *obj,
   else if (G_IS_PARAM_SPEC_INT64(pspec))
     res = get_int64(env, &gvalue);
   else if (G_IS_PARAM_SPEC_STRING(pspec))
-    res = get_string(env, &gvalue);
+    res = get_string_as_binary(env, &gvalue);
   else if (G_IS_PARAM_SPEC_BOXED(pspec))
     res = get_boxed(env, &gvalue);
   else if (G_IS_PARAM_SPEC_OBJECT(pspec))

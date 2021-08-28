@@ -11,11 +11,11 @@ defmodule Vix.Vips.ImageTest do
   end
 
   test "new_from_file" do
-    assert {:error, 'Failed to read image'} == Image.new_from_file('invalid.jpg')
+    assert {:error, "Failed to read image"} == Image.new_from_file("invalid.jpg")
   end
 
   test "write_to_file", %{dir: dir} do
-    path = img_path("puppies.jpg") |> to_charlist()
+    path = img_path("puppies.jpg")
     {:ok, im} = Image.new_from_file(path)
 
     out_path = Temp.path!(suffix: ".png", basedir: dir)

@@ -14,7 +14,7 @@ defmodule Vix.GObject.String do
   def default(default), do: default
 
   @impl Type
-  def to_nif_term(str, _data) when is_binary(str) do
+  def to_nif_term(str, _data) do
     if String.valid?(str) do
       [str, <<"\0">>]
     else
@@ -23,5 +23,12 @@ defmodule Vix.GObject.String do
   end
 
   @impl Type
-  def to_erl_term(value), do: to_string(value)
+  def to_erl_term(value) do
+    if String.valid?(value) do
+      value
+    else
+      # TODO: remove after debugging
+      raise ArgumentError, "value from NIF is not a valid UTF-8 string"
+    end
+  end
 end

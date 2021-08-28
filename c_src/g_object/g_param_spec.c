@@ -103,7 +103,7 @@ static ERL_NIF_TERM string_details(ErlNifEnv *env, GParamSpec *pspec) {
   if (pspec_string->default_value == NULL) {
     return ATOM_NIL;
   } else {
-    return enif_make_string(env, pspec_string->default_value, ERL_NIF_LATIN1);
+    return make_binary(env, pspec_string->default_value);
   }
 }
 
@@ -132,13 +132,9 @@ bool erl_term_to_g_param_spec(ErlNifEnv *env, ERL_NIF_TERM term,
 ERL_NIF_TERM g_param_spec_details(ErlNifEnv *env, GParamSpec *pspec) {
   ERL_NIF_TERM term, value_type, spec_type, desc;
 
-  spec_type = enif_make_string(env, g_type_name(G_PARAM_SPEC_TYPE(pspec)),
-                               ERL_NIF_LATIN1);
-
-  value_type = enif_make_string(
-      env, g_type_name(G_PARAM_SPEC_VALUE_TYPE(pspec)), ERL_NIF_LATIN1);
-
-  desc = enif_make_string(env, g_param_spec_get_blurb(pspec), ERL_NIF_LATIN1);
+  spec_type = make_binary(env, g_type_name(G_PARAM_SPEC_TYPE(pspec)));
+  value_type = make_binary(env, g_type_name(G_PARAM_SPEC_VALUE_TYPE(pspec)));
+  desc = make_binary(env, g_param_spec_get_blurb(pspec));
 
   if (G_IS_PARAM_SPEC_ENUM(pspec)) {
     term = enum_details(env, pspec);
