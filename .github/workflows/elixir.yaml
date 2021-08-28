@@ -5,7 +5,7 @@ env:
 jobs:
   linux:
     runs-on: ubuntu-latest
-    name: Linux OTP ${{matrix.otp}} / Elixir ${{matrix.elixir}}
+    name: Test - Linux OTP ${{matrix.otp}} / Elixir ${{matrix.elixir}}
     strategy:
       matrix:
         include:
@@ -55,8 +55,25 @@ jobs:
       - name: Compile
         run: mix compile --force --warnings-as-errors
 
-      - name: Check format
-        run: mix format --check-formatted
-
       - name: Run Tests
         run: mix test
+
+  check_format:
+    runs-on: ubuntu-latest
+    name: Check format
+    strategy:
+      matrix:
+        include:
+          - elixir: 1.12.x
+            otp: 24.x
+    steps:
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: ${{matrix.otp}}
+          elixir-version: ${{matrix.elixir}}
+
+      - name: Checkout vix
+        uses: actions/checkout@v2
+
+      - name: Check format
+        run: mix format --check-formatted
