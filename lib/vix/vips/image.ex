@@ -255,9 +255,7 @@ defmodule Vix.Vips.Image do
     @doc """
     Get #{name} of the the image
 
-    see: https://libvips.github.io/libvips/API/current/libvips-header.html#vips-image-get-#{
-      String.replace(name, "_", "-")
-    }
+    see: https://libvips.github.io/libvips/API/current/libvips-header.html#vips-image-get-#{String.replace(name, "_", "-")}
     """
     @spec unquote(func_name)(__MODULE__.t()) :: term() | no_return()
     def unquote(func_name)(vips_image) do
@@ -283,9 +281,9 @@ defmodule Vix.Vips.Image do
     :ok = IO.write(io_device, [@image_escape_sequence, ";File=", args, ":", encoded, "\a"])
   end
 
-  defp normalize_string(str) when is_binary(str), do: to_charlist(str)
+  defp normalize_string(str) when is_binary(str), do: str
 
-  defp normalize_string(str) when is_list(str), do: str
+  defp normalize_string(str) when is_list(str), do: to_string(str)
 
   defp flatten_list(list) do
     Enum.flat_map(list, fn p ->

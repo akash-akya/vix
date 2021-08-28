@@ -63,4 +63,9 @@ defmodule Vix.Vips.OperationTest do
     assert {:ok, {0.0, [x: _, y: _, "out-array": [0.0], "x-array": [_ | _], "y-array": [_ | _]]}} =
              Operation.min(im)
   end
+
+  test "required output order", %{dir: _dir} do
+    {:ok, im} = Image.new_from_file(img_path("black_on_white.jpg"))
+    assert {:ok, {41, 44, 45, 45, []}} = Operation.find_trim(im)
+  end
 end

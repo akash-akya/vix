@@ -13,13 +13,12 @@ ERL_NIF_TERM make_ok(ErlNifEnv *env, ERL_NIF_TERM term) {
 }
 
 ERL_NIF_TERM make_error(ErlNifEnv *env, const char *reason) {
-  return enif_make_tuple2(env, ATOM_ERROR,
-                          enif_make_string(env, reason, ERL_NIF_LATIN1));
+  return enif_make_tuple2(env, ATOM_ERROR, make_binary(env, reason));
 }
 
 ERL_NIF_TERM raise_exception(ErlNifEnv *env, const char *msg) {
   error(msg);
-  return enif_raise_exception(env, enif_make_string(env, msg, ERL_NIF_LATIN1));
+  return enif_raise_exception(env, make_binary(env, msg));
 }
 
 ERL_NIF_TERM raise_badarg(ErlNifEnv *env, const char *reason) {
@@ -35,10 +34,41 @@ ERL_NIF_TERM make_atom(ErlNifEnv *env, const char *name) {
   return enif_make_atom(env, name);
 }
 
+ERL_NIF_TERM make_binary(ErlNifEnv *env, const char *str) {
+  ERL_NIF_TERM bin;
+  ssize_t length;
+  unsigned char *temp;
+
+  length = strlen(str);
+  temp = enif_make_new_binary(env, length, &bin);
+  memcpy(temp, str, length);
+
+  return bin;
+}
+
+bool get_binary(ErlNifEnv *env, ERL_NIF_TERM bin_term, char *str,
+                ssize_t dest_size) {
+  ErlNifBinary bin;
+
+  if (!enif_inspect_binary(env, bin_term, &bin)) {
+    error("failed to get binary string from erl term");
+    return false;
+  }
+
+  if (bin.size >= dest_size) {
+    error("destination size is smaller than required");
+    return false;
+  }
+
+  memcpy(str, bin.data, bin.size);
+  str[bin.size] = '\0';
+
+  return true;
+}
+
 VixResult vix_error(ErlNifEnv *env, const char *reason) {
   error(reason);
-  return (VixResult){.is_success = false,
-                     .result = enif_make_string(env, reason, ERL_NIF_LATIN1)};
+  return (VixResult){.is_success = false, .result = make_binary(env, reason)};
 }
 
 VixResult vix_result(ERL_NIF_TERM term) {

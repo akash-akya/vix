@@ -144,7 +144,7 @@ static VixResult get_operation_properties(ErlNifEnv *env, VipsOperation *op) {
       if (!res.is_success)
         return res;
 
-      name = enif_make_string(env, names[i], ERL_NIF_LATIN1);
+      name = make_binary(env, names[i]);
       entry = enif_make_tuple2(env, name, res.result);
       list = enif_make_list_cell(env, entry, list);
     }
@@ -181,7 +181,7 @@ static VixResult set_operation_properties(ErlNifEnv *env, VipsOperation *op,
     if (count != 2)
       return vix_error(env, "Tuple length must be of length 2");
 
-    if (enif_get_string(env, tup[0], name, 1024, ERL_NIF_LATIN1) < 0)
+    if (!get_binary(env, tup[0], name, 1024))
       return vix_error(env, "Failed to get param name");
 
     if (vips_object_get_argument(VIPS_OBJECT(op), name, &pspec, &arg_class,
@@ -205,13 +205,13 @@ ERL_NIF_TERM nif_vips_operation_call(ErlNifEnv *env, int argc,
   VipsOperation *op = NULL;
   VipsOperation *new_op;
   ErlNifTime start;
+  char op_name[200] = {0};
 
   start = enif_monotonic_time(ERL_NIF_USEC);
 
   assert_argc(argc, 2);
 
-  char op_name[200] = {0};
-  if (enif_get_string(env, argv[0], op_name, 200, ERL_NIF_LATIN1) < 1) {
+  if (!get_binary(env, argv[0], op_name, 200)) {
     res = vix_error(env, "operation name must be a valid string");
     goto exit;
   }
@@ -268,7 +268,7 @@ ERL_NIF_TERM nif_vips_operation_get_arguments(ErlNifEnv *env, int argc,
 
   start = enif_monotonic_time(ERL_NIF_USEC);
 
-  if (enif_get_string(env, argv[0], op_name, 200, ERL_NIF_LATIN1) < 1) {
+  if (!get_binary(env, argv[0], op_name, 200)) {
     result = raise_badarg(env, "operation name must be a valid string");
     goto exit;
   }
@@ -282,13 +282,12 @@ ERL_NIF_TERM nif_vips_operation_get_arguments(ErlNifEnv *env, int argc,
     goto free_and_exit;
   }
 
-  description = enif_make_string(
-      env, vips_object_get_description(VIPS_OBJECT(op)), ERL_NIF_LATIN1);
+  description = make_binary(env, vips_object_get_description(VIPS_OBJECT(op)));
 
   list = enif_make_list(env, 0);
 
   for (int i = 0; i < n_args; i++) {
-    name = enif_make_string(env, names[i], ERL_NIF_LATIN1);
+    name = make_binary(env, names[i]);
     erl_flags = vips_argument_flags_to_erl_terms(env, flags[i]);
 
     if (vips_object_get_argument(VIPS_OBJECT(op), names[i], &pspec, &arg_class,
@@ -365,7 +364,7 @@ ERL_NIF_TERM nif_vips_operation_list(ErlNifEnv *env, int argc,
 
   for (guint i = 0; i < type_list.count; i++) {
     type = type_list.types[i];
-    name = enif_make_string(env, vips_nickname_find(type), ERL_NIF_LATIN1);
+    name = make_binary(env, vips_nickname_find(type));
     list = enif_make_list_cell(env, name, list);
   }
 
@@ -409,7 +408,7 @@ ERL_NIF_TERM nif_vips_enum_list(ErlNifEnv *env, int argc,
       enum_values = enif_make_list_cell(env, tuple, enum_values);
     }
 
-    name = enif_make_string(env, g_type_name(type), ERL_NIF_LATIN1);
+    name = make_binary(env, g_type_name(type));
     enums = enif_make_list_cell(env, enif_make_tuple2(env, name, enum_values),
                                 enums);
 
@@ -456,7 +455,7 @@ ERL_NIF_TERM nif_vips_flag_list(ErlNifEnv *env, int argc,
       flag_values = enif_make_list_cell(env, tuple, flag_values);
     }
 
-    name = enif_make_string(env, g_type_name(type), ERL_NIF_LATIN1);
+    name = make_binary(env, g_type_name(type));
     flags = enif_make_list_cell(env, enif_make_tuple2(env, name, flag_values),
                                 flags);
 

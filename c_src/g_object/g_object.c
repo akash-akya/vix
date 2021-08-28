@@ -33,7 +33,7 @@ ERL_NIF_TERM nif_g_object_type_name(ErlNifEnv *env, int argc,
   if (!erl_term_to_g_object(env, argv[0], &obj))
     return make_error(env, "Failed to get GObject");
 
-  return enif_make_string(env, G_OBJECT_TYPE_NAME(obj), ERL_NIF_LATIN1);
+  return make_binary(env, G_OBJECT_TYPE_NAME(obj));
 }
 
 bool erl_term_to_g_object(ErlNifEnv *env, ERL_NIF_TERM term, GObject **obj) {

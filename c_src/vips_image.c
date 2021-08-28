@@ -48,7 +48,7 @@ ERL_NIF_TERM nif_image_new_from_file(ErlNifEnv *env, int argc,
 
   start = enif_monotonic_time(ERL_NIF_USEC);
 
-  if (enif_get_string(env, argv[0], src, VIPS_PATH_MAX, ERL_NIF_LATIN1) < 0) {
+  if (!get_binary(env, argv[0], src, VIPS_PATH_MAX)) {
     ret = raise_badarg(env, "Failed to get file name");
     goto exit;
   }
@@ -70,7 +70,7 @@ exit:
 }
 
 ERL_NIF_TERM nif_image_new_from_image(ErlNifEnv *env, int argc,
-                                     const ERL_NIF_TERM argv[]) {
+                                      const ERL_NIF_TERM argv[]) {
   assert_argc(argc, 2);
 
   VipsImage *image;
@@ -120,10 +120,10 @@ ERL_NIF_TERM nif_image_new_from_image(ErlNifEnv *env, int argc,
   }
 
   ret = make_ok(env, g_object_to_erl_term(env, (GObject *)copy));
-  
+
 free_and_exit:
   g_free(array);
-  
+
 exit:
   notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
   return ret;
@@ -177,7 +177,7 @@ ERL_NIF_TERM nif_image_write_to_file(ErlNifEnv *env, int argc,
     goto exit;
   }
 
-  if (enif_get_string(env, argv[1], dst, VIPS_PATH_MAX, ERL_NIF_LATIN1) < 0) {
+  if (!get_binary(env, argv[1], dst, VIPS_PATH_MAX)) {
     ret = make_error(env, "Failed to get destination path");
     goto exit;
   }
@@ -216,8 +216,7 @@ ERL_NIF_TERM nif_image_write_to_buffer(ErlNifEnv *env, int argc,
     goto exit;
   }
 
-  if (enif_get_string(env, argv[1], suffix, VIPS_PATH_MAX, ERL_NIF_LATIN1) <
-      0) {
+  if (!get_binary(env, argv[1], suffix, VIPS_PATH_MAX)) {
     ret = make_error(env, "Failed to get suffix");
     goto exit;
   }
@@ -271,15 +270,14 @@ ERL_NIF_TERM nif_image_new_temp_file(ErlNifEnv *env, int argc,
                                      const ERL_NIF_TERM argv[]) {
   assert_argc(argc, 1);
 
-  char format[100];
+  char format[VIPS_PATH_MAX];
   VipsImage *image;
   ErlNifTime start;
   ERL_NIF_TERM ret;
 
   start = enif_monotonic_time(ERL_NIF_USEC);
 
-  if (enif_get_string(env, argv[0], format, VIPS_PATH_MAX, ERL_NIF_LATIN1) <
-      0) {
+  if (!get_binary(env, argv[0], format, VIPS_PATH_MAX)) {
     ret = raise_badarg(env, "Failed to get format");
     goto exit;
   }
@@ -442,8 +440,7 @@ ERL_NIF_TERM nif_image_get_header(ErlNifEnv *env, int argc,
     goto exit;
   }
 
-  if (enif_get_string(env, argv[1], header_name, MAX_HEADER_NAME_LENGTH,
-                      ERL_NIF_LATIN1) < 0) {
+  if (!get_binary(env, argv[1], header_name, MAX_HEADER_NAME_LENGTH)) {
     ret = make_error(env, "Failed to get header name");
     goto exit;
   }
@@ -506,8 +503,7 @@ ERL_NIF_TERM nif_image_get_as_string(ErlNifEnv *env, int argc,
     goto exit;
   }
 
-  if (enif_get_string(env, argv[1], header_name, MAX_HEADER_NAME_LENGTH,
-                      ERL_NIF_LATIN1) < 0) {
+  if (!get_binary(env, argv[1], header_name, MAX_HEADER_NAME_LENGTH)) {
     ret = make_error(env, "Failed to get header name");
     goto exit;
   }
