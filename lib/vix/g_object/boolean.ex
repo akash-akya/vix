@@ -20,8 +20,7 @@ defmodule Vix.GObject.Boolean do
         value
 
       value ->
-        raise ArgumentError,
-              "value must be boolean. given: #{inspect(value)}"
+        raise ArgumentError, message: "expected boolean. given: #{inspect(value)}"
     end
   end
 

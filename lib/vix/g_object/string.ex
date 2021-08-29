@@ -18,7 +18,7 @@ defmodule Vix.GObject.String do
     if String.valid?(str) do
       [str, <<"\0">>]
     else
-      raise ArgumentError, "value must be a valid UTF-8 string"
+      raise ArgumentError, message: "expected UTF-8 binary string"
     end
   end
 

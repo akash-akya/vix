@@ -21,8 +21,7 @@ defmodule Vix.GObject.Int do
         value
 
       value ->
-        raise ArgumentError,
-              "value must be integer. given: #{inspect(value)}"
+        raise ArgumentError, message: "expected integer. given: #{inspect(value)}"
     end
   end
 

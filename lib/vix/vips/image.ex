@@ -1,4 +1,8 @@
 defmodule Vix.Vips.Image do
+  defstruct [:ref]
+
+  alias __MODULE__
+
   @moduledoc """
   Vips Image
   """
@@ -11,7 +15,7 @@ defmodule Vix.Vips.Image do
   @typedoc """
   Represents an instance of libvips image
   """
-  @opaque t() :: reference()
+  @type t() :: %Image{ref: reference()}
 
   @impl Type
   def typespec do
@@ -24,10 +28,18 @@ defmodule Vix.Vips.Image do
   def default(nil), do: :unsupported
 
   @impl Type
-  def to_nif_term(value, _data), do: value
+  def to_nif_term(image, _data) do
+    case image do
+      %Image{ref: ref} ->
+        ref
+
+      value ->
+        raise ArgumentError, message: "expected Vix.Vips.Image. given: #{inspect(value)}"
+    end
+  end
 
   @impl Type
-  def to_erl_term(value), do: value
+  def to_erl_term(ref), do: %Image{ref: ref}
 
   @doc """
   Opens `path` for reading, returns an instance of `t:Vix.Vips.Image.t/0`
@@ -53,16 +65,20 @@ defmodule Vix.Vips.Image do
   @spec new_from_file(String.t()) :: {:ok, __MODULE__.t()} | {:error, term()}
   def new_from_file(path) do
     path = Path.expand(path)
+
     Nif.nif_image_new_from_file(normalize_string(path))
+    |> wrap_type()
   end
 
   @doc """
   Creates a new image with width, height, format, interpretation, resolution and offset taken from the input image, but with each band set from `value`.
   """
   @spec new_from_image(__MODULE__.t(), [float()]) :: {:ok, __MODULE__.t()} | {:error, term()}
-  def new_from_image(vips_image, value) do
+  def new_from_image(%Image{ref: vips_image}, value) do
     float_value = Enum.map(value, &Vix.GObject.Double.normalize/1)
+
     Nif.nif_image_new_from_image(vips_image, float_value)
+    |> wrap_type()
   end
 
   # Copy an image to a memory area.
@@ -72,8 +88,9 @@ defmodule Vix.Vips.Image do
   # properly supported
   @doc false
   @spec copy_memory(__MODULE__.t()) :: {:ok, __MODULE__.t()} | {:error, term()}
-  def copy_memory(vips_image) do
+  def copy_memory(%Image{ref: vips_image}) do
     Nif.nif_image_copy_memory(vips_image)
+    |> wrap_type()
   end
 
   @doc """
@@ -93,7 +110,7 @@ defmodule Vix.Vips.Image do
   at the command-line to see all the available options for JPEG save.
   """
   @spec write_to_file(__MODULE__.t(), String.t()) :: :ok | {:error, term()}
-  def write_to_file(vips_image, path) do
+  def write_to_file(%Image{ref: vips_image}, path) do
     Nif.nif_image_write_to_file(vips_image, normalize_string(path))
   end
 
@@ -116,7 +133,7 @@ defmodule Vix.Vips.Image do
   """
   @spec write_to_buffer(__MODULE__.t(), String.t()) ::
           {:ok, binary()} | {:error, term()}
-  def write_to_buffer(vips_image, suffix) do
+  def write_to_buffer(%Image{ref: vips_image}, suffix) do
     Nif.nif_image_write_to_buffer(vips_image, normalize_string(suffix))
   end
 
@@ -131,9 +148,10 @@ defmodule Vix.Vips.Image do
   vips_image = Image.new_temp_file("%s.v")
   ```
   """
-  @spec new_temp_file(String.t()) :: :ok | {:error, term()}
+  @spec new_temp_file(String.t()) :: {:ok, __MODULE__.t()} | {:error, term()}
   def new_temp_file(format) do
     Nif.nif_image_new_temp_file(normalize_string(format))
+    |> wrap_type()
   end
 
   @doc """
@@ -149,12 +167,14 @@ defmodule Vix.Vips.Image do
   * scale - Default: 1
   * offset - Default: 0
   """
-  @spec new_matrix_from_array(integer, integer, list(list), keyword()) :: :ok | {:error, term()}
+  @spec new_matrix_from_array(integer, integer, list(list), keyword()) ::
+          {:ok, __MODULE__.t()} | {:error, term()}
   def new_matrix_from_array(width, height, list, optional \\ []) do
     scale = to_double(optional[:scale], 1)
     offset = to_double(optional[:offset], 0)
 
     Nif.nif_image_new_matrix_from_array(width, height, flatten_list(list), scale, offset)
+    |> wrap_type()
   end
 
   @doc """
@@ -163,7 +183,7 @@ defmodule Vix.Vips.Image do
   See https://libvips.github.io/libvips/API/current/libvips-header.html#vips-image-get-fields for more details
   """
   @spec header_field_names(__MODULE__.t()) :: {:ok, [String.t()]} | {:error, term()}
-  def header_field_names(vips_image) do
+  def header_field_names(%Image{ref: vips_image}) do
     Nif.nif_image_get_fields(vips_image)
   end
 
@@ -180,7 +200,7 @@ defmodule Vix.Vips.Image do
   """
   @spec header_value(__MODULE__.t(), String.t()) ::
           {:ok, integer() | float() | String.t() | [integer()]} | {:error, term()}
-  def header_value(vips_image, name) do
+  def header_value(%Image{ref: vips_image}, name) do
     Nif.nif_image_get_header(vips_image, normalize_string(name))
   end
 
@@ -192,60 +212,8 @@ defmodule Vix.Vips.Image do
   See: https://libvips.github.io/libvips/API/current/libvips-header.html#vips-image-get-as-string
   """
   @spec header_value_as_string(__MODULE__.t(), String.t()) :: {:ok, String.t()} | {:error, term()}
-  def header_value_as_string(vips_image, name) do
+  def header_value_as_string(%Image{ref: vips_image}, name) do
     Nif.nif_image_get_as_string(vips_image, normalize_string(name))
-  end
-
-  @supported_suffix [".jpg", ".png"]
-
-  @doc """
-  **EXPERIMENTAL**
-
-  Writes image to terminal using [iTerm2 proprietary escape sequence protocol](https://iterm2.com/documentation-images.html).
-
-  Returns the input image similar to `IO.inspect/1`
-
-  Note that currently this is not supported in the `iex`, this is intended to be used with patched Livebook.
-
-  ## Optional
-  * height - maximum height of the image. if image size is more than this, it will be scaled down to match this height keeping aspect ratio same. value should not be more than 500. Default: 300
-  * label - label for the image. If not set - it will use `filename` header from the image metadata
-  * suffix - image will be converted to this format for displaying. See `write_to_buffer` function suffix option. only supports `.jpg` and `.png` as of now. Default: `.jpg[Q=90]`
-  """
-  @spec display(__MODULE__.t(), keyword()) :: __MODULE__.t() | {:error, term()}
-  def display(image, opts \\ []) do
-    opts =
-      Keyword.merge(
-        [height: 300, suffix: ".jpg[Q=90]", label: "unnamed", io_device: :stdio],
-        opts
-      )
-
-    max_height = min(500, opts[:height])
-
-    ext =
-      case Regex.named_captures(~r/^(?<ext>\.[a-zA-Z]+)/, opts[:suffix]) do
-        %{"ext" => ext} when ext in @supported_suffix -> ext
-        _ -> raise "Invalid suffix: #{inspect(opts[:suffix])}"
-      end
-
-    filename = opts[:label] <> ext
-
-    height = height(image)
-
-    scale =
-      if height > max_height do
-        max_height / height
-      else
-        1.0
-      end
-
-    {:ok, image_bin} =
-      Vix.Vips.Operation.resize!(image, scale)
-      |> write_to_buffer(ext)
-
-    write_image_to_terminal(filename, image_bin, opts[:io_device])
-
-    image
   end
 
   for name <-
@@ -266,21 +234,6 @@ defmodule Vix.Vips.Image do
     end
   end
 
-  # Proprietary escape sequences mainly used by iTerm2 and some other terminals.
-  # see: https://iterm2.com/documentation-images.html
-  @image_escape_sequence "\e]1337"
-
-  defp write_image_to_terminal(filename, image_bin, io_device) do
-    encoded = Base.encode64(image_bin)
-
-    args =
-      [name: Base.encode64(filename), size: byte_size(encoded), inline: 1]
-      |> Enum.map(fn {name, value} -> "#{name}=#{value}" end)
-      |> Enum.join(";")
-
-    :ok = IO.write(io_device, [@image_escape_sequence, ";File=", args, ":", encoded, "\a"])
-  end
-
   defp normalize_string(str) when is_binary(str), do: str
 
   defp normalize_string(str) when is_list(str), do: to_string(str)
@@ -296,4 +249,7 @@ defmodule Vix.Vips.Image do
 
   defp to_double(nil, default), do: to_double(default)
   defp to_double(v, _default), do: to_double(v)
+
+  defp wrap_type({:ok, ref}), do: {:ok, %Image{ref: ref}}
+  defp wrap_type(value), do: value
 end
