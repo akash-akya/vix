@@ -82,4 +82,14 @@ defmodule Vix.Vips.OperationTest do
       Operation.invert(:invalid)
     end
   end
+
+  test "enum parameter", %{dir: dir} do
+    {:ok, im} = Image.new_from_file(img_path("black_on_white.jpg"))
+    {:ok, out} = Operation.flip(im, :VIPS_DIRECTION_HORIZONTAL)
+
+    out_path = Temp.path!(suffix: ".jpg", basedir: dir)
+    :ok = Image.write_to_file(out, out_path)
+
+    assert_files_equal(img_path("black_on_white_hflip.jpg"), out_path)
+  end
 end
