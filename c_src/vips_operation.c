@@ -221,7 +221,7 @@ ERL_NIF_TERM nif_vips_operation_call(ErlNifEnv *env, int argc,
 
   start = enif_monotonic_time(ERL_NIF_USEC);
 
-  assert_argc(argc, 2);
+  ASSERT_ARGC(argc, 2);
 
   if (!get_binary(env, argv[0], op_name, 200)) {
     SET_ERROR_RESULT(env, "operation name must be a valid string", res);
@@ -263,7 +263,7 @@ exit:
 ERL_NIF_TERM nif_vips_operation_get_arguments(ErlNifEnv *env, int argc,
                                               const ERL_NIF_TERM argv[]) {
 
-  assert_argc(argc, 1);
+  ASSERT_ARGC(argc, 1);
 
   VipsOperation *op;
   char op_name[200] = {0};
@@ -356,7 +356,7 @@ skip:
 ERL_NIF_TERM nif_vips_operation_list(ErlNifEnv *env, int argc,
                                      const ERL_NIF_TERM argv[]) {
 
-  assert_argc(argc, 0);
+  ASSERT_ARGC(argc, 0);
 
   GType type;
   GTypeList type_list;
@@ -387,7 +387,7 @@ ERL_NIF_TERM nif_vips_operation_list(ErlNifEnv *env, int argc,
 ERL_NIF_TERM nif_vips_enum_list(ErlNifEnv *env, int argc,
                                 const ERL_NIF_TERM argv[]) {
 
-  assert_argc(argc, 0);
+  ASSERT_ARGC(argc, 0);
 
   GType type;
   GType *types;
@@ -434,7 +434,7 @@ ERL_NIF_TERM nif_vips_enum_list(ErlNifEnv *env, int argc,
 ERL_NIF_TERM nif_vips_flag_list(ErlNifEnv *env, int argc,
                                 const ERL_NIF_TERM argv[]) {
 
-  assert_argc(argc, 0);
+  ASSERT_ARGC(argc, 0);
 
   GType type;
   GType *types;
@@ -480,7 +480,7 @@ ERL_NIF_TERM nif_vips_flag_list(ErlNifEnv *env, int argc,
 
 ERL_NIF_TERM nif_vips_cache_set_max(ErlNifEnv *env, int argc,
                                     const ERL_NIF_TERM argv[]) {
-  assert_argc(argc, 1);
+  ASSERT_ARGC(argc, 1);
 
   int max_op;
 
@@ -494,13 +494,13 @@ ERL_NIF_TERM nif_vips_cache_set_max(ErlNifEnv *env, int argc,
 
 ERL_NIF_TERM nif_vips_cache_get_max(ErlNifEnv *env, int argc,
                                     const ERL_NIF_TERM argv[]) {
-  assert_argc(argc, 0);
+  ASSERT_ARGC(argc, 0);
   return make_ok(env, enif_make_int(env, vips_cache_get_max()));
 }
 
 ERL_NIF_TERM nif_vips_concurrency_set(ErlNifEnv *env, int argc,
                                       const ERL_NIF_TERM argv[]) {
-  assert_argc(argc, 1);
+  ASSERT_ARGC(argc, 1);
 
   int concurrency;
 
@@ -514,13 +514,13 @@ ERL_NIF_TERM nif_vips_concurrency_set(ErlNifEnv *env, int argc,
 
 ERL_NIF_TERM nif_vips_concurrency_get(ErlNifEnv *env, int argc,
                                       const ERL_NIF_TERM argv[]) {
-  assert_argc(argc, 0);
+  ASSERT_ARGC(argc, 0);
   return make_ok(env, enif_make_int(env, vips_concurrency_get()));
 }
 
 ERL_NIF_TERM nif_vips_cache_set_max_files(ErlNifEnv *env, int argc,
                                           const ERL_NIF_TERM argv[]) {
-  assert_argc(argc, 1);
+  ASSERT_ARGC(argc, 1);
 
   int max_files;
 
@@ -534,13 +534,13 @@ ERL_NIF_TERM nif_vips_cache_set_max_files(ErlNifEnv *env, int argc,
 
 ERL_NIF_TERM nif_vips_cache_get_max_files(ErlNifEnv *env, int argc,
                                           const ERL_NIF_TERM argv[]) {
-  assert_argc(argc, 0);
+  ASSERT_ARGC(argc, 0);
   return make_ok(env, enif_make_int(env, vips_cache_get_max_files()));
 }
 
 ERL_NIF_TERM nif_vips_cache_set_max_mem(ErlNifEnv *env, int argc,
                                         const ERL_NIF_TERM argv[]) {
-  assert_argc(argc, 1);
+  ASSERT_ARGC(argc, 1);
 
   unsigned long max_mem;
 
@@ -554,20 +554,20 @@ ERL_NIF_TERM nif_vips_cache_set_max_mem(ErlNifEnv *env, int argc,
 
 ERL_NIF_TERM nif_vips_cache_get_max_mem(ErlNifEnv *env, int argc,
                                         const ERL_NIF_TERM argv[]) {
-  assert_argc(argc, 0);
+  ASSERT_ARGC(argc, 0);
   return make_ok(env, enif_make_uint64(env, vips_cache_get_max_mem()));
 }
 
 ERL_NIF_TERM nif_vips_shutdown(ErlNifEnv *env, int argc,
                                const ERL_NIF_TERM argv[]) {
-  assert_argc(argc, 0);
+  ASSERT_ARGC(argc, 0);
   vips_shutdown();
   return ATOM_OK;
 }
 
 ERL_NIF_TERM nif_vips_version(ErlNifEnv *env, int argc,
                               const ERL_NIF_TERM argv[]) {
-  assert_argc(argc, 0);
+  ASSERT_ARGC(argc, 0);
   int major, minor, micro;
 
   major = vips_version(0);

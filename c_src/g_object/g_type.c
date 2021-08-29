@@ -33,7 +33,7 @@ static bool erl_term_to_g_type(ErlNifEnv *env, ERL_NIF_TERM term, GType *type) {
 ERL_NIF_TERM nif_g_type_from_instance(ErlNifEnv *env, int argc,
                                       const ERL_NIF_TERM argv[]) {
 
-  assert_argc(argc, 1);
+  ASSERT_ARGC(argc, 1);
 
   ERL_NIF_TERM term;
   GObject *obj;
@@ -52,7 +52,7 @@ ERL_NIF_TERM nif_g_type_from_instance(ErlNifEnv *env, int argc,
 
 ERL_NIF_TERM nif_g_type_name(ErlNifEnv *env, int argc,
                              const ERL_NIF_TERM argv[]) {
-  assert_argc(argc, 1);
+  ASSERT_ARGC(argc, 1);
 
   GType type;
 

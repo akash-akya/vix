@@ -30,7 +30,7 @@
     enif_fprintf(stderr, "\n");                                                \
   } while (0)
 
-#define assert_argc(argc, count)                                               \
+#define ASSERT_ARGC(argc, count)                                               \
   if (argc != count) {                                                         \
     error("number of arguments must be %d", count);                            \
     return enif_make_badarg(env);                                              \

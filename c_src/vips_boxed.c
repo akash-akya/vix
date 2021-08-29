@@ -86,7 +86,7 @@ static VipsArrayImage *erl_list_to_vips_image_array(ErlNifEnv *env,
 ERL_NIF_TERM nif_int_array(ErlNifEnv *env, int argc,
                            const ERL_NIF_TERM argv[]) {
 
-  assert_argc(argc, 1);
+  ASSERT_ARGC(argc, 1);
 
   GBoxedResource *boxed_r;
   unsigned int len;
@@ -123,7 +123,7 @@ exit:
 
 ERL_NIF_TERM nif_double_array(ErlNifEnv *env, int argc,
                               const ERL_NIF_TERM argv[]) {
-  assert_argc(argc, 1);
+  ASSERT_ARGC(argc, 1);
 
   GBoxedResource *boxed_r;
   unsigned int len;
@@ -160,7 +160,7 @@ exit:
 
 ERL_NIF_TERM nif_image_array(ErlNifEnv *env, int argc,
                              const ERL_NIF_TERM argv[]) {
-  assert_argc(argc, 1);
+  ASSERT_ARGC(argc, 1);
 
   GBoxedResource *boxed_r;
   unsigned int len;
@@ -197,7 +197,7 @@ exit:
 
 ERL_NIF_TERM nif_vips_int_array_to_erl_list(ErlNifEnv *env, int argc,
                                             const ERL_NIF_TERM argv[]) {
-  assert_argc(argc, 1);
+  ASSERT_ARGC(argc, 1);
 
   VipsArrayInt *int_array;
   ERL_NIF_TERM list;
@@ -247,7 +247,7 @@ exit:
 
 ERL_NIF_TERM nif_vips_double_array_to_erl_list(ErlNifEnv *env, int argc,
                                                const ERL_NIF_TERM argv[]) {
-  assert_argc(argc, 1);
+  ASSERT_ARGC(argc, 1);
 
   VipsArrayDouble *double_array;
   ERL_NIF_TERM list;
@@ -297,7 +297,7 @@ exit:
 
 ERL_NIF_TERM nif_vips_image_array_to_erl_list(ErlNifEnv *env, int argc,
                                               const ERL_NIF_TERM argv[]) {
-  assert_argc(argc, 1);
+  ASSERT_ARGC(argc, 1);
 
   VipsArrayImage *image_array;
   ERL_NIF_TERM list;

@@ -39,7 +39,7 @@ static int get_ref_string(ErlNifEnv *env, VipsImage *image, const char *name,
 
 ERL_NIF_TERM nif_image_new_from_file(ErlNifEnv *env, int argc,
                                      const ERL_NIF_TERM argv[]) {
-  assert_argc(argc, 1);
+  ASSERT_ARGC(argc, 1);
 
   char src[VIPS_PATH_MAX];
   VipsImage *image;
@@ -71,7 +71,7 @@ exit:
 
 ERL_NIF_TERM nif_image_new_from_image(ErlNifEnv *env, int argc,
                                       const ERL_NIF_TERM argv[]) {
-  assert_argc(argc, 2);
+  ASSERT_ARGC(argc, 2);
 
   VipsImage *image;
   VipsImage *copy;
@@ -131,7 +131,7 @@ exit:
 
 ERL_NIF_TERM nif_image_copy_memory(ErlNifEnv *env, int argc,
                                    const ERL_NIF_TERM argv[]) {
-  assert_argc(argc, 1);
+  ASSERT_ARGC(argc, 1);
 
   VipsImage *image;
   VipsImage *copy;
@@ -163,7 +163,7 @@ exit:
 
 ERL_NIF_TERM nif_image_write_to_file(ErlNifEnv *env, int argc,
                                      const ERL_NIF_TERM argv[]) {
-  assert_argc(argc, 2);
+  ASSERT_ARGC(argc, 2);
 
   char dst[VIPS_PATH_MAX];
   VipsImage *image;
@@ -198,7 +198,7 @@ exit:
 
 ERL_NIF_TERM nif_image_write_to_buffer(ErlNifEnv *env, int argc,
                                        const ERL_NIF_TERM argv[]) {
-  assert_argc(argc, 2);
+  ASSERT_ARGC(argc, 2);
 
   char suffix[VIPS_PATH_MAX];
   VipsImage *image;
@@ -242,7 +242,7 @@ exit:
 
 ERL_NIF_TERM nif_image_new(ErlNifEnv *env, int argc,
                            const ERL_NIF_TERM argv[]) {
-  assert_argc(argc, 0);
+  ASSERT_ARGC(argc, 0);
 
   VipsImage *image;
   ErlNifTime start;
@@ -268,7 +268,7 @@ exit:
 
 ERL_NIF_TERM nif_image_new_temp_file(ErlNifEnv *env, int argc,
                                      const ERL_NIF_TERM argv[]) {
-  assert_argc(argc, 1);
+  ASSERT_ARGC(argc, 1);
 
   char format[VIPS_PATH_MAX];
   VipsImage *image;
@@ -300,7 +300,7 @@ exit:
 
 ERL_NIF_TERM nif_image_new_matrix_from_array(ErlNifEnv *env, int argc,
                                              const ERL_NIF_TERM argv[]) {
-  assert_argc(argc, 5);
+  ASSERT_ARGC(argc, 5);
 
   VipsImage *image;
   int width, height;
@@ -383,7 +383,7 @@ exit:
 
 ERL_NIF_TERM nif_image_get_fields(ErlNifEnv *env, int argc,
                                   const ERL_NIF_TERM argv[]) {
-  assert_argc(argc, 1);
+  ASSERT_ARGC(argc, 1);
 
   VipsImage *image;
   ERL_NIF_TERM ret;
@@ -422,7 +422,7 @@ exit:
 
 ERL_NIF_TERM nif_image_get_header(ErlNifEnv *env, int argc,
                                   const ERL_NIF_TERM argv[]) {
-  assert_argc(argc, 2);
+  ASSERT_ARGC(argc, 2);
 
   VipsImage *image;
   char header_name[MAX_HEADER_NAME_LENGTH];
@@ -484,7 +484,7 @@ exit:
 
 ERL_NIF_TERM nif_image_get_as_string(ErlNifEnv *env, int argc,
                                      const ERL_NIF_TERM argv[]) {
-  assert_argc(argc, 2);
+  ASSERT_ARGC(argc, 2);
 
   VipsImage *image;
   ERL_NIF_TERM ret;
