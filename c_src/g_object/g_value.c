@@ -7,39 +7,42 @@
 #include "g_value.h"
 
 static VixResult set_enum(ErlNifEnv *env, ERL_NIF_TERM term, GValue *gvalue) {
-
   int value;
+  VixResult res;
 
   if (!enif_get_int(env, term, &value)) {
-    error("failed to get enum int value from erl term");
-    return vix_error(env, "failed to get enum int value from erl term");
+    SET_ERROR_RESULT(env, "failed to get enum int value from erl term", res);
+    return res;
   }
 
   g_value_set_enum(gvalue, value);
-  return vix_result(ATOM_OK);
+  SET_VIX_RESULT(res, ATOM_OK);
+  return res;
 }
 
 static VixResult set_flags(ErlNifEnv *env, ERL_NIF_TERM term, GValue *gvalue) {
-
   int value;
+  VixResult res;
 
   if (!enif_get_int(env, term, &value)) {
-    error("failed to get flag int value from erl term");
-    return vix_error(env, "failed to get flag int value from erl term");
+    SET_ERROR_RESULT(env, "failed to get flag int value from erl term", res);
+    return res;
   }
 
   g_value_set_flags(gvalue, value);
-  return vix_result(ATOM_OK);
+  SET_VIX_RESULT(res, ATOM_OK);
+  return res;
 }
 
 static VixResult set_boolean(ErlNifEnv *env, ERL_NIF_TERM term,
                              GValue *gvalue) {
   char atom[10] = {0};
   bool boolean_value;
+  VixResult res;
 
   if (enif_get_atom(env, term, atom, 9, ERL_NIF_LATIN1) < 1) {
-    error("failed to get atom");
-    return vix_error(env, "failed to get atom");
+    SET_ERROR_RESULT(env, "failed to get atom", res);
+    return res;
   }
 
   if (strcmp(atom, "true") == 0) {
@@ -47,114 +50,133 @@ static VixResult set_boolean(ErlNifEnv *env, ERL_NIF_TERM term,
   } else if (strcmp(atom, "false") == 0) {
     boolean_value = false;
   } else {
-    error("invalid atom value, value must be :true or :false");
-    return vix_error(env, "invalid atom value, value must be :true or :false");
+    SET_ERROR_RESULT(env, "invalid atom value, value must be :true or :false", res);
+    return res;
   }
 
   g_value_set_boolean(gvalue, boolean_value);
-  return vix_result(ATOM_OK);
+  SET_VIX_RESULT(res, ATOM_OK);
+  return res;
 }
 
 static VixResult set_int(ErlNifEnv *env, ERL_NIF_TERM term, GValue *gvalue) {
   int int_value;
+  VixResult res;
 
   if (!enif_get_int(env, term, &int_value)) {
-    error("failed to get int from erl term");
-    return vix_error(env, "failed to get int from erl term");
+    SET_ERROR_RESULT(env, "failed to get int from erl term", res);
+    return res;
   }
 
   g_value_set_int(gvalue, int_value);
-  return vix_result(ATOM_OK);
+  SET_VIX_RESULT(res, ATOM_OK);
+  return res;
 }
 
 static VixResult set_uint(ErlNifEnv *env, ERL_NIF_TERM term, GValue *gvalue) {
   unsigned int uint_value;
+  VixResult res;
 
   if (!enif_get_uint(env, term, &uint_value)) {
-    error("failed to get uint from erl term");
-    return vix_error(env, "failed to get uint from erl term");
+    SET_ERROR_RESULT(env, "failed to get uint from erl term", res);
+    return res;
   }
 
   g_value_set_uint(gvalue, uint_value);
-  return vix_result(ATOM_OK);
+  SET_VIX_RESULT(res, ATOM_OK);
+  return res;
 }
 
 static VixResult set_int64(ErlNifEnv *env, ERL_NIF_TERM term, GValue *gvalue) {
   long int64_value;
+  VixResult res;
 
   if (!enif_get_int64(env, term, &int64_value)) {
-    error("failed to get int64 from erl term");
-    return vix_error(env, "failed to get int64 from erl term");
+    SET_ERROR_RESULT(env, "failed to get int64 from erl term", res);
+    return res;
   }
 
   g_value_set_int64(gvalue, int64_value);
-  return vix_result(ATOM_OK);
+  SET_VIX_RESULT(res, ATOM_OK);
+  return res;
 }
 
 static VixResult set_string(ErlNifEnv *env, ERL_NIF_TERM term, GValue *gvalue) {
   ErlNifBinary bin;
+  VixResult res;
 
   if (!enif_inspect_iolist_as_binary(env, term, &bin)) {
-    error("failed to get string from erl term");
-    return vix_error(env, "failed to get string from erl term");
+    SET_ERROR_RESULT(env, "failed to get string from erl term", res);
+    return res;
   }
 
-  // we always ensure that data is appended with NULL
+  // we ensure that data is appended with NULL while passing string from elixir
   g_value_set_string(gvalue, (const gchar *)bin.data);
-  return vix_result(ATOM_OK);
+  SET_VIX_RESULT(res, ATOM_OK);
+  return res;
 }
 
 static VixResult set_uint64(ErlNifEnv *env, ERL_NIF_TERM term, GValue *gvalue) {
   unsigned long uint64_value;
+  VixResult res;
 
   if (!enif_get_uint64(env, term, &uint64_value)) {
-    error("failed to get uint64 from erl term");
-    return vix_error(env, "failed to get uint64 from erl term");
+    SET_ERROR_RESULT(env, "failed to get uint64 from erl term", res);
+    return res;
   }
 
   g_value_set_uint64(gvalue, uint64_value);
-  return vix_result(ATOM_OK);
+  SET_VIX_RESULT(res, ATOM_OK);
+  return res;
 }
 
 static VixResult set_double(ErlNifEnv *env, ERL_NIF_TERM term, GValue *gvalue) {
   double double_value;
+  VixResult res;
 
   if (!enif_get_double(env, term, &double_value)) {
-    error("failed to get double from erl term");
-    return vix_error(env, "failed to get double from erl term");
+    SET_ERROR_RESULT(env, "failed to get double from erl term", res);
+    return res;
   }
 
   g_value_set_double(gvalue, double_value);
-  return vix_result(ATOM_OK);
+  SET_VIX_RESULT(res, ATOM_OK);
+  return res;
 }
 
 static VixResult set_boxed(ErlNifEnv *env, ERL_NIF_TERM term, GValue *gvalue) {
   gpointer ptr = NULL;
+  VixResult res;
 
   if (!erl_term_to_g_boxed(env, term, &ptr)) {
-    error("failed to get boxed pointer from erl term");
-    return vix_error(env, "failed to get boxed pointer from erl term");
+    SET_ERROR_RESULT(env, "failed to get boxed pointer from erl term", res);
+    return res;
   }
 
   g_value_set_boxed(gvalue, ptr);
-  return vix_result(ATOM_OK);
+  SET_VIX_RESULT(res, ATOM_OK);
+  return res;
 }
 
 static VixResult set_g_object(ErlNifEnv *env, ERL_NIF_TERM term,
                               GValue *gvalue) {
   GObject *obj;
+  VixResult res;
 
   if (!erl_term_to_g_object(env, term, &obj)) {
-    error("failed to get GObject argument");
-    return vix_error(env, "failed to get GObject argument");
+    SET_ERROR_RESULT(env, "failed to get GObject argument", res);
+    return res;
   }
 
   g_value_set_object(gvalue, obj);
-  return vix_result(ATOM_OK);
+  SET_VIX_RESULT(res, ATOM_OK);
+  return res;
 }
 
 VixResult set_g_value_from_erl_term(ErlNifEnv *env, GParamSpec *pspec,
                                     ERL_NIF_TERM term, GValue *gvalue) {
+  VixResult res;
+
   g_value_init(gvalue, G_PARAM_SPEC_VALUE_TYPE(pspec));
 
   if (G_IS_PARAM_SPEC_ENUM(pspec))
@@ -179,8 +201,10 @@ VixResult set_g_value_from_erl_term(ErlNifEnv *env, GParamSpec *pspec,
     return set_g_object(env, term, gvalue);
   else if (G_IS_PARAM_SPEC_FLAGS(pspec))
     return set_flags(env, term, gvalue);
-  else
-    return vix_error(env, "Unknown pspec");
+  else {
+    SET_ERROR_RESULT(env, "unknown pspec", res);
+    return res;
+  }
 }
 
 static VixResult get_enum(ErlNifEnv *env, GValue *gvalue) {
@@ -367,7 +391,7 @@ VixResult get_erl_term_from_g_object_property(ErlNifEnv *env, GObject *obj,
   else if (G_IS_PARAM_SPEC_FLAGS(pspec))
     res = get_flags(env, &gvalue);
   else
-    res = vix_error(env, "Unknown pspec");
+    SET_ERROR_RESULT(env, "unknown pspec", res);
 
   g_value_unset(&gvalue);
   return res;
@@ -404,7 +428,7 @@ VixResult g_value_to_erl_term(ErlNifEnv *env, GValue gvalue) {
   else if (G_TYPE_IS_FLAGS(type))
     res = get_flags_as_atoms(env, &gvalue);
   else
-    res = vix_error(env, "Specified GValue type is not supported");
+    SET_ERROR_RESULT(env, "specified GValue type is not supported", res);
 
   g_value_unset(&gvalue);
   return res;

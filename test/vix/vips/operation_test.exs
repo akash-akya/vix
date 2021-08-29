@@ -66,6 +66,16 @@ defmodule Vix.Vips.OperationTest do
 
   test "required output order", %{dir: _dir} do
     {:ok, im} = Image.new_from_file(img_path("black_on_white.jpg"))
-    assert {:ok, {41, 44, 45, 45, []}} = Operation.find_trim(im)
+    assert Operation.find_trim(im) == {:ok, {41, 44, 45, 45, []}}
+  end
+
+  test "operation error", %{dir: _dir} do
+    assert Operation.invert(:invalid) == {:error, "failed to get GObject argument"}
+
+    {:ok, im} = Image.new_from_file(img_path("black_on_white.jpg"))
+
+    assert Operation.affine(im, [1, 1, 1, 1]) ==
+             {:error,
+              "operation build: vips__transform_calc_inverse: singular or near-singular matrix"}
   end
 end

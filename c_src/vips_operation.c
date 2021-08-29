@@ -121,9 +121,8 @@ static VixResult get_operation_properties(ErlNifEnv *env, VipsOperation *op) {
   VixResult res;
 
   if (get_vips_operation_args(op, &names, &flags, &n_args)) {
-    error("failed to get args. error: %s", vips_error_buffer());
-    vips_error_clear();
-    return vix_error(env, "failed to get VipsObject output params");
+    SET_RESULT_FROM_VIPS_ERROR(env, "failed to get output fields", res);
+    return res;
   }
 
   list = enif_make_list(env, 0);
@@ -133,9 +132,10 @@ static VixResult get_operation_properties(ErlNifEnv *env, VipsOperation *op) {
       if (vips_object_get_argument(VIPS_OBJECT(op), names[i], &pspec,
                                    &arg_class, &arg_instance)) {
         error("failed to get argument: %s", names[i]);
+        SET_RESULT_FROM_VIPS_ERROR(env, names[i], res);
         // early exit is fine, for already reffed output GObjects
         // since `g_object_dtor` takes care of unreffing
-        return vix_error(env, "failed to get output argument");
+        return res;
       }
 
       res = get_erl_term_from_g_object_property(env, G_OBJECT(op), names[i],
@@ -150,7 +150,8 @@ static VixResult get_operation_properties(ErlNifEnv *env, VipsOperation *op) {
     }
   }
 
-  return vix_result(list);
+  SET_VIX_RESULT(res, list);
+  return res;
 }
 
 static VixResult set_operation_properties(ErlNifEnv *env, VipsOperation *op,
@@ -168,25 +169,35 @@ static VixResult set_operation_properties(ErlNifEnv *env, VipsOperation *op,
   GValue gvalue = {0};
 
   if (!enif_get_list_length(env, list, &length)) {
-    return vix_error(env, "Failed to get list length");
+    SET_ERROR_RESULT(env, "failed to get param list length", res);
+    return res;
   }
 
   for (guint i = 0; i < length; i++) {
-    if (!enif_get_list_cell(env, list, &head, &list))
-      return vix_error(env, "Failed to get list");
+    if (!enif_get_list_cell(env, list, &head, &list)) {
+      SET_ERROR_RESULT(env, "failed to get param list entry", res);
+      return res;
+    }
 
-    if (!enif_get_tuple(env, head, &count, &tup))
-      return vix_error(env, "Failed to get tuple");
+    if (!enif_get_tuple(env, head, &count, &tup)) {
+      SET_ERROR_RESULT(env, "failed to get param tuple", res);
+      return res;
+    }
 
-    if (count != 2)
-      return vix_error(env, "Tuple length must be of length 2");
+    if (count != 2) {
+      SET_ERROR_RESULT(env, "tuple length must be 2", res);
+      return res;
+    }
 
-    if (!get_binary(env, tup[0], name, 1024))
-      return vix_error(env, "Failed to get param name");
-
+    if (!get_binary(env, tup[0], name, 1024)) {
+      SET_ERROR_RESULT(env, "failed to get param name", res);
+      return res;
+    }
     if (vips_object_get_argument(VIPS_OBJECT(op), name, &pspec, &arg_class,
-                                 &arg_instance))
-      return vix_error(env, "Failed to get vips argument");
+                                 &arg_instance)) {
+      SET_ERROR_RESULT(env, "failed to get vips argument", res);
+      return res;
+    }
 
     res = set_g_value_from_erl_term(env, pspec, tup[1], &gvalue);
     if (!res.is_success)
@@ -196,7 +207,8 @@ static VixResult set_operation_properties(ErlNifEnv *env, VipsOperation *op,
     g_value_unset(&gvalue);
   }
 
-  return vix_result(ATOM_OK);
+  SET_VIX_RESULT(res, list);
+  return res;
 }
 
 ERL_NIF_TERM nif_vips_operation_call(ErlNifEnv *env, int argc,
@@ -212,7 +224,7 @@ ERL_NIF_TERM nif_vips_operation_call(ErlNifEnv *env, int argc,
   assert_argc(argc, 2);
 
   if (!get_binary(env, argv[0], op_name, 200)) {
-    res = vix_error(env, "operation name must be a valid string");
+    SET_ERROR_RESULT(env, "operation name must be a valid string", res);
     goto exit;
   }
 
@@ -223,9 +235,7 @@ ERL_NIF_TERM nif_vips_operation_call(ErlNifEnv *env, int argc,
     goto free_and_exit;
 
   if (!(new_op = vips_cache_operation_build(op))) {
-    error("failed to build operation, error: %s", vips_error_buffer());
-    vips_error_clear();
-    res = vix_error(env, "failed to build operation");
+    SET_RESULT_FROM_VIPS_ERROR(env, "operation build", res);
     goto free_and_exit;
   }
 

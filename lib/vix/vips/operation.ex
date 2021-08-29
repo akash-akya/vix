@@ -31,7 +31,7 @@ defmodule Vix.Vips.OperationHelper do
             {required, [{String.to_atom(param), value} | optional]}
 
           true ->
-            raise "Invalid operation output"
+            raise Vix.Vips.Operation.Error, message: "Invalid operation output field: #{param}"
         end
       end)
 
@@ -370,6 +370,9 @@ defmodule Vix.Vips.Operation do
             unquote(Macro.escape(optional_out_pspec))
           )
 
+        {:error, {label, error}} ->
+          {:error, String.trim("#{label}: #{error}")}
+
         {:error, term} ->
           {:error, term}
       end
@@ -393,7 +396,7 @@ defmodule Vix.Vips.Operation do
       case __MODULE__.unquote(func_name)(unquote_splicing(func_params), optional) do
         :ok -> :ok
         {:ok, result} -> result
-        {:error, reason} when is_list(reason) -> raise Error, message: to_string(reason)
+        {:error, reason} when is_binary(reason) -> raise Error, message: reason
         {:error, reason} -> raise Error, message: inspect(reason)
       end
     end
