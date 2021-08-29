@@ -21,8 +21,7 @@ defmodule Vix.GObject.UInt64 do
         value
 
       value ->
-        raise ArgumentError,
-              "value must be unsigned integer. given: #{inspect(value)}"
+        raise ArgumentError, message: "expected unsigned integer. given: #{inspect(value)}"
     end
   end
 

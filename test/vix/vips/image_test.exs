@@ -73,49 +73,6 @@ defmodule Vix.Vips.ImageTest do
     {:ok, _bin} = Image.write_to_buffer(im, ".jpg[Q=90]")
   end
 
-  test "display" do
-    {:ok, io_device} = StringIO.open("")
-
-    {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
-    assert ^im = Image.display(im, io_device: io_device)
-
-    {:ok, {"", image_data}} = StringIO.close(io_device)
-
-    assert_output_to_terminal("unnamed.jpg", image_data)
-  end
-
-  test "display options" do
-    {:ok, io_device} = StringIO.open("")
-
-    {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
-    im = Vix.Vips.Operation.invert!(im)
-
-    assert ^im = Image.display(im, io_device: io_device, label: "cute_puppies", suffix: ".png")
-
-    {:ok, {"", image_data}} = StringIO.close(io_device)
-
-    assert_output_to_terminal("cute_puppies.png", image_data)
-  end
-
-  defp assert_output_to_terminal(expected_name, image_data) do
-    assert "\e]1337;File=" <> data = image_data
-    [args, image_data] = String.split(data, ":", parts: 2)
-
-    args =
-      String.split(args, ";")
-      |> Map.new(fn kv ->
-        [key, value] = String.split(kv, "=", parts: 2)
-        {key, value}
-      end)
-
-    assert %{"name" => encoded_name, "size" => size, "inline" => "1"} = args
-
-    assert expected_name == Base.decode64!(encoded_name)
-    assert {size, ""} = Integer.parse(size)
-
-    assert <<_::binary-size(size), "\a">> = image_data
-  end
-
   test "new image from other image", %{dir: _dir} do
     {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
     {:ok, new_im} = Image.new_from_image(im, [250])

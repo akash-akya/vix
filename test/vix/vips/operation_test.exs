@@ -70,12 +70,16 @@ defmodule Vix.Vips.OperationTest do
   end
 
   test "operation error", %{dir: _dir} do
-    assert Operation.invert(:invalid) == {:error, "failed to get GObject argument"}
-
     {:ok, im} = Image.new_from_file(img_path("black_on_white.jpg"))
 
     assert Operation.affine(im, [1, 1, 1, 1]) ==
              {:error,
               "operation build: vips__transform_calc_inverse: singular or near-singular matrix"}
+  end
+
+  test "image type mis-match error", %{dir: _dir} do
+    assert_raise ArgumentError, "expected Vix.Vips.Image. given: :invalid", fn ->
+      Operation.invert(:invalid)
+    end
   end
 end

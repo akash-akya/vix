@@ -22,8 +22,7 @@ defmodule Vix.GObject.Double do
         value
 
       value ->
-        raise ArgumentError,
-              "value must be integer or double. given: #{inspect(value)}"
+        raise ArgumentError, message: "expected integer or double. given: #{inspect(value)}"
     end
   end
 
