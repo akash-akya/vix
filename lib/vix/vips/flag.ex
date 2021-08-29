@@ -12,7 +12,7 @@ defmodule Vix.Vips.FlagHelper do
   end
 
   def def_vips_flag(name, flag, env) do
-    module_name = Module.concat(Vix.Vips.Flag, String.to_atom(name))
+    module_name = Module.concat(Vix.Vips.Flag, name)
     {flag_str_list, _} = Enum.unzip(flag)
 
     spec = Enum.reduce(flag_str_list, &{:|, [], [&1, &2]})

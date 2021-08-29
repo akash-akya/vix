@@ -12,7 +12,7 @@ defmodule Vix.Vips.EnumHelper do
   end
 
   def def_vips_enum(name, enum, env) do
-    module_name = Module.concat(Vix.Vips.Enum, String.to_atom(name))
+    module_name = Module.concat(Vix.Vips.Enum, name)
     {enum_str_list, _} = Enum.unzip(enum)
 
     spec = Enum.reduce(enum_str_list, &{:|, [], [&1, &2]})

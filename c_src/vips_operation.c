@@ -393,7 +393,7 @@ ERL_NIF_TERM nif_vips_enum_list(ErlNifEnv *env, int argc,
   GType *types;
   gpointer g_class;
   GEnumClass *enum_class;
-  ERL_NIF_TERM enum_values, tuple, enum_str, enum_int, enums, name;
+  ERL_NIF_TERM enum_values, tuple, enum_atom, enum_int, enums, name;
   guint count = 0;
   ErlNifTime start;
 
@@ -411,10 +411,10 @@ ERL_NIF_TERM nif_vips_enum_list(ErlNifEnv *env, int argc,
     enum_values = enif_make_list(env, 0);
 
     for (guint j = 0; j < enum_class->n_values - 1; j++) {
-      enum_str = make_atom(env, enum_class->values[j].value_name);
+      enum_atom = make_atom(env, enum_class->values[j].value_name);
       enum_int = enif_make_int(env, enum_class->values[j].value);
 
-      tuple = enif_make_tuple2(env, enum_str, enum_int);
+      tuple = enif_make_tuple2(env, enum_atom, enum_int);
       enum_values = enif_make_list_cell(env, tuple, enum_values);
     }
 
@@ -440,7 +440,7 @@ ERL_NIF_TERM nif_vips_flag_list(ErlNifEnv *env, int argc,
   GType *types;
   gpointer g_class;
   GFlagsClass *flag_class;
-  ERL_NIF_TERM flag_values, tuple, flag_str, flag_int, flags, name;
+  ERL_NIF_TERM flag_values, tuple, flag_atom, flag_int, flags, name;
   guint count = 0;
   ErlNifTime start;
 
@@ -458,10 +458,10 @@ ERL_NIF_TERM nif_vips_flag_list(ErlNifEnv *env, int argc,
     flag_values = enif_make_list(env, 0);
 
     for (guint j = 0; j < flag_class->n_values - 1; j++) {
-      flag_str = make_atom(env, flag_class->values[j].value_name);
+      flag_atom = make_atom(env, flag_class->values[j].value_name);
       flag_int = enif_make_int(env, flag_class->values[j].value);
 
-      tuple = enif_make_tuple2(env, flag_str, flag_int);
+      tuple = enif_make_tuple2(env, flag_atom, flag_int);
       flag_values = enif_make_list_cell(env, tuple, flag_values);
     }
 
