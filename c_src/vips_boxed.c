@@ -86,7 +86,7 @@ static VipsArrayImage *erl_list_to_vips_image_array(ErlNifEnv *env,
 ERL_NIF_TERM nif_int_array(ErlNifEnv *env, int argc,
                            const ERL_NIF_TERM argv[]) {
 
-  assert_argc(argc, 1);
+  ASSERT_ARGC(argc, 1);
 
   GBoxedResource *boxed_r;
   unsigned int len;
@@ -123,7 +123,7 @@ exit:
 
 ERL_NIF_TERM nif_double_array(ErlNifEnv *env, int argc,
                               const ERL_NIF_TERM argv[]) {
-  assert_argc(argc, 1);
+  ASSERT_ARGC(argc, 1);
 
   GBoxedResource *boxed_r;
   unsigned int len;
@@ -160,7 +160,7 @@ exit:
 
 ERL_NIF_TERM nif_image_array(ErlNifEnv *env, int argc,
                              const ERL_NIF_TERM argv[]) {
-  assert_argc(argc, 1);
+  ASSERT_ARGC(argc, 1);
 
   GBoxedResource *boxed_r;
   unsigned int len;
@@ -197,7 +197,7 @@ exit:
 
 ERL_NIF_TERM nif_vips_int_array_to_erl_list(ErlNifEnv *env, int argc,
                                             const ERL_NIF_TERM argv[]) {
-  assert_argc(argc, 1);
+  ASSERT_ARGC(argc, 1);
 
   VipsArrayInt *int_array;
   ERL_NIF_TERM list;
@@ -213,17 +213,17 @@ ERL_NIF_TERM nif_vips_int_array_to_erl_list(ErlNifEnv *env, int argc,
   vips_array_term = argv[0];
 
   if (!erl_term_boxed_type(env, vips_array_term, &type)) {
-    res = vix_error(env, "failed to get type of boxed term");
+    SET_ERROR_RESULT(env, "failed to get type of boxed term", res);
     goto exit;
   }
 
   if (type != VIPS_TYPE_ARRAY_INT) {
-    res = vix_error(env, "term is not a VIPS_TYPE_ARRAY_INT");
+    SET_ERROR_RESULT(env, "term is not a VIPS_TYPE_ARRAY_INT", res);
     goto exit;
   }
 
   if (!erl_term_to_g_boxed(env, vips_array_term, (gpointer *)&int_array)) {
-    res = vix_error(env, "failed to get boxed term");
+    SET_ERROR_RESULT(env, "failed to get boxed term", res);
     goto exit;
   }
 
@@ -234,7 +234,8 @@ ERL_NIF_TERM nif_vips_int_array_to_erl_list(ErlNifEnv *env, int argc,
   for (int i = n - 1; i >= 0; i--) {
     list = enif_make_list_cell(env, enif_make_int(env, arr[i]), list);
   }
-  res = vix_result(list);
+
+  SET_VIX_RESULT(res, list);
 
 exit:
   notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
@@ -246,7 +247,7 @@ exit:
 
 ERL_NIF_TERM nif_vips_double_array_to_erl_list(ErlNifEnv *env, int argc,
                                                const ERL_NIF_TERM argv[]) {
-  assert_argc(argc, 1);
+  ASSERT_ARGC(argc, 1);
 
   VipsArrayDouble *double_array;
   ERL_NIF_TERM list;
@@ -262,17 +263,17 @@ ERL_NIF_TERM nif_vips_double_array_to_erl_list(ErlNifEnv *env, int argc,
   vips_array_term = argv[0];
 
   if (!erl_term_boxed_type(env, vips_array_term, &type)) {
-    res = vix_error(env, "failed to get type of boxed term");
+    SET_ERROR_RESULT(env, "failed to get type of boxed term", res);
     goto exit;
   }
 
   if (type != VIPS_TYPE_ARRAY_DOUBLE) {
-    res = vix_error(env, "term is not a VIPS_TYPE_ARRAY_DOUBLE");
+    SET_ERROR_RESULT(env, "term is not a VIPS_TYPE_ARRAY_DOUBLE", res);
     goto exit;
   }
 
   if (!erl_term_to_g_boxed(env, vips_array_term, (gpointer *)&double_array)) {
-    res = vix_error(env, "failed to get boxed term");
+    SET_ERROR_RESULT(env, "failed to get boxed term", res);
     goto exit;
   }
 
@@ -284,7 +285,7 @@ ERL_NIF_TERM nif_vips_double_array_to_erl_list(ErlNifEnv *env, int argc,
     list = enif_make_list_cell(env, enif_make_double(env, arr[i]), list);
   }
 
-  res = vix_result(list);
+  SET_VIX_RESULT(res, list);
 
 exit:
   notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
@@ -296,7 +297,7 @@ exit:
 
 ERL_NIF_TERM nif_vips_image_array_to_erl_list(ErlNifEnv *env, int argc,
                                               const ERL_NIF_TERM argv[]) {
-  assert_argc(argc, 1);
+  ASSERT_ARGC(argc, 1);
 
   VipsArrayImage *image_array;
   ERL_NIF_TERM list;
@@ -313,17 +314,17 @@ ERL_NIF_TERM nif_vips_image_array_to_erl_list(ErlNifEnv *env, int argc,
   vips_array_term = argv[0];
 
   if (!erl_term_boxed_type(env, vips_array_term, &type)) {
-    res = vix_error(env, "failed to get type of boxed term");
+    SET_ERROR_RESULT(env, "failed to get type of boxed term", res);
     goto exit;
   }
 
   if (type != VIPS_TYPE_ARRAY_IMAGE) {
-    res = vix_error(env, "term is not a VIPS_TYPE_ARRAY_IMAGE");
+    SET_ERROR_RESULT(env, "term is not a VIPS_TYPE_ARRAY_IMAGE", res);
     goto exit;
   }
 
   if (!erl_term_to_g_boxed(env, vips_array_term, (gpointer *)&image_array)) {
-    res = vix_error(env, "failed to get boxed term");
+    SET_ERROR_RESULT(env, "failed to get boxed term", res);
     goto exit;
   }
 
@@ -338,7 +339,7 @@ ERL_NIF_TERM nif_vips_image_array_to_erl_list(ErlNifEnv *env, int argc,
                                list);
   }
 
-  res = vix_result(list);
+  SET_VIX_RESULT(res, list);
 
 exit:
   notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));

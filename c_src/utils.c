@@ -17,7 +17,6 @@ ERL_NIF_TERM make_error(ErlNifEnv *env, const char *reason) {
 }
 
 ERL_NIF_TERM raise_exception(ErlNifEnv *env, const char *msg) {
-  error(msg);
   return enif_raise_exception(env, make_binary(env, msg));
 }
 
@@ -64,11 +63,6 @@ bool get_binary(ErlNifEnv *env, ERL_NIF_TERM bin_term, char *str,
   str[bin.size] = '\0';
 
   return true;
-}
-
-VixResult vix_error(ErlNifEnv *env, const char *reason) {
-  error(reason);
-  return (VixResult){.is_success = false, .result = make_binary(env, reason)};
 }
 
 VixResult vix_result(ERL_NIF_TERM term) {
