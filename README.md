@@ -1,8 +1,12 @@
 # Vix [![Hex.pm](https://img.shields.io/hexpm/v/vix.svg)](https://hex.pm/packages/vix)
 
-Vix is Elixir extension for [vips](https://libvips.github.io/libvips/).
+Vix is Elixir extension for [vips](https://libvips.github.io/libvips/) image processing library.
 
-Vix is a **NIF bindings** for libvips. Image Operation binding are generated using vips introspection, so documentation and bindings will be in-sync with the vips version installed. It uses dirty IO scheduler to avoid blocking main schedulers.
+### Why Vix
+
+Vix is a **NIF** based bindings library for libvips. Vix does not spwan OS processes for the operations like other libraries. And it can make full use of libvips [optimizations](https://libvips.github.io/libvips/API/current/How-it-works.md.html) such as joining of operations, cache etc.
+
+Image Operation binding are generated using vips introspection, so documentation and bindings always matches the vips version installed.
 
 Check [vips operation documentation](https://hexdocs.pm/vix/Vix.Vips.Operation.html) for the list of available operations and spec.
 
@@ -14,57 +18,79 @@ Check [vips operation documentation](https://hexdocs.pm/vix/Vix.Vips.Operation.h
 
 See [libvips documentation](https://libvips.github.io/libvips/API/current/How-it-works.md.html) for more details.
 
-### Example
+
+## Intro
 
 ```elixir
+# print vips version
+IO.puts("Version: " <> Vix.Vips.version())
+
+# contains image read/write functions
 alias Vix.Vips.Image
+
+# reading image from a file. Note that image is not actually loaded to the memory at this point.
+# img is `%Image{}` struct.
+{:ok, img} = Image.new_from_file("~/Downloads/kitty.png")
+
+# writing `Image` to a file.
+# Image type selected based on the image path extension. See documentation for more options
+:ok = Image.write_to_file(img, "kitty.jpg[Q=90]")
+
+# let's print image dimensions
+IO.puts("Width: #{Image.width(img)}")
+IO.puts("Height: #{Image.height(img)}")
+
+
+# Operations
+
+# contains image processing operations
 alias Vix.Vips.Operation
 
-def example(path) do
-  {:ok, im} = Image.new_from_file(path)
+# getting a rectangular region from the image (crop)
+{:ok, extract_img} = Operation.extract_area(img, 100, 50, 200, 200)
 
-  # put im at position (100, 100) in a 3000 x 3000 pixel image,
-  # make the other pixels in the image by mirroring im up / down /
-  # left / right, see
-  # https://libvips.github.io/libvips/API/current/libvips-conversion.html#vips-embed
-  {:ok, im} = Operation.embed(im, 100, 100, 3000, 3000, extend: :VIPS_EXTEND_MIRROR)
+# create image thumbnail.
+# this function accepts many optional parameters, see: https://libvips.github.io/libvips/API/current/Using-vipsthumbnail.md.html
+# also see `Operation.thumbnail/3` which accepts image path
+{:ok, thumb} = Operation.thumbnail_image(img, 100)
 
-  # multiply the green (middle) band by 2, leave the other two alone
-  {:ok, im} = Operation.linear(im, [1, 2, 1], [0])
+# resize image to 400x600. `resize` function accepts scaling factor.
+# Skip `vscale` if you want to preserve aspect ratio
+hscale = 400 / Image.width(img)
+vscale = 600 / Image.height(img)
+{:ok, resized_img} = Operation.resize(img, hscale, vscale: vscale)
 
-  # make an image from an array constant, convolve with it
-  {:ok, mask} =
-    Image.new_matrix_from_array(3, 3,
-      [
-        [-1, -1, -1],
-        [-1, 16, -1],
-        [-1, -1, -1]
-      ],
-      scale: 8
-    )
+# flip image
+{:ok, flipped_img} = Operation.flip(img, :VIPS_DIRECTION_HORIZONTAL)
 
-  {:ok, im} = Operation.conv(im, mask, precision: :VIPS_PRECISION_INTEGER)
+# Gaussian blur
+{:ok, blurred_img} = Operation.gaussblur(img, 5)
 
-  # finally, write the result back to a file on disk
-  :ok = Vix.Vips.Image.write_to_file(im, "out.jpg")
-end
+# convert image to a grayscale image
+{:ok, bw_img} = Operation.colourspace(img, :VIPS_INTERPRETATION_B_W)
+
+# adding gray border
+{:ok, extended_img} =
+  Operation.embed(img, 10, 10, Image.width(img) + 20, Image.height(img) + 20,
+    extend: :VIPS_EXTEND_BACKGROUND,
+    background: [128]
+  )
+
+# rotate image 90 degree clockwise
+{:ok, rotated_img} = Operation.rot(img, :VIPS_ANGLE_D90)
+
+# join two images horizontally
+{:ok, main_img} = Image.new_from_file("~/Downloads/kitten.svg")
+{:ok, joined_img} = Operation.join(img, main_img, :VIPS_DIRECTION_HORIZONTAL, expand: true)
+
+# render text as image
+# see https://libvips.github.io/libvips/API/current/libvips-create.html#vips-text for more details
+{:ok, {text, _}} = Operation.text(~s(<b>Vix</b> is <span foreground="red">awesome!</span>), dpi: 300, rgba: true)
+# add text to an image
+{:ok, img_with_text} = Operation.composite2(img, text, :VIPS_BLEND_MODE_OVER, x: 50, y: 20)
 ```
 
-The [libvips reference manual](https://libvips.github.io/libvips/API/current/) has a complete explanation of every method.
-
-### Simple *unscientific* comparison with mogrify
-
-For generating thumbnail
-
-|   | Vix       | Mogrify   |
-|---|-----------|-----------|
-| 1 | 298.731ms | 618.854ms |
-| 2 | 29.873ms  | 605.824ms |
-| 3 | 34.479ms  | 609.820ms |
-| 4 | 31.339ms  | 604.712ms |
-| 5 | 32.526ms  | 605.553ms |
-
-The significant reduction in operation-time for subsequent calls is because of [operation caching](https://libvips.github.io/libvips/API/current/VipsOperation.html) in vips.
+The [libvips reference manual](https://libvips.github.io/libvips/API/current/) has more detailed documentation about the operations.
 
 ### Warning
 
@@ -88,5 +114,4 @@ end
 
 ### TODO
 - [ ] support mutable operations such as draw*
-- [ ] support `VipsConnection`(?)
 - [ ] support all remaining vips types
