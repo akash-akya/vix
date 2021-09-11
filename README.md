@@ -21,13 +21,14 @@ See [libvips documentation](https://libvips.github.io/libvips/API/current/How-it
 
 ## Introduction
 
-Easiest way to get started with Vix, or to explore the operations is to use load [intro notebook](./livebooks/intro.livemd) using [Livebook](https://github.com/livebook-dev/livebook).
+Easiest way to get started with Vix, or to explore the operations is to use load [Introduction Notebook](./livebooks/intro.livemd) using [Livebook](https://github.com/livebook-dev/livebook).
 
-**[Livebook](https://github.com/livebook-dev/livebook) Notebooks**
+### Available Notebooks:
 
 * [Introduction](./livebooks/intro.livemd)
 * [Picture Language](./livebooks/picture-language.livemd)
 
+### Example
 
 ```elixir
 # print vips version

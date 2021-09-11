@@ -1,0 +1,113 @@
+# Picture Language
+
+## Load Dependencies
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.3.0"},
+  {:vix, "~> 0.5"}
+])
+```
+
+Defining helper function `display` using kino so that we can show image inline
+
+```elixir
+defmodule VixExt do
+  alias Vix.Vips.Image
+  alias Vix.Vips.Operation
+
+  @max_height 500
+
+  def show(%Image{} = image) do
+    height = Image.height(image)
+
+    # scale down if image height is larger than 500px
+    image =
+      if height > @max_height do
+        Operation.resize!(image, @max_height / height)
+      else
+        image
+      end
+
+    # write vips-image as png image to memory
+    {:ok, image_bin} = Image.write_to_buffer(image, ".png")
+    Kino.render(Kino.Image.new(image_bin, "image/png"))
+
+    :ok
+  end
+end
+```
+
+## Picture Language
+
+Implementing picture language defined in [**Structural and Interpretation of Computer Programs**](https://mitpress.mit.edu/sites/default/files/sicp/index.html) section [2.2.4](https://mitpress.mit.edu/sites/default/files/sicp/full-text/book/book-Z-H-15.html#%_sec_2.2.4) in Elixir using vix
+
+```elixir
+defmodule Pict do
+  alias Vix.Vips.Operation, as: Op
+
+  def beside(a, b) do
+    Op.resize!(Op.join!(a, b, :VIPS_DIRECTION_HORIZONTAL), 0.5, vscale: 1)
+  end
+
+  def below(a, b) do
+    Op.resize!(Op.join!(a, b, :VIPS_DIRECTION_VERTICAL), 1, vscale: 0.5)
+  end
+
+  def vert_flip(p) do
+    Op.flip!(p, :VIPS_DIRECTION_VERTICAL)
+  end
+
+  def horz_flip(p) do
+    Op.flip!(p, :VIPS_DIRECTION_HORIZONTAL)
+  end
+end
+```
+
+Implementation of [Fig. 2.14](https://mitpress.mit.edu/sites/default/files/sicp/full-text/book/book-Z-H-15.html#%_fig_2.14)
+
+```elixir
+defmodule PictUtils do
+  import Pict
+
+  def right_split(p, 0), do: p
+
+  def right_split(p, n) do
+    t = right_split(p, n - 1)
+    beside(p, below(t, t))
+  end
+
+  def up_split(p, 0), do: p
+
+  def up_split(p, n) do
+    t = up_split(p, n - 1)
+    below(beside(t, t), p)
+  end
+
+  def corner_split(p, 0), do: p
+
+  def corner_split(p, n) do
+    us = up_split(p, n - 1)
+    rs = right_split(p, n - 1)
+
+    beside(
+      below(beside(us, us), p),
+      below(corner_split(p, n - 1), below(rs, rs))
+    )
+  end
+end
+```
+
+```elixir
+alias Vix.Vips.Image
+import VixExt
+
+{:ok, img} = Image.new_from_file("~/Downloads/kitty.png")
+img = PictUtils.corner_split(img, 5)
+
+right = Pict.below(img, Pict.vert_flip(img))
+left = Pict.horz_flip(right)
+img = Pict.beside(left, right)
+
+show(img)
+```
