@@ -4,7 +4,7 @@ Vix is Elixir extension for [vips](https://libvips.github.io/libvips/) image pro
 
 ### Why Vix
 
-Vix is a **NIF** based bindings library for libvips. Vix does not spwan OS processes for the operations like other libraries. And it can make full use of libvips [optimizations](https://libvips.github.io/libvips/API/current/How-it-works.md.html) such as joining of operations, cache etc.
+Vix is a **NIF** based bindings library for libvips. Vix does not spawn OS processes for the operations like other libraries. And it can make full use of libvips [optimizations](https://libvips.github.io/libvips/API/current/How-it-works.md.html) such as joining of operations, cache etc.
 
 Image Operation binding are generated using vips introspection, so documentation and bindings always matches the vips version installed.
 
@@ -19,7 +19,15 @@ Check [vips operation documentation](https://hexdocs.pm/vix/Vix.Vips.Operation.h
 See [libvips documentation](https://libvips.github.io/libvips/API/current/How-it-works.md.html) for more details.
 
 
-## Intro
+## Introduction
+
+Easiest way to get started with Vix, or to explore the operations is to use load [intro notebook](./livebooks/intro.livemd) using [Livebook](https://github.com/livebook-dev/livebook).
+
+**[Livebook](https://github.com/livebook-dev/livebook) Notebooks**
+
+* [Introduction](./livebooks/intro.livemd)
+* [Picture Language](./livebooks/picture-language.livemd)
+
 
 ```elixir
 # print vips version
