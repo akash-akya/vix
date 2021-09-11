@@ -54,16 +54,11 @@ defmodule Vix.Vips.OperationHelper do
   end
 
   def prepare_doc(desc, required_in, optional_in, required_out, optional_out) do
-    doc_required_in =
-      Enum.map_join(required_in, "\n", fn pspec ->
-        "  * #{pspec.param_name} - #{pspec.desc}"
-      end)
-
     """
     #{String.capitalize(to_string(desc))}
 
     ## Arguments
-    #{doc_required_in}
+    #{required_in_doc(required_in)}
 
     #{optional_in_doc(optional_in)}
 
@@ -236,6 +231,12 @@ defmodule Vix.Vips.OperationHelper do
     """
   end
 
+  defp required_in_doc(required_in) do
+    Enum.map_join(required_in, "\n", fn pspec ->
+      "  * #{pspec.param_name} - #{pspec.desc}"
+    end)
+  end
+
   def output_values_doc([], []), do: ""
   def output_values_doc([_], []), do: ""
 
@@ -286,7 +287,9 @@ defmodule Vix.Vips.Operation do
   @moduledoc """
   Vips Operations
 
-  NOTE: Vips operation functions are generated using vips-introspection, so the bindings are up-to-date with vips version installed. Documentation in the hexdocs might *not* match for you.
+  See libvips [documentation](https://libvips.github.io/libvips/API/current/func-list.html) for more detailed description of the operation.
+
+  Vips operation functions are generated using vips-introspection and are up-to-date with libvips version installed. Documentation in the hexdocs might *not* match for you.
   """
 
   import Vix.Vips.OperationHelper
