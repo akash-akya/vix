@@ -213,10 +213,9 @@ ERL_NIF_TERM nif_vips_blob(ErlNifEnv *env, int argc,
     goto exit;
   }
 
-  boxed_r = enif_alloc_resource(G_BOXED_RT, sizeof(GBoxedResource));
-
   vips_blob = vips_blob_copy(bin.data, bin.size);
 
+  boxed_r = enif_alloc_resource(G_BOXED_RT, sizeof(GBoxedResource));
   boxed_r->boxed_type = VIPS_TYPE_BLOB;
   boxed_r->boxed_ptr = vips_blob;
 
@@ -248,6 +247,12 @@ ERL_NIF_TERM nif_vips_ref_string(ErlNifEnv *env, int argc,
 
   // we ensure that data is appended with NULL while passing string from elixir
   vips_ref_string = vips_ref_string_new((const char *)bin.data);
+
+  if (!vips_ref_string) {
+    error("failed to create vips ref string");
+    ret = enif_make_badarg(env);
+    goto exit;
+  }
 
   boxed_r = enif_alloc_resource(G_BOXED_RT, sizeof(GBoxedResource));
   boxed_r->boxed_type = VIPS_TYPE_REF_STRING;

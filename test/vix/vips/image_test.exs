@@ -16,7 +16,9 @@ defmodule Vix.Vips.ImageTest do
 
   test "write_to_file", %{dir: dir} do
     path = img_path("puppies.jpg")
-    {:ok, im} = Image.new_from_file(path)
+
+    {:ok, %Image{ref: ref} = im} = Image.new_from_file(path)
+    assert is_reference(ref)
 
     out_path = Temp.path!(suffix: ".png", basedir: dir)
     assert :ok == Image.write_to_file(im, out_path)
@@ -53,6 +55,11 @@ defmodule Vix.Vips.ImageTest do
   test "get_header", %{dir: _dir} do
     {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
     assert {:ok, 518} = Image.header_value(im, "width")
+  end
+
+  test "get_header binary", %{dir: _dir} do
+    {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
+    assert {:ok, <<_::binary>>} = Image.header_value(im, "exif-data")
   end
 
   test "get_as_string", %{dir: _dir} do
