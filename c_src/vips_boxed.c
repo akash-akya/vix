@@ -195,6 +195,72 @@ exit:
   return ret;
 }
 
+ERL_NIF_TERM nif_vips_blob(ErlNifEnv *env, int argc,
+                           const ERL_NIF_TERM argv[]) {
+  ASSERT_ARGC(argc, 1);
+
+  GBoxedResource *boxed_r;
+  VipsBlob *vips_blob;
+  ERL_NIF_TERM ret;
+  ErlNifBinary bin;
+  ErlNifTime start;
+
+  start = enif_monotonic_time(ERL_NIF_USEC);
+
+  if (!enif_inspect_binary(env, argv[0], &bin)) {
+    error("failed to get binary from erl term");
+    ret = enif_make_badarg(env);
+    goto exit;
+  }
+
+  boxed_r = enif_alloc_resource(G_BOXED_RT, sizeof(GBoxedResource));
+
+  vips_blob = vips_blob_copy(bin.data, bin.size);
+
+  boxed_r->boxed_type = VIPS_TYPE_BLOB;
+  boxed_r->boxed_ptr = vips_blob;
+
+  ret = enif_make_resource(env, boxed_r);
+  enif_release_resource(boxed_r);
+
+exit:
+  notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
+  return ret;
+}
+
+ERL_NIF_TERM nif_vips_ref_string(ErlNifEnv *env, int argc,
+                                 const ERL_NIF_TERM argv[]) {
+  ASSERT_ARGC(argc, 1);
+
+  GBoxedResource *boxed_r;
+  VipsRefString *vips_ref_string;
+  ERL_NIF_TERM ret;
+  ErlNifBinary bin;
+  ErlNifTime start;
+
+  start = enif_monotonic_time(ERL_NIF_USEC);
+
+  if (!enif_inspect_iolist_as_binary(env, argv[0], &bin)) {
+    error("failed to get binary from erl term");
+    ret = enif_make_badarg(env);
+    goto exit;
+  }
+
+  // we ensure that data is appended with NULL while passing string from elixir
+  vips_ref_string = vips_ref_string_new((const char *)bin.data);
+
+  boxed_r = enif_alloc_resource(G_BOXED_RT, sizeof(GBoxedResource));
+  boxed_r->boxed_type = VIPS_TYPE_REF_STRING;
+  boxed_r->boxed_ptr = vips_ref_string;
+
+  ret = enif_make_resource(env, boxed_r);
+  enif_release_resource(boxed_r);
+
+exit:
+  notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
+  return ret;
+}
+
 ERL_NIF_TERM nif_vips_int_array_to_erl_list(ErlNifEnv *env, int argc,
                                             const ERL_NIF_TERM argv[]) {
   ASSERT_ARGC(argc, 1);
@@ -340,6 +406,101 @@ ERL_NIF_TERM nif_vips_image_array_to_erl_list(ErlNifEnv *env, int argc,
   }
 
   SET_VIX_RESULT(res, list);
+
+exit:
+  notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
+  if (res.is_success)
+    return make_ok(env, res.result);
+  else
+    return enif_make_tuple2(env, ATOM_ERROR, res.result);
+}
+
+ERL_NIF_TERM nif_vips_blob_to_erl_binary(ErlNifEnv *env, int argc,
+                                         const ERL_NIF_TERM argv[]) {
+  ASSERT_ARGC(argc, 1);
+
+  VipsBlob *blob;
+  ERL_NIF_TERM vips_blob_term;
+  ERL_NIF_TERM bin_term;
+  GType type;
+  size_t length;
+  const void *blob_data;
+  unsigned char *erl_bin_data;
+  ErlNifTime start;
+  VixResult res;
+
+  start = enif_monotonic_time(ERL_NIF_USEC);
+
+  vips_blob_term = argv[0];
+
+  if (!erl_term_boxed_type(env, vips_blob_term, &type)) {
+    SET_ERROR_RESULT(env, "failed to get type of boxed term", res);
+    goto exit;
+  }
+
+  if (type != VIPS_TYPE_BLOB) {
+    SET_ERROR_RESULT(env, "term is not a VIPS_TYPE_BLOB", res);
+    goto exit;
+  }
+
+  if (!erl_term_to_g_boxed(env, vips_blob_term, (gpointer *)&blob)) {
+    SET_ERROR_RESULT(env, "failed to get boxed term", res);
+    goto exit;
+  }
+
+  blob_data = vips_blob_get(blob, &length);
+  erl_bin_data = enif_make_new_binary(env, length, &bin_term);
+  memcpy(erl_bin_data, blob_data, length);
+
+  SET_VIX_RESULT(res, bin_term);
+
+exit:
+  notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
+  if (res.is_success)
+    return make_ok(env, res.result);
+  else
+    return enif_make_tuple2(env, ATOM_ERROR, res.result);
+}
+
+ERL_NIF_TERM nif_vips_ref_string_to_erl_binary(ErlNifEnv *env, int argc,
+                                               const ERL_NIF_TERM argv[]) {
+  ASSERT_ARGC(argc, 1);
+
+  VipsRefString *vips_ref_string;
+  ERL_NIF_TERM vips_ref_string_term;
+  ERL_NIF_TERM bin_term;
+  GType type;
+  size_t length;
+  const char *string;
+  unsigned char *erl_bin_data;
+  ErlNifTime start;
+  VixResult res;
+
+  start = enif_monotonic_time(ERL_NIF_USEC);
+
+  vips_ref_string_term = argv[0];
+
+  if (!erl_term_boxed_type(env, vips_ref_string_term, &type)) {
+    SET_ERROR_RESULT(env, "failed to get type of ref string term", res);
+    goto exit;
+  }
+
+  if (type != VIPS_TYPE_REF_STRING) {
+    SET_ERROR_RESULT(env, "term is not a VIPS_TYPE_REF_STRING", res);
+    goto exit;
+  }
+
+  if (!erl_term_to_g_boxed(env, vips_ref_string_term,
+                           (gpointer *)&vips_ref_string)) {
+    SET_ERROR_RESULT(env, "failed to get boxed term", res);
+    goto exit;
+  }
+
+  string = vips_ref_string_get(vips_ref_string, &length);
+  erl_bin_data = enif_make_new_binary(env, length, &bin_term);
+  memcpy(erl_bin_data, string, length);
+
+  SET_VIX_RESULT(res, bin_term);
 
 exit:
   notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));

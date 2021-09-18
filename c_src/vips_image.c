@@ -17,26 +17,6 @@ static ERL_NIF_TERM vips_image_header_read_error(ErlNifEnv *env,
   return make_error(env, "Failed to read image metadata");
 }
 
-static int get_ref_string(ErlNifEnv *env, VipsImage *image, const char *name,
-                          ERL_NIF_TERM *value) {
-  const char *str;
-  unsigned char *temp;
-  ssize_t length;
-
-  if (vips_image_get_string(image, name, &str)) {
-    error("Failed to get string. error: %s", vips_error_buffer());
-    vips_error_clear();
-    *value = make_error(env, "Failed to get string");
-    return -1;
-  }
-
-  length = strlen(str);
-  temp = enif_make_new_binary(env, length, value);
-  memcpy(temp, str, length);
-
-  return 0;
-}
-
 ERL_NIF_TERM nif_image_new_from_file(ErlNifEnv *env, int argc,
                                      const ERL_NIF_TERM argv[]) {
   ASSERT_ARGC(argc, 1);
@@ -428,7 +408,7 @@ ERL_NIF_TERM nif_image_get_header(ErlNifEnv *env, int argc,
   char header_name[MAX_HEADER_NAME_LENGTH];
   GType type;
   ERL_NIF_TERM ret;
-  ERL_NIF_TERM value;
+  ERL_NIF_TERM type_name;
   ErlNifTime start;
   GValue gvalue = {0};
   VixResult res;
@@ -463,16 +443,8 @@ ERL_NIF_TERM nif_image_get_header(ErlNifEnv *env, int argc,
   res = g_value_to_erl_term(env, gvalue);
 
   if (res.is_success) {
-
-    if (type == VIPS_TYPE_REF_STRING) {
-      if (get_ref_string(env, image, header_name, &value))
-        ret = enif_make_tuple2(env, ATOM_ERROR, value);
-      else
-        ret = make_ok(env, value);
-    } else {
-      ret = make_ok(env, res.result);
-    }
-
+    type_name = make_binary(env, g_type_name(type));
+    ret = make_ok(env, enif_make_tuple2(env, type_name, res.result));
   } else {
     ret = enif_make_tuple2(env, ATOM_ERROR, res.result);
   }

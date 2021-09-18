@@ -9,8 +9,8 @@ defmodule Vix.Vips.OperationHelper do
     Enum.map(
       args,
       fn {name, value} ->
-        param_spec = Map.get(in_pspec, name)
-        {name, Type.to_nif_term(value, param_spec)}
+        pspec = Map.get(in_pspec, name)
+        {name, Type.to_nif_term(pspec_type(pspec), value, pspec.data)}
       end
     )
   end
@@ -21,13 +21,13 @@ defmodule Vix.Vips.OperationHelper do
       |> Enum.reduce({[], []}, fn {param, value}, {required, optional} ->
         cond do
           Map.has_key?(required_out_pspec, param) ->
-            param_spec = Map.get(required_out_pspec, param)
-            value = Type.to_erl_term(value, param_spec)
-            {[{param_spec.priority, value} | required], optional}
+            pspec = Map.get(required_out_pspec, param)
+            value = Type.to_erl_term(pspec_type(pspec), value)
+            {[{pspec.priority, value} | required], optional}
 
           Map.has_key?(optional_out_pspec, param) ->
-            param_spec = Map.get(optional_out_pspec, param)
-            value = Type.to_erl_term(value, param_spec)
+            pspec = Map.get(optional_out_pspec, param)
+            value = Type.to_erl_term(pspec_type(pspec), value)
             {required, [{String.to_atom(param), value} | optional]}
 
           true ->
@@ -73,8 +73,7 @@ defmodule Vix.Vips.OperationHelper do
       # we do not support mutable operations yet. Skip operations which use un-supported types as arguments
       :vips_argument_modify in flags ||
         value_type == "VipsSource" ||
-        value_type == "VipsTarget" ||
-        value_type == "VipsBlob"
+        value_type == "VipsTarget"
     end)
   end
 
@@ -109,7 +108,10 @@ defmodule Vix.Vips.OperationHelper do
       end)
 
     # TODO: support VipsInterpolate and other types
-    optional_input = Enum.filter(optional_input, &Type.supported?/1)
+    optional_input =
+      Enum.filter(optional_input, fn pspec ->
+        Type.supported?(pspec_type(pspec))
+      end)
 
     required_input = Enum.sort_by(required_input, & &1.priority)
     required_output = Enum.sort_by(required_output, & &1.priority)
@@ -209,11 +211,16 @@ defmodule Vix.Vips.OperationHelper do
     {description, args}
   end
 
+  defp pspec_type(pspec), do: GParamSpec.type(pspec)
+
   defp default(pspec) do
-    if Type.default(pspec) == :unsupported do
+    type = pspec_type(pspec)
+    data = pspec.data
+
+    if Type.default(type, data) == :unsupported do
       ""
     else
-      "Default: `#{inspect(Type.default(pspec))}`"
+      "Default: `#{inspect(Type.default(type, data))}`"
     end
   end
 
@@ -262,19 +269,22 @@ defmodule Vix.Vips.OperationHelper do
     """
   end
 
-  defp typespec(%GParamSpec{spec_type: "GParamEnum"} = pspec) do
-    type_name(pspec.value_type)
-  end
+  defp typespec(%GParamSpec{} = pspec) do
+    case pspec_type(pspec) do
+      {:enum, name} ->
+        type_name(name)
 
-  defp typespec(%GParamSpec{spec_type: "GParamFlags"} = pspec) do
-    type_name(pspec.value_type)
+      {:flags, name} ->
+        type_name(name)
+
+      type ->
+        Type.typespec(type)
+    end
   end
 
   defp typespec(pspec_list) when is_list(pspec_list) do
     Enum.map(pspec_list, &typespec/1)
   end
-
-  defp typespec(pspec), do: Type.typespec(pspec)
 
   defp optional_args_typespec(optional) do
     Enum.map(optional, fn pspec ->
