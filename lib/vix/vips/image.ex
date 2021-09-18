@@ -192,16 +192,24 @@ defmodule Vix.Vips.Image do
 
   This is a generic function to get header value.
 
-  Casts the value to appropriate type. Currently it only supports values of type integer, float, string and list of integer values. Use `Vix.Vips.Image.header_value_as_string/2` to get string representation of any header value.
+  Casts the value to appropriate type. Returned value can be integer, float, string, binary, list. Use `Vix.Vips.Image.header_value_as_string/2` to get string representation of any header value.
 
   ```elixir
   {:ok, width} = Image.header_value(vips_image, "width")
   ```
   """
   @spec header_value(__MODULE__.t(), String.t()) ::
-          {:ok, integer() | float() | String.t() | [integer()]} | {:error, term()}
+          {:ok, integer() | float() | String.t() | binary() | list()} | {:error, term()}
   def header_value(%Image{ref: vips_image}, name) do
-    Nif.nif_image_get_header(vips_image, normalize_string(name))
+    value = Nif.nif_image_get_header(vips_image, normalize_string(name))
+
+    case value do
+      {:ok, {type, value}} ->
+        {:ok, Vix.Type.to_erl_term(type, value)}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
   end
 
   @doc """

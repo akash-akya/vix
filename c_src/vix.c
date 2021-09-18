@@ -99,10 +99,15 @@ static ErlNifFunc nif_funcs[] = {
     {"nif_int_array", 1, nif_int_array, 0},
     {"nif_image_array", 1, nif_image_array, 0},
     {"nif_double_array", 1, nif_double_array, 0},
+    {"nif_vips_blob", 1, nif_vips_blob, 0},
+    {"nif_vips_ref_string", 1, nif_vips_ref_string, 0},
     {"nif_vips_int_array_to_erl_list", 1, nif_vips_int_array_to_erl_list, 0},
     {"nif_vips_double_array_to_erl_list", 1, nif_vips_double_array_to_erl_list,
      0},
     {"nif_vips_image_array_to_erl_list", 1, nif_vips_image_array_to_erl_list,
+     0},
+    {"nif_vips_blob_to_erl_binary", 1, nif_vips_blob_to_erl_binary, 0},
+    {"nif_vips_ref_string_to_erl_binary", 1, nif_vips_ref_string_to_erl_binary,
      0}};
 
 ERL_NIF_INIT(Elixir.Vix.Nif, nif_funcs, &on_load, NULL, NULL, NULL)
