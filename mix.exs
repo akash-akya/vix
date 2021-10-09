@@ -1,10 +1,13 @@
 defmodule Vix.MixProject do
   use Mix.Project
 
+  @version "0.6.0"
+  @scm_url "https://github.com/akash-akya/vix"
+
   def project do
     [
       app: :vix,
-      version: "0.5.0",
+      version: @version,
       elixir: "~> 1.7",
       start_permanent: Mix.env() == :prod,
       elixirc_paths: elixirc_paths(Mix.env()),
@@ -18,11 +21,12 @@ defmodule Vix.MixProject do
       description: description(),
 
       # Docs
-      source_url: "https://github.com/akash-akya/vix",
-      homepage_url: "https://github.com/akash-akya/vix",
+      source_url: @scm_url,
+      homepage_url: @scm_url,
       docs: [
         main: "readme",
-        extras: ["README.md"]
+        source_ref: "v#{@version}",
+        extras: ["README.md", "LICENSE"]
       ]
     ]
   end
@@ -45,7 +49,7 @@ defmodule Vix.MixProject do
       files:
         ~w(lib .formatter.exs mix.exs README* LICENSE* Makefile c_src/Makefile c_src/*.{h,c} c_src/g_object/*.{h,c}),
       links: %{
-        GitHub: "https://github.com/akash-akya/vix",
+        GitHub: @scm_url,
         libvips: "https://libvips.github.io/libvips"
       }
     ]
