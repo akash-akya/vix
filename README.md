@@ -16,23 +16,15 @@ Check [vips operation documentation](https://hexdocs.pm/vix/Vix.Vips.Operation.h
 
 ### What is Vips
 
-*(from vips documentation)*
+From vips documentation:
 
 > libvips is a [demand-driven, horizontally threaded](https://github.com/libvips/libvips/wiki/Why-is-libvips-quick) image processing library. Compared to similar libraries, [libvips runs quickly and uses little memory](https://github.com/libvips/libvips/wiki/Speed-and-memory-use).
 
-See [libvips documentation](https://libvips.github.io/libvips/API/current/How-it-works.md.html) for more details.
-
-
 ## Introduction
 
-Easiest way to get started or to explore the operations is to run [Introduction Livebook](./livebooks/introduction.livemd) .
+Easiest way to get started or to explore the operations is to run Introduction Livebook.
 
-### Available Notebooks:
-
-* [Introduction](./livebooks/introduction.livemd)
-* [Picture Language](./livebooks/picture-language.livemd)
-
-### Example
+[![Run in Livebook](https://livebook.dev/badge/v1/blue.svg)](https://livebook.dev/run?url=https%3A%2F%2Fgithub.com%2Fakash-akya%2Fvix%2Fblob%2Fmaster%2Flivebooks%2Fintroduction.livemd)
 
 ```elixir
 # print vips version
@@ -105,9 +97,16 @@ vscale = 600 / Image.height(img)
 
 The [libvips reference manual](https://libvips.github.io/libvips/API/current/) has more detailed documentation about the operations.
 
+### Bonus
+
+Livebook implementing picture language defined in [*Structural and Interpretation of Computer Programs*](https://mitpress.mit.edu/sites/default/files/sicp/index.html) section [2.2.4](https://mitpress.mit.edu/sites/default/files/sicp/full-text/book/book-Z-H-15.html#%_sec_2.2.4)
+
+[![Run in Livebook](https://livebook.dev/badge/v1/blue.svg)](https://livebook.dev/run?url=https%3A%2F%2Fgithub.com%2Fakash-akya%2Fvix%2Fblob%2Fmaster%2Flivebooks%2Fpicture-language.livemd)
+
+
 ### Warning
 
-This library is experimental. Interface might change significantly in the future versions. The code is not well tested, so you might experience crashes.
+This library is experimental and the code is not well tested, so you might experience crashes.
 
 ### Requirements
 
