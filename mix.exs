@@ -26,12 +26,19 @@ defmodule Vix.MixProject do
       docs: [
         main: "readme",
         source_ref: "v#{@version}",
-        extras: ["README.md", "LICENSE"]
+        extras: [
+          "README.md",
+          "LICENSE",
+          "livebooks/introduction.livemd",
+          "livebooks/picture-language.livemd"
+        ],
+        groups_for_extras: [
+          Livebooks: Path.wildcard("livebooks/*.livemd")
+        ]
       ]
     ]
   end
 
-  # Run "mix help compile.app" to learn about applications.
   def application do
     [
       extra_applications: [:logger]
@@ -55,7 +62,6 @@ defmodule Vix.MixProject do
     ]
   end
 
-  # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
       {:elixir_make, "~> 0.6", runtime: false},

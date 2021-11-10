@@ -1,6 +1,6 @@
-# Introduction to Vix
+# Introduction
 
-## Load Dependencies
+## Install dependencies
 
 ```elixir
 Mix.install([

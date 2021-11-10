@@ -1,6 +1,6 @@
 # Picture Language
 
-## Load Dependencies
+## Install dependencies
 
 ```elixir
 Mix.install([

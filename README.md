@@ -25,11 +25,11 @@ See [libvips documentation](https://libvips.github.io/libvips/API/current/How-it
 
 ## Introduction
 
-Easiest way to get started with Vix, or to explore the operations is to load [Introduction Notebook](./livebooks/intro.livemd) in [Livebook](https://github.com/livebook-dev/livebook).
+Easiest way to get started or to explore the operations is to run [Introduction Livebook](./livebooks/introduction.livemd) .
 
 ### Available Notebooks:
 
-* [Introduction](./livebooks/intro.livemd)
+* [Introduction](./livebooks/introduction.livemd)
 * [Picture Language](./livebooks/picture-language.livemd)
 
 ### Example
