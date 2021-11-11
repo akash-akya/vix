@@ -110,7 +110,11 @@ This library is experimental and the code is not well tested, so you might exper
 
 ### Requirements
 
-* libvips
+* libvips with development headers
+  * **macOS**: using brew `brew install libvips`
+  * **Linux**: using deb `apt install libvips-dev`
+
+  For more details see https://www.libvips.org/install.html
 * pkg-config
 * c compiler
 
