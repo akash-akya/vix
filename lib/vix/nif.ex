@@ -18,6 +18,10 @@ defmodule Vix.Nif do
   def nif_g_type_name(_type),
     do: :erlang.nif_error(:nif_library_not_loaded)
 
+  # VipsInterpolate
+  def nif_interpolate_new(_name),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
   # VipsImage
   def nif_image_new_from_file(_src),
     do: :erlang.nif_error(:nif_library_not_loaded)

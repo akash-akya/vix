@@ -70,7 +70,7 @@ defmodule Vix.Vips.OperationHelper do
     {_desc, args} = vips_operation_arguments(op_name)
 
     Enum.any?(args, fn %{flags: flags, value_type: value_type} ->
-      # we do not support mutable operations yet. Skip operations which use un-supported types as arguments
+      # we do not support mutable operations & operations with VipsSource and VipsTarget as arguments
       :vips_argument_modify in flags ||
         value_type == "VipsSource" ||
         value_type == "VipsTarget"
@@ -107,7 +107,6 @@ defmodule Vix.Vips.OperationHelper do
         :vips_argument_required in flags
       end)
 
-    # TODO: support VipsInterpolate and other types
     optional_input =
       Enum.filter(optional_input, fn pspec ->
         Type.supported?(pspec_type(pspec))
