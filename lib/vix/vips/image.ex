@@ -13,7 +13,7 @@ defmodule Vix.Vips.Image do
   @behaviour Type
 
   @typedoc """
-  Represents an instance of libvips image
+  Represents an instance of VipsImage
   """
   @type t() :: %Image{ref: reference()}
 

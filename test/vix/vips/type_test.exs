@@ -5,8 +5,4 @@ defmodule Vix.TypeTest do
   test "typespec" do
     assert {:integer, [], []} == Type.typespec("gint")
   end
-
-  test "supported?" do
-    refute Type.supported?("VipsInterpolate")
-  end
 end

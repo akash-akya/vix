@@ -85,6 +85,9 @@ defmodule Vix.Type do
       "VipsTarget" ->
         Vips.Target
 
+      "VipsInterpolate" ->
+        Vips.Interpolate
+
       _type ->
         :unsupported
     end

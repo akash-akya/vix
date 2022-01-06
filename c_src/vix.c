@@ -10,6 +10,7 @@
 #include "g_object/g_type.h"
 #include "vips_boxed.h"
 #include "vips_image.h"
+#include "vips_interpolate.h"
 #include "vips_operation.h"
 
 static int on_load(ErlNifEnv *env, void **priv, ERL_NIF_TERM load_info) {
@@ -52,6 +53,9 @@ static ErlNifFunc nif_funcs[] = {
     /* GType */
     {"nif_g_type_from_instance", 1, nif_g_type_from_instance, 0},
     {"nif_g_type_name", 1, nif_g_type_name, 0},
+
+    /* VipsInterpolate */
+    {"nif_interpolate_new", 1, nif_interpolate_new, 0},
 
     /* VipsImage */
     {"nif_image_new_from_file", 1, nif_image_new_from_file,
