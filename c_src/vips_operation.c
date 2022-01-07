@@ -341,8 +341,6 @@ static void *collect_operation_types(GType type, void *user_data) {
     goto skip;
   if (G_TYPE_IS_ABSTRACT(type))
     goto skip;
-  if (G_TYPE_CHECK_CLASS_TYPE(class, VIPS_TYPE_FOREIGN))
-    goto skip;
 
   type_list = (GTypeList *)user_data;
   type_list->types[type_list->count] = type;

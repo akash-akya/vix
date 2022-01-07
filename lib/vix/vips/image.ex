@@ -61,6 +61,8 @@ defmodule Vix.Vips.Image do
   ```
   at the command-line to see a summary of the available options for the JPEG loader.
 
+  If you want more control over the loader, Use specifc format loader from `Vix.Vips.Operation`. For example for jpeg use `Vix.Vips.Operation.jpegload/2`
+
   Loading is fast: only enough of the image is loaded to be able to fill out the header. Pixels will only be decompressed when they are needed.
   """
   @spec new_from_file(String.t()) :: {:ok, __MODULE__.t()} | {:error, term()}
@@ -109,6 +111,8 @@ defmodule Vix.Vips.Image do
   $ vips jpegsave
   ```
   at the command-line to see all the available options for JPEG save.
+
+  If you want more control over the saver, Use specifc format saver from `Vix.Vips.Operation`. For example for jpeg use `Vix.Vips.Operation.jpegsave/2`
   """
   @spec write_to_file(__MODULE__.t(), String.t()) :: :ok | {:error, term()}
   def write_to_file(%Image{ref: vips_image}, path) do
