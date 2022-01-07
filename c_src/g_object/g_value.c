@@ -433,3 +433,38 @@ VixResult g_value_to_erl_term(ErlNifEnv *env, GValue gvalue) {
   g_value_unset(&gvalue);
   return res;
 }
+
+VixResult erl_term_to_g_value(ErlNifEnv *env, GType type, ERL_NIF_TERM term, GValue *gvalue) {
+  VixResult res;
+
+  debug("G_VALUE_TYPE: %s", g_type_name(type));
+
+  g_value_init(gvalue, type);
+
+  if (type == G_TYPE_BOOLEAN)
+    return set_boolean(env, term, gvalue);
+  else if (type == G_TYPE_UINT64)
+    return set_uint64(env, term, gvalue);
+  else if (type == G_TYPE_DOUBLE)
+    return set_double(env, term, gvalue);
+  else if (type == G_TYPE_INT)
+    return set_int(env, term, gvalue);
+  else if (type == G_TYPE_UINT)
+    return set_uint(env, term, gvalue);
+  else if (type == G_TYPE_INT64)
+    return set_int64(env, term, gvalue);
+  else if (type == G_TYPE_STRING)
+    return set_string(env, term, gvalue);
+  else if (G_TYPE_IS_BOXED(type))
+    return set_boxed(env, term, gvalue);
+  else if (G_TYPE_IS_ENUM(type))
+    return set_enum(env, term, gvalue);
+  else if (G_TYPE_IS_OBJECT(type))
+    return set_g_object(env, term, gvalue);
+  else if (G_TYPE_IS_FLAGS(type))
+    return set_flags(env, term, gvalue);
+  else {
+    SET_ERROR_RESULT(env, "specified GValue type is not supported", res);
+    return res;
+  }
+}

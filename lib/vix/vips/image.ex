@@ -9,6 +9,7 @@ defmodule Vix.Vips.Image do
 
   alias Vix.Type
   alias Vix.Nif
+  alias Vix.Vips.MutableImage
 
   @behaviour Type
 
@@ -175,6 +176,38 @@ defmodule Vix.Vips.Image do
 
     Nif.nif_image_new_matrix_from_array(width, height, flatten_list(list), scale, offset)
     |> wrap_type()
+  end
+
+  @doc """
+  Mutate an image in-place. You have to pass a function which takes MutableImage as argument. Inside the callback function, you can call functions which modify the image, such as setting or removing metadata. See `Vix.Vips.MutableImage`
+
+  Return value of the callback is ignored.
+
+  Call returns updated image.
+
+  Example
+
+  ```elixir
+    {:ok, im} = Image.new_from_file("puppies.jpg")
+
+    {:ok, new_im} =
+      Image.mutate(im, fn mut_image ->
+        :ok = MutableImage.update(mut_image, "orientation", 0)
+        :ok = MutableImage.set(mut_image, "new-field", :gint, 0)
+      end)
+  ```
+  """
+  @spec mutate(__MODULE__.t(), (Vix.Vips.MutableImage.t() -> any())) ::
+          {:ok, __MODULE__.t()} | {:error, term()}
+  def mutate(%Image{} = image, callback) do
+    {:ok, mut_image} = MutableImage.new(image)
+
+    try do
+      callback.(mut_image)
+      MutableImage.to_image(mut_image)
+    after
+      MutableImage.stop(mut_image)
+    end
   end
 
   @doc """

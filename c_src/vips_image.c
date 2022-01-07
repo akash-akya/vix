@@ -7,6 +7,7 @@
 #include "vips_image.h"
 
 const int MAX_HEADER_NAME_LENGTH = 100;
+const int MAX_G_TYPE_NAME_LENGTH = 1024;
 
 static ERL_NIF_TERM vips_image_header_read_error(ErlNifEnv *env,
                                                  const char *name,
@@ -447,6 +448,147 @@ ERL_NIF_TERM nif_image_get_header(ErlNifEnv *env, int argc,
     ret = make_ok(env, enif_make_tuple2(env, type_name, res.result));
   } else {
     ret = enif_make_tuple2(env, ATOM_ERROR, res.result);
+  }
+
+exit:
+  notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
+  return ret;
+}
+
+ERL_NIF_TERM nif_image_update_metadata(ErlNifEnv *env, int argc,
+                                       const ERL_NIF_TERM argv[]) {
+  ASSERT_ARGC(argc, 3);
+
+  VipsImage *image;
+  char name[MAX_HEADER_NAME_LENGTH];
+  GType type;
+  ERL_NIF_TERM ret;
+  ErlNifTime start;
+  GValue gvalue = {0};
+  VixResult res;
+
+  start = enif_monotonic_time(ERL_NIF_USEC);
+
+  if (!erl_term_to_g_object(env, argv[0], (GObject **)&image)) {
+    ret = make_error(env, "Failed to get VipsImage");
+    goto exit;
+  }
+
+  if (!get_binary(env, argv[1], name, MAX_HEADER_NAME_LENGTH)) {
+    ret = make_error(env, "Failed to get name");
+    goto exit;
+  }
+
+  type = vips_image_get_typeof(image, name);
+
+  if (type == 0) {
+    ret = make_error(env, "No such field");
+    goto exit;
+  }
+
+  res = erl_term_to_g_value(env, type, argv[2], &gvalue);
+
+  if (!res.is_success) {
+    ret = enif_make_tuple2(env, ATOM_ERROR, res.result);
+    goto exit;
+  }
+
+  vips_image_set(image, name, &gvalue);
+  g_value_unset(&gvalue);
+
+  if (res.is_success) {
+    ret = ATOM_OK;
+  } else {
+    ret = enif_make_tuple2(env, ATOM_ERROR, res.result);
+  }
+
+exit:
+  notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
+  return ret;
+}
+
+ERL_NIF_TERM nif_image_set_metadata(ErlNifEnv *env, int argc,
+                                    const ERL_NIF_TERM argv[]) {
+  ASSERT_ARGC(argc, 4);
+
+  VipsImage *image;
+  char name[MAX_HEADER_NAME_LENGTH];
+  char gtype_name[MAX_G_TYPE_NAME_LENGTH];
+  GType type;
+  ERL_NIF_TERM ret;
+  ErlNifTime start;
+  GValue gvalue = {0};
+  VixResult res;
+
+  start = enif_monotonic_time(ERL_NIF_USEC);
+
+  if (!erl_term_to_g_object(env, argv[0], (GObject **)&image)) {
+    ret = make_error(env, "Failed to get VipsImage");
+    goto exit;
+  }
+
+  if (!get_binary(env, argv[1], name, MAX_HEADER_NAME_LENGTH)) {
+    ret = make_error(env, "Failed to get header name");
+    goto exit;
+  }
+
+  if (!get_binary(env, argv[2], gtype_name, MAX_G_TYPE_NAME_LENGTH)) {
+    ret = make_error(env, "Failed to get gtype name");
+    goto exit;
+  }
+
+  type = g_type_from_name(gtype_name);
+  if (type == 0) {
+    ret = make_error(env, "GType for the given name not found");
+    goto exit;
+  }
+
+  res = erl_term_to_g_value(env, type, argv[3], &gvalue);
+
+  if (!res.is_success) {
+    ret = enif_make_tuple2(env, ATOM_ERROR, res.result);
+    goto exit;
+  }
+
+  vips_image_set(image, name, &gvalue);
+  g_value_unset(&gvalue);
+
+  if (res.is_success) {
+    ret = ATOM_OK;
+  } else {
+    ret = enif_make_tuple2(env, ATOM_ERROR, res.result);
+  }
+
+exit:
+  notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
+  return ret;
+}
+
+ERL_NIF_TERM nif_image_remove_metadata(ErlNifEnv *env, int argc,
+                                       const ERL_NIF_TERM argv[]) {
+  ASSERT_ARGC(argc, 2);
+
+  VipsImage *image;
+  char name[MAX_HEADER_NAME_LENGTH];
+  ERL_NIF_TERM ret;
+  ErlNifTime start;
+
+  start = enif_monotonic_time(ERL_NIF_USEC);
+
+  if (!erl_term_to_g_object(env, argv[0], (GObject **)&image)) {
+    ret = make_error(env, "Failed to get VipsImage");
+    goto exit;
+  }
+
+  if (!get_binary(env, argv[1], name, MAX_HEADER_NAME_LENGTH)) {
+    ret = make_error(env, "Failed to get name");
+    goto exit;
+  }
+
+  if (vips_image_remove(image, name)) {
+    ret = ATOM_OK;
+  } else {
+    ret = make_error(env, "No such metadata found");
   }
 
 exit:

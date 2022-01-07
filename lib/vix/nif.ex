@@ -56,6 +56,16 @@ defmodule Vix.Nif do
   def nif_image_get_as_string(_vips_image, _name),
     do: :erlang.nif_error(:nif_library_not_loaded)
 
+  # VipsImage *UNSAFE*
+  def nif_image_update_metadata(_vips_image, _name, _value),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
+  def nif_image_set_metadata(_vips_image, _name, _type_name, _value),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
+  def nif_image_remove_metadata(_vips_image, _name),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
   # VipsOperation
   def nif_vips_operation_call(_vips_operation_name, _input),
     do: :erlang.nif_error(:nif_library_not_loaded)

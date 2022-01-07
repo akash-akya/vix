@@ -76,6 +76,11 @@ static ErlNifFunc nif_funcs[] = {
     {"nif_image_get_header", 2, nif_image_get_header, 0},
     {"nif_image_get_as_string", 2, nif_image_get_as_string, 0},
 
+    /* VipsImage UNSAFE */
+    {"nif_image_update_metadata", 3, nif_image_update_metadata, 0},
+    {"nif_image_set_metadata", 4, nif_image_set_metadata, 0},
+    {"nif_image_remove_metadata", 2, nif_image_remove_metadata, 0},
+
     /* VipsOperation */
     /* should these be ERL_NIF_DIRTY_JOB_IO_BOUND? */
     {"nif_vips_operation_call", 2, nif_vips_operation_call,
