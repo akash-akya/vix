@@ -1,6 +1,7 @@
 defmodule Vix.Vips.ImageTest do
   use ExUnit.Case
   alias Vix.Vips.Image
+  alias Vix.Vips.MutableImage
 
   import Vix.Support.Images
 
@@ -30,6 +31,19 @@ defmodule Vix.Vips.ImageTest do
   test "new_matrix_from_array", %{dir: _dir} do
     assert {:ok, _} =
              Image.new_matrix_from_array(3, 3, [[-1, -1, -1], [-1, 16, -1], [-1, -1, -1]])
+  end
+
+  test "mutate", %{dir: _dir} do
+    {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
+
+    {:ok, updated_image} =
+      Image.mutate(im, fn mut_image ->
+        :ok = MutableImage.update(mut_image, "orientation", 0)
+        :ok = MutableImage.set(mut_image, "new-field", :gint, 0)
+      end)
+
+    assert {:ok, 0} = Image.header_value(updated_image, "orientation")
+    assert {:ok, 0} = Image.header_value(updated_image, "new-field")
   end
 
   test "get_fields", %{dir: _dir} do

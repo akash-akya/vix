@@ -15,4 +15,7 @@ VixResult get_erl_term_from_g_object_property(ErlNifEnv *env, GObject *obj,
 
 VixResult g_value_to_erl_term(ErlNifEnv *env, GValue gvalue);
 
+VixResult erl_term_to_g_value(ErlNifEnv *env, GType type, ERL_NIF_TERM term,
+                              GValue *gvalue);
+
 #endif
