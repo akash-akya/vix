@@ -45,7 +45,8 @@ defmodule Vix.Vips.MutableImage do
   @spec set(__MODULE__.t(), String.t(), atom(), term()) :: :ok | {:error, term()}
   def set(%MutableImage{pid: pid}, name, type, value) do
     if type in @supported_gtype do
-      GenServer.call(pid, {:set, name, to_string(type), value})
+      type = to_string(type)
+      GenServer.call(pid, {:set, name, type, cast_value(type, value)})
     else
       {:error, "invalid gtype. Supported types are #{inspect(@supported_gtype)}"}
     end
@@ -114,4 +115,8 @@ defmodule Vix.Vips.MutableImage do
 
   defp wrap_type({:ok, pid}), do: {:ok, %MutableImage{pid: pid}}
   defp wrap_type(value), do: value
+
+  defp cast_value(type, value) do
+    Vix.Type.to_nif_term(type, value, nil)
+  end
 end

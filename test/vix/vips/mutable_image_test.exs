@@ -18,8 +18,8 @@ defmodule Vix.Vips.MutableImageTest do
     {:ok, mim} = MutableImage.new(im)
 
     assert {:error, "No such field"} == MutableImage.get(mim, "new-field")
-    assert :ok == MutableImage.set(mim, "new-field", :gint, 0)
-    assert {:ok, 0} == MutableImage.get(mim, "new-field")
+    assert :ok == MutableImage.set(mim, "new-field", :gdouble, 0)
+    assert {:ok, 0.0} === MutableImage.get(mim, "new-field")
   end
 
   test "remove" do
