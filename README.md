@@ -93,6 +93,26 @@ vscale = 600 / Image.height(img)
 {:ok, {text, _}} = Operation.text(~s(<b>Vix</b> is <span foreground="red">awesome!</span>), dpi: 300, rgba: true)
 # add text to an image
 {:ok, img_with_text} = Operation.composite2(img, text, :VIPS_BLEND_MODE_OVER, x: 50, y: 20)
+
+
+## Creating GIF
+black = Operation.black!(500, 500, bands: 3)
+
+# create images with different grayscale
+frames = Enum.map(1..255//10, fn n ->
+  Operation.linear!(black, [1], [n,n,n])
+end)
+
+{:ok, joined_img} = Operation.arrayjoin(frames, across: 1)
+
+# set frame delay metadata. See `Image.mutate` documentation for more details
+{:ok, joined_img} =
+  Image.mutate(joined_img, fn mut_img ->
+    frame_delay = List.duplicate(100, length(frames))
+    :ok = Vix.Vips.MutableImage.set(mut_img, "delay", :VipsArrayInt, frame_delay)
+  end)
+
+:ok = Operation.gifsave(joined_img, Path.expand("~/Downloads/bw.gif"), "page-height": 500)
 ```
 
 The [libvips reference manual](https://libvips.github.io/libvips/API/current/) has more detailed documentation about the operations.

@@ -148,6 +148,27 @@ str = String.trim(IO.gets("Text: "))
 show(inserted_text_img)
 ```
 
+### Creating GIF
+
+```elixir
+black = Operation.black!(500, 500, bands: 3)
+
+# create images with different grayscale
+frames = Enum.map(1..255//10, fn n ->
+  Operation.linear!(black, [1], [n,n,n])
+end)
+
+{:ok, joined_img} = Operation.arrayjoin(frames, across: 1)
+
+{:ok, joined_img} =
+  Image.mutate(joined_img, fn mut_img ->
+    frame_delay = List.duplicate(100, length(frames))
+    :ok = Vix.Vips.MutableImage.set(mut_img, "delay", :VipsArrayInt, frame_delay)
+  end)
+
+:ok = Operation.gifsave(joined_img, Path.expand("~/Downloads/bw.gif"), "page-height": 500)
+```
+
 ### Few more operations
 
 ```elixir
