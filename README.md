@@ -150,4 +150,3 @@ end
 
 ### TODO
 - [ ] support mutable operations such as draw*
-- [ ] support all remaining vips types
