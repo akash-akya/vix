@@ -14,6 +14,25 @@ defmodule Vix.Vips.ImageTest do
 
   test "new_from_file" do
     assert {:error, "Failed to read image"} == Image.new_from_file("invalid.jpg")
+
+    assert {:ok, %Image{ref: ref}} = Image.new_from_file(img_path("puppies.jpg"))
+    assert is_reference(ref)
+  end
+
+  test "new_from_buffer", %{dir: dir} do
+    assert {:error, "Failed to find load buffer"} == Image.new_from_buffer(<<>>)
+
+    path = img_path("puppies.jpg")
+
+    assert {:ok, img_from_buf} = Image.new_from_buffer(File.read!(path))
+    img_buf_out_path = Temp.path!(suffix: ".png", basedir: dir)
+    assert :ok == Image.write_to_file(img_from_buf, img_buf_out_path)
+
+    {:ok, img_from_file} = Image.new_from_file(path)
+    img_file_out_path = Temp.path!(suffix: ".png", basedir: dir)
+    assert :ok == Image.write_to_file(img_from_file, img_file_out_path)
+
+    assert File.read!(img_buf_out_path) == File.read!(img_file_out_path)
   end
 
   test "write_to_file", %{dir: dir} do
