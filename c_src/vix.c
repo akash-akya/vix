@@ -103,6 +103,7 @@ static ErlNifFunc nif_funcs[] = {
     {"nif_vips_cache_get_max_mem", 0, nif_vips_cache_get_max_mem, 0},
     {"nif_vips_version", 0, nif_vips_version, 0},
     {"nif_vips_shutdown", 0, nif_vips_shutdown, 0},
+    {"nif_vips_nickname_find", 1, nif_vips_nickname_find, 0},
 
     /* VipsBoxed */
     {"nif_int_array", 1, nif_int_array, 0},
