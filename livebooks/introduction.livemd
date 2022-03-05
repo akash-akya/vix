@@ -14,7 +14,7 @@ Mix.install([
 IO.puts("Version: " <> Vix.Vips.version())
 ```
 
-## Vips Image IO
+## Vips Image
 
 All image IO operations such as reading and writing files are available in `Vix.Vips.Image` module. Image module also contains functions get image attributes. Most Vips operations takes `%Vix.Vips.Image{}` instance
 
@@ -26,6 +26,15 @@ Reading image from a file. Note that image is not actually loaded to the memory 
 
 ```elixir
 {:ok, %Image{} = img} = Image.new_from_file("~/Downloads/kitty.png")
+```
+
+You can also load image from binary. This let us to work images without touching file system.
+
+Vix tires to guess image format from the binary and uses correct loader. If you know image format beforehand then you can use appropriate function from `Vix.Vips.Operation`. For example to load jpeg you can use `Vix.Vips.Operation.jpegload_buffer/2`.
+
+```elixir
+bin = File.read!("~/Downloads/kitty.png")
+{:ok, %Image{} = img} = Image.new_from_buffer(bin)
 ```
 
 Writing `Image` to a file. Image type selected based on the image path extension. See documentation for more options

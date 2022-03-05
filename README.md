@@ -37,6 +37,14 @@ alias Vix.Vips.Image
 # img is `%Image{}` struct.
 {:ok, img} = Image.new_from_file("~/Downloads/kitty.png")
 
+# You can also load image from binary. This let us to work images without touching file system.
+# Vix tires to guess image format from the binary and uses correct loader. If you know image format
+# beforehand then you can use appropriate function from `Vix.Vips.Operation`. For example to load
+# jpeg you can use `Vix.Vips.Operation.jpegload_buffer/2`.
+
+bin = File.read!("~/Downloads/kitty.png")
+{:ok, %Image{} = img} = Image.new_from_buffer(bin)
+
 # writing `Image` to a file.
 # Image type selected based on the image path extension. See documentation for more options
 :ok = Image.write_to_file(img, "kitty.jpg[Q=90]")
