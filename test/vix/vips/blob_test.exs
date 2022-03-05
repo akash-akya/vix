@@ -1,5 +1,6 @@
 defmodule Vix.Vips.BlobTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
+
   alias Vix.Vips.Blob
 
   test "to_nif_term" do

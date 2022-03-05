@@ -1,5 +1,6 @@
 defmodule Vix.Vips.InterpolateTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
+
   alias Vix.Vips.Interpolate
 
   test "new interpolate" do

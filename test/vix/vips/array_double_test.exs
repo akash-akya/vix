@@ -1,5 +1,6 @@
 defmodule Vix.Vips.ArrayDoubleTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
+
   alias Vix.Vips.ArrayDouble
 
   test "to_nif_term" do

@@ -1,5 +1,5 @@
 defmodule Vix.GObject.StringTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   test "to_nif_term" do
     io_list = Vix.GObject.String.to_nif_term("sample", nil)
