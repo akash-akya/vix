@@ -1,5 +1,6 @@
 defmodule Vix.NifTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
+
   alias Vix.Nif
 
   import Vix.Support.Images

@@ -1,5 +1,6 @@
 defmodule Vix.TypeTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
+
   alias Vix.Type
 
   test "typespec" do

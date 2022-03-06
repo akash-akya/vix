@@ -112,6 +112,9 @@ defmodule Vix.Nif do
   def nif_vips_shutdown(),
     do: :erlang.nif_error(:nif_library_not_loaded)
 
+  def nif_vips_nickname_find(_type_name),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
   # VipsBoxed
   def nif_int_array(_int_list),
     do: :erlang.nif_error(:nif_library_not_loaded)
@@ -141,5 +144,18 @@ defmodule Vix.Nif do
     do: :erlang.nif_error(:nif_library_not_loaded)
 
   def nif_vips_ref_string_to_erl_binary(_vips_blob),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
+  # VipsForeign
+  def nif_foreign_find_load_buffer(_binary),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
+  def nif_foreign_find_save_buffer(_suffix),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
+  def nif_foreign_find_load(_filename),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
+  def nif_foreign_find_save(_filename),
     do: :erlang.nif_error(:nif_library_not_loaded)
 end

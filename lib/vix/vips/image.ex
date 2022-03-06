@@ -84,6 +84,33 @@ defmodule Vix.Vips.Image do
     |> wrap_type()
   end
 
+  @doc """
+  Create a new image from formatted binary `bin`. Binary should be an
+  image encoded in a format such as JPEG. It tries to recognize the
+  format by checking the binary.
+
+  If you already know the image format of `bin` then you can just use
+  corresponding loader operation function directly from
+  `Vix.Vips.Operation` instead. For example to load jpeg, you can use
+  `Vix.Vips.Operation.jpegload_buffer/2`
+
+  The options available depend on the file format. Try something like:
+
+  ```sh
+  $ vips jpegload_buffer
+  ```
+
+  Not all loaders support load from buffer, but at least JPEG, PNG and
+  TIFF images will work.
+  """
+  @spec new_from_buffer(binary(), keyword()) :: {:ok, __MODULE__.t()} | {:error, term()}
+  def new_from_buffer(bin, opts \\ []) do
+    with {:ok, loader} <- Vix.Vips.Foreign.find_load_buffer(bin),
+         {:ok, {ref, _optional}} <- Vix.Vips.OperationHelper.operation_call(loader, [bin], opts) do
+      {:ok, wrap_type(ref)}
+    end
+  end
+
   # Copy an image to a memory area.
   # If image is already a memory buffer, just ref and return. If it's
   # a file on disc or a partial, allocate memory and copy the image to

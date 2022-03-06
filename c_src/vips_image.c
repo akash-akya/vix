@@ -7,7 +7,6 @@
 #include "vips_image.h"
 
 const int MAX_HEADER_NAME_LENGTH = 100;
-const int MAX_G_TYPE_NAME_LENGTH = 1024;
 
 static ERL_NIF_TERM vips_image_header_read_error(ErlNifEnv *env,
                                                  const char *name,

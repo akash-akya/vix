@@ -9,6 +9,7 @@
 #include "g_object/g_param_spec.h"
 #include "g_object/g_type.h"
 #include "vips_boxed.h"
+#include "vips_foreign.h"
 #include "vips_image.h"
 #include "vips_interpolate.h"
 #include "vips_operation.h"
@@ -103,6 +104,7 @@ static ErlNifFunc nif_funcs[] = {
     {"nif_vips_cache_get_max_mem", 0, nif_vips_cache_get_max_mem, 0},
     {"nif_vips_version", 0, nif_vips_version, 0},
     {"nif_vips_shutdown", 0, nif_vips_shutdown, 0},
+    {"nif_vips_nickname_find", 1, nif_vips_nickname_find, 0},
 
     /* VipsBoxed */
     {"nif_int_array", 1, nif_int_array, 0},
@@ -117,6 +119,12 @@ static ErlNifFunc nif_funcs[] = {
      0},
     {"nif_vips_blob_to_erl_binary", 1, nif_vips_blob_to_erl_binary, 0},
     {"nif_vips_ref_string_to_erl_binary", 1, nif_vips_ref_string_to_erl_binary,
-     0}};
+     0},
+
+    /* VipsForeign */
+    {"nif_foreign_find_load", 1, nif_foreign_find_load, 0},
+    {"nif_foreign_find_save", 1, nif_foreign_find_save, 0},
+    {"nif_foreign_find_load_buffer", 1, nif_foreign_find_load_buffer, 0},
+    {"nif_foreign_find_save_buffer", 1, nif_foreign_find_save_buffer, 0}};
 
 ERL_NIF_INIT(Elixir.Vix.Nif, nif_funcs, &on_load, NULL, NULL, NULL)

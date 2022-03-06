@@ -576,6 +576,39 @@ ERL_NIF_TERM nif_vips_version(ErlNifEnv *env, int argc,
                           enif_make_int(env, minor), enif_make_int(env, micro));
 }
 
+ERL_NIF_TERM nif_vips_nickname_find(ErlNifEnv *env, int argc,
+                                    const ERL_NIF_TERM argv[]) {
+  ASSERT_ARGC(argc, 1);
+  char gtype_name[MAX_G_TYPE_NAME_LENGTH];
+  const char *nickname;
+  GType type;
+  ERL_NIF_TERM ret;
+
+  if (!get_binary(env, argv[0], gtype_name, MAX_G_TYPE_NAME_LENGTH)) {
+    ret = make_error(env, "Failed to get GType name");
+    goto exit;
+  }
+
+  type = g_type_from_name(gtype_name);
+
+  if (type == 0) {
+    ret = make_error(env, "GType for the given name not found");
+    goto exit;
+  }
+
+  nickname = vips_nickname_find(type);
+
+  if (!nickname) {
+    ret = make_error(env, "Vips nickname not found for given type");
+    goto exit;
+  }
+
+  ret = make_ok(env, make_binary(env, nickname));
+
+exit:
+  return ret;
+}
+
 static void *load_operation(GType type, void *a) {
   const char **names;
   gpointer g_class;

@@ -50,7 +50,8 @@ static VixResult set_boolean(ErlNifEnv *env, ERL_NIF_TERM term,
   } else if (strcmp(atom, "false") == 0) {
     boolean_value = false;
   } else {
-    SET_ERROR_RESULT(env, "invalid atom value, value must be :true or :false", res);
+    SET_ERROR_RESULT(env, "invalid atom value, value must be :true or :false",
+                     res);
     return res;
   }
 
@@ -434,7 +435,8 @@ VixResult g_value_to_erl_term(ErlNifEnv *env, GValue gvalue) {
   return res;
 }
 
-VixResult erl_term_to_g_value(ErlNifEnv *env, GType type, ERL_NIF_TERM term, GValue *gvalue) {
+VixResult erl_term_to_g_value(ErlNifEnv *env, GType type, ERL_NIF_TERM term,
+                              GValue *gvalue) {
   VixResult res;
 
   debug("G_VALUE_TYPE: %s", g_type_name(type));
