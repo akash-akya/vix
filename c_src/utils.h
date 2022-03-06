@@ -64,6 +64,8 @@ typedef struct _VixResult {
   ERL_NIF_TERM result;
 } VixResult;
 
+extern int MAX_G_TYPE_NAME_LENGTH;
+
 extern ERL_NIF_TERM ATOM_OK;
 
 extern ERL_NIF_TERM ATOM_ERROR;

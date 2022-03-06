@@ -2,6 +2,8 @@
 #include <glib-object.h>
 #include <stdbool.h>
 
+int MAX_G_TYPE_NAME_LENGTH = 1024;
+
 ERL_NIF_TERM ATOM_OK;
 ERL_NIF_TERM ATOM_ERROR;
 ERL_NIF_TERM ATOM_NIL;

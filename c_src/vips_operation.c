@@ -579,12 +579,12 @@ ERL_NIF_TERM nif_vips_version(ErlNifEnv *env, int argc,
 ERL_NIF_TERM nif_vips_nickname_find(ErlNifEnv *env, int argc,
                                     const ERL_NIF_TERM argv[]) {
   ASSERT_ARGC(argc, 1);
-  char gtype_name[1024];
+  char gtype_name[MAX_G_TYPE_NAME_LENGTH];
   const char *nickname;
   GType type;
   ERL_NIF_TERM ret;
 
-  if (!get_binary(env, argv[0], gtype_name, 1024)) {
+  if (!get_binary(env, argv[0], gtype_name, MAX_G_TYPE_NAME_LENGTH)) {
     ret = make_error(env, "Failed to get GType name");
     goto exit;
   }
