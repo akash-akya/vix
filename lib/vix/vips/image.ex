@@ -299,12 +299,15 @@ defmodule Vix.Vips.Image do
     """
     @spec unquote(func_name)(__MODULE__.t()) :: term() | no_return()
     def unquote(func_name)(vips_image) do
-      case header_value(vips_image, unquote(name)) do
+      case header_value(vips_image, normalize_meta(unquote(name))) do
         {:ok, value} -> value
         {:error, error} -> raise to_string(error)
       end
     end
   end
+
+  defp normalize_meta("n_pages"), do: "n-pages"
+  defp normalize_meta(meta), do: meta
 
   defp normalize_string(str) when is_binary(str), do: str
 
