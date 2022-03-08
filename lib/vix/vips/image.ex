@@ -289,25 +289,22 @@ defmodule Vix.Vips.Image do
   end
 
   for name <-
-        ~w/width height bands xres yres xoffset yoffset filename mode scale offset page_height n_pages orientation interpretation coding format/ do
-    func_name = String.to_atom(name)
+        ~w/width height bands xres yres xoffset yoffset filename mode scale offset page-height n-pages orientation interpretation coding format/ do
+    func_name = name |> String.replace("-", "_") |> String.to_atom()
 
     @doc """
-    Get #{name} of the the image
+    Get "#{name}" of the image
 
-    see: https://libvips.github.io/libvips/API/current/libvips-header.html#vips-image-get-#{String.replace(name, "_", "-")}
+    see: https://libvips.github.io/libvips/API/current/libvips-header.html#vips-image-get-#{name}
     """
     @spec unquote(func_name)(__MODULE__.t()) :: term() | no_return()
     def unquote(func_name)(vips_image) do
-      case header_value(vips_image, normalize_meta(unquote(name))) do
+      case header_value(vips_image, unquote(name)) do
         {:ok, value} -> value
         {:error, error} -> raise to_string(error)
       end
     end
   end
-
-  defp normalize_meta("n_pages"), do: "n-pages"
-  defp normalize_meta(meta), do: meta
 
   defp normalize_string(str) when is_binary(str), do: str
 

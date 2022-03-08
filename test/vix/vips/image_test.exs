@@ -107,6 +107,9 @@ defmodule Vix.Vips.ImageTest do
     {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
     assert 518 == Image.width(im)
     assert :VIPS_INTERPRETATION_sRGB == Image.interpretation(im)
+
+    {:ok, im} = Image.new_from_file(img_path("boats.tif"))
+    assert 2 == Image.n_pages(im)
   end
 
   test "write image to buffer", %{dir: _dir} do
