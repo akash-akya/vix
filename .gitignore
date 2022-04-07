@@ -35,3 +35,9 @@ eips-*.tar
 /priv
 
 *.o
+
+# Bench
+/bench/_build/
+/bench/deps/
+/bench/output/
+/bench/out_*.png

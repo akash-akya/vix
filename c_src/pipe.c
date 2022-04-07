@@ -171,7 +171,7 @@ ERL_NIF_TERM nif_pipe_open(ErlNifEnv *env, int argc,
   ASSERT_ARGC(argc, 1);
 
   ERL_NIF_TERM ret;
-  int fds[] = {0, 0};
+  int fds[] = {-1, -1};
   ERL_NIF_TERM read_fd_term, write_fd_term;
   char mode[10] = {0};
   VixResult res;
