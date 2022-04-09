@@ -147,6 +147,9 @@ defmodule Vix.Vips.Image do
   @doc """
   Create a new image from Enumerable.
 
+  > #### Caution {: .warning}
+  > This function is experimental and might cause crashes, use with caution
+
   Returns an image which will lazily pull data from passed
   Enumerable.
 
@@ -187,6 +190,9 @@ defmodule Vix.Vips.Image do
 
   @doc """
   Creates a Stream from Image.
+
+  > #### Caution {: .warning}
+  > This function is experimental and might cause crashes, use with caution
 
   Returns a Stream which will lazily pull data from passed image.
 
@@ -447,7 +453,10 @@ defmodule Vix.Vips.Image do
     @doc """
     Get "#{name}" of the image
 
-    see: https://libvips.github.io/libvips/API/current/libvips-header.html#vips-image-get-#{name}
+    > #### More details {: .tip}
+    >
+    > See [libvips docs](https://libvips.github.io/libvips/API/current/libvips-header.html#vips-image-get-#{name}) for more details regarding `#{func_name}` function
+
     """
     @spec unquote(func_name)(__MODULE__.t()) :: term() | no_return()
     def unquote(func_name)(vips_image) do
