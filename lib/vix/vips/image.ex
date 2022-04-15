@@ -42,6 +42,31 @@ defmodule Vix.Vips.Image do
   @impl Type
   def to_erl_term(ref), do: %Image{ref: ref}
 
+  # Implements the Access beahviour for Vix.Vips.Image to allow
+  # acccess to image bands. For example `image[1]`. Note that
+  # due to the nature of images, `pop/2` and `put_and_udpate/3`
+  # are not supported.
+
+  @behaviour Access
+
+  @impl Access
+  def fetch(image, band) when is_integer(band) do
+    case Vix.Vips.Operation.extract_band(image, band) do
+      {:ok, band} -> {:ok, band}
+      {:error, _reason} -> :error
+    end
+  end
+
+  @impl Access
+  def get_and_update(_image, _key, _fun) do
+    raise "get_and_update/3 for Vix.Vips.Image is not supported."
+  end
+
+  @impl Access
+  def pop(_image, _band, _default \\ nil) do
+    raise "pop/3 for Vix.Vip.Image is not supported."
+  end
+
   @doc """
   Opens `path` for reading, returns an instance of `t:Vix.Vips.Image.t/0`
 
