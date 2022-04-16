@@ -4,7 +4,14 @@ defmodule Vix.Vips.Image do
   alias __MODULE__
 
   @moduledoc """
-  Vips Image
+  Functions for reading and writing images as well as
+  accessing and updating image metadata.
+
+  The `Access` behaviour is implemented to allow
+  acccess to image bands. For example `image[1]`. Note that
+  due to the nature of images, `pop/2` and `put_and_udpate/3`
+  are not supported.
+
   """
 
   alias Vix.Type
@@ -42,7 +49,7 @@ defmodule Vix.Vips.Image do
   @impl Type
   def to_erl_term(ref), do: %Image{ref: ref}
 
-  # Implements the Access beahviour for Vix.Vips.Image to allow
+  # Implements the Access behaviour for Vix.Vips.Image to allow
   # acccess to image bands. For example `image[1]`. Note that
   # due to the nature of images, `pop/2` and `put_and_udpate/3`
   # are not supported.
