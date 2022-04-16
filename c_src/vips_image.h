@@ -44,4 +44,6 @@ ERL_NIF_TERM nif_image_set_metadata(ErlNifEnv *env, int argc,
 ERL_NIF_TERM nif_image_remove_metadata(ErlNifEnv *env, int argc,
                                        const ERL_NIF_TERM argv[]);
 
+ERL_NIF_TERM nif_image_hasalpha(ErlNifEnv *env, int argc,
+                                      const ERL_NIF_TERM argv[]);
 #endif
