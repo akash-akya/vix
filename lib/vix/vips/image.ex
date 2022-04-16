@@ -71,7 +71,7 @@ defmodule Vix.Vips.Image do
 
   @impl Access
   def pop(_image, _band, _default \\ nil) do
-    raise "pop/3 for Vix.Vip.Image is not supported."
+    raise "pop/3 for Vix.Vips.Image is not supported."
   end
 
   @doc """
