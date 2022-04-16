@@ -645,13 +645,11 @@ exit:
   return ret;
 }
 
-
 ERL_NIF_TERM nif_image_hasalpha(ErlNifEnv *env, int argc,
-                                     const ERL_NIF_TERM argv[]) {
+                                const ERL_NIF_TERM argv[]) {
   ASSERT_ARGC(argc, 1);
 
   VipsImage *image;
-  gboolean has_alpha;
   ErlNifTime start;
   ERL_NIF_TERM ret;
 
@@ -662,8 +660,11 @@ ERL_NIF_TERM nif_image_hasalpha(ErlNifEnv *env, int argc,
     goto exit;
   }
 
-  has_alpha = vips_image_hasalpha(image);
-  ret = make_ok(env, enif_make_int(env, has_alpha));
+  if (vips_image_hasalpha(image)) {
+    ret = make_ok(env, ATOM_TRUE);
+  } else {
+    ret = make_ok(env, ATOM_FALSE);
+  }
 
 exit:
   notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));

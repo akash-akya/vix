@@ -126,7 +126,7 @@ defmodule Vix.Vips.ImageTest do
     assert Image.bands(new_im) == 1
   end
 
-  test "image has an alpha band", %{dir: _dir}  do
+  test "image has an alpha band", %{dir: _dir} do
     {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
     refute Image.has_alpha?(im)
 

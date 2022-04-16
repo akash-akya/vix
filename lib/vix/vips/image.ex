@@ -284,10 +284,14 @@ defmodule Vix.Vips.Image do
     has_alpha? = Image.has_alpha?(im)
   ```
   """
+  @spec has_alpha?(__MODULE__.t()) :: boolean | no_return()
   def has_alpha?(%Image{ref: vips_image}) do
     case Nif.nif_image_hasalpha(vips_image) do
-      {:ok, 1} -> true
-      {:ok, 0} -> false
+      {:ok, value} ->
+        value
+
+      {:error, reason} ->
+        raise reason
     end
   end
 

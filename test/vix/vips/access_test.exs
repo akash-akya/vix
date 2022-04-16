@@ -1,6 +1,5 @@
 defmodule Vix.Vips.AccessTest do
   use ExUnit.Case, async: true
-  import ExUnit.CaptureIO
   import Vix.Support.Images
   alias Vix.Vips.Image
 
