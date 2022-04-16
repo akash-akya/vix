@@ -644,3 +644,28 @@ exit:
   notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
   return ret;
 }
+
+
+ERL_NIF_TERM nif_image_hasalpha(ErlNifEnv *env, int argc,
+                                     const ERL_NIF_TERM argv[]) {
+  ASSERT_ARGC(argc, 1);
+
+  VipsImage *image;
+  gboolean has_alpha;
+  ErlNifTime start;
+  ERL_NIF_TERM ret;
+
+  start = enif_monotonic_time(ERL_NIF_USEC);
+
+  if (!erl_term_to_g_object(env, argv[0], (GObject **)&image)) {
+    ret = make_error(env, "Failed to get VipsImage");
+    goto exit;
+  }
+
+  has_alpha = vips_image_hasalpha(image);
+  ret = make_ok(env, enif_make_int(env, has_alpha));
+
+exit:
+  notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
+  return ret;
+}

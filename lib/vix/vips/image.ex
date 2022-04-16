@@ -267,6 +267,24 @@ defmodule Vix.Vips.Image do
   end
 
   @doc """
+  Return a boolean indicating if an image has an alpha band.
+
+  Example
+
+  ```elixir
+    {:ok, im} = Image.new_from_file("puppies.jpg")
+
+    has_alpha? = Image.has_alpha?(im)
+  ```
+  """
+  def has_alpha?(%Image{ref: vips_image}) do
+    case Nif.nif_image_hasalpha(vips_image) do
+      {:ok, 1} -> true
+      {:ok, 0} -> false
+    end
+  end
+
+  @doc """
   Get all image header field names.
 
   See https://libvips.github.io/libvips/API/current/libvips-header.html#vips-image-get-fields for more details

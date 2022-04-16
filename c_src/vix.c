@@ -76,6 +76,7 @@ static ErlNifFunc nif_funcs[] = {
     {"nif_image_get_fields", 1, nif_image_get_fields, 0},
     {"nif_image_get_header", 2, nif_image_get_header, 0},
     {"nif_image_get_as_string", 2, nif_image_get_as_string, 0},
+    {"nif_image_hasalpha", 1, nif_image_hasalpha, 0},
 
     /* VipsImage UNSAFE */
     {"nif_image_update_metadata", 3, nif_image_update_metadata, 0},
