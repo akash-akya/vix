@@ -46,7 +46,7 @@ defmodule Vix.MixProject do
   end
 
   defp description do
-    "NIF based bindings for Vips"
+    "NIF based bindings for libvips"
   end
 
   defp package do
