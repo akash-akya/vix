@@ -17,6 +17,7 @@ defmodule Vix.Vips.Image do
   alias Vix.Type
   alias Vix.Nif
   alias Vix.Vips.MutableImage
+  alias Vix.Pipe
 
   @behaviour Type
 
@@ -141,6 +142,103 @@ defmodule Vix.Vips.Image do
          {:ok, {ref, _optional}} <- Vix.Vips.OperationHelper.operation_call(loader, [bin], opts) do
       {:ok, wrap_type(ref)}
     end
+  end
+
+  @doc """
+  Create a new image from Enumerable.
+
+  Returns an image which will lazily pull data from passed
+  Enumerable.
+
+  Useful when working with big images in streaming systems. Where you
+  don't want to load complete input image data to memory.
+
+  ```elixir
+  {:ok, image} =
+    File.stream!("puppies.jpg", [], 1024) # or read from s3, web-request
+    |> Image.new_from_enum()
+
+  :ok = Image.write_to_file(image, "puppies.png")
+  ```
+
+  """
+  @spec new_from_enum(Enumerable.t(), String.t()) :: {:ok, __MODULE__.t()} | {:error, term()}
+  def new_from_enum(enum, suffix \\ "") do
+    parent = self()
+
+    pid =
+      spawn_link(fn ->
+        {pipe, source} = Pipe.new_vips_source()
+        send(parent, {self(), source})
+
+        Enum.each(enum, fn data ->
+          :ok = Pipe.write(pipe, data)
+        end)
+
+        Pipe.stop(pipe)
+      end)
+
+    receive do
+      {^pid, source} ->
+        Nif.nif_image_new_from_source(source, suffix)
+        |> wrap_type()
+    end
+  end
+
+  @doc """
+  Creates a Stream from Image.
+
+  Returns a Stream which will lazily pull data from passed image.
+
+  Useful when working with big images in streaming systems. Where you
+  don't want to keep complete output image in memory.
+
+  ```elixir
+  {:ok, image} = Image.new_from_file("puppies.jpg")
+
+  :ok =
+    Image.write_to_stream(image, ".png")
+    |> Stream.into(File.stream!("puppies.png")) # or write to S3, web-request
+    |> Stream.run()
+  ```
+
+  """
+  @spec write_to_stream(__MODULE__.t(), String.t()) :: Enumerable.t()
+  def write_to_stream(%Image{ref: vips_image}, suffix) do
+    require Logger
+
+    Stream.resource(
+      fn ->
+        parent = self()
+
+        pid =
+          spawn_link(fn ->
+            {pipe, target} = Pipe.new_vips_target()
+            send(parent, {self(), pipe})
+
+            :ok = Nif.nif_image_to_target(vips_image, target, suffix)
+          end)
+
+        receive do
+          {^pid, pipe} ->
+            pipe
+        end
+      end,
+      fn pipe ->
+        ret = Pipe.read(pipe)
+
+        case ret do
+          :eof ->
+            {:halt, pipe}
+
+          {:ok, bin} ->
+            {[bin], pipe}
+        end
+      end,
+      fn pipe ->
+        Pipe.stop(pipe)
+      end
+    )
   end
 
   # Copy an image to a memory area.

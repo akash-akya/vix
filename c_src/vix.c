@@ -8,6 +8,7 @@
 #include "g_object/g_object.h"
 #include "g_object/g_param_spec.h"
 #include "g_object/g_type.h"
+#include "pipe.h"
 #include "vips_boxed.h"
 #include "vips_foreign.h"
 #include "vips_image.h"
@@ -44,6 +45,9 @@ static int on_load(ErlNifEnv *env, void **priv, ERL_NIF_TERM load_info) {
   if (nif_vips_operation_init(env))
     return 1;
 
+  if (nif_pipe_init(env))
+    return 1;
+
   return 0;
 }
 
@@ -62,14 +66,14 @@ static ErlNifFunc nif_funcs[] = {
     {"nif_image_new_from_file", 1, nif_image_new_from_file,
      ERL_NIF_DIRTY_JOB_IO_BOUND},
     {"nif_image_new_from_image", 2, nif_image_new_from_image,
-     ERL_NIF_DIRTY_JOB_CPU_BOUND},
+     ERL_NIF_DIRTY_JOB_IO_BOUND},
     {"nif_image_copy_memory", 1, nif_image_copy_memory,
      ERL_NIF_DIRTY_JOB_IO_BOUND},
     {"nif_image_write_to_file", 2, nif_image_write_to_file,
      ERL_NIF_DIRTY_JOB_IO_BOUND},
     {"nif_image_write_to_buffer", 2, nif_image_write_to_buffer,
      ERL_NIF_DIRTY_JOB_IO_BOUND},
-    {"nif_image_new", 0, nif_image_new, ERL_NIF_DIRTY_JOB_CPU_BOUND},
+    {"nif_image_new", 0, nif_image_new, ERL_NIF_DIRTY_JOB_IO_BOUND},
     {"nif_image_new_temp_file", 1, nif_image_new_temp_file,
      ERL_NIF_DIRTY_JOB_IO_BOUND},
     {"nif_image_new_matrix_from_array", 5, nif_image_new_matrix_from_array, 0},
@@ -77,6 +81,10 @@ static ErlNifFunc nif_funcs[] = {
     {"nif_image_get_header", 2, nif_image_get_header, 0},
     {"nif_image_get_as_string", 2, nif_image_get_as_string, 0},
     {"nif_image_hasalpha", 1, nif_image_hasalpha, 0},
+    {"nif_image_new_from_source", 2, nif_image_new_from_source,
+     ERL_NIF_DIRTY_JOB_IO_BOUND},
+    {"nif_image_to_target", 3, nif_image_to_target,
+     ERL_NIF_DIRTY_JOB_IO_BOUND},
 
     /* VipsImage UNSAFE */
     {"nif_image_update_metadata", 3, nif_image_update_metadata, 0},
@@ -86,7 +94,7 @@ static ErlNifFunc nif_funcs[] = {
     /* VipsOperation */
     /* should these be ERL_NIF_DIRTY_JOB_IO_BOUND? */
     {"nif_vips_operation_call", 2, nif_vips_operation_call,
-     ERL_NIF_DIRTY_JOB_CPU_BOUND},
+     ERL_NIF_DIRTY_JOB_IO_BOUND},
     {"nif_vips_operation_get_arguments", 1, nif_vips_operation_get_arguments,
      ERL_NIF_DIRTY_JOB_CPU_BOUND},
     {"nif_vips_operation_list", 0, nif_vips_operation_list,
@@ -126,6 +134,13 @@ static ErlNifFunc nif_funcs[] = {
     {"nif_foreign_find_load", 1, nif_foreign_find_load, 0},
     {"nif_foreign_find_save", 1, nif_foreign_find_save, 0},
     {"nif_foreign_find_load_buffer", 1, nif_foreign_find_load_buffer, 0},
-    {"nif_foreign_find_save_buffer", 1, nif_foreign_find_save_buffer, 0}};
+    {"nif_foreign_find_save_buffer", 1, nif_foreign_find_save_buffer, 0},
+
+    /* Syscalls */
+    {"nif_pipe_open", 1, nif_pipe_open, 0},
+    {"nif_write", 2, nif_write, ERL_NIF_DIRTY_JOB_CPU_BOUND},
+    {"nif_read", 2, nif_read, ERL_NIF_DIRTY_JOB_CPU_BOUND},
+    {"nif_source_new", 0, nif_source_new, ERL_NIF_DIRTY_JOB_CPU_BOUND},
+    {"nif_target_new", 0, nif_target_new, ERL_NIF_DIRTY_JOB_CPU_BOUND}};
 
 ERL_NIF_INIT(Elixir.Vix.Nif, nif_funcs, &on_load, NULL, NULL, NULL)
