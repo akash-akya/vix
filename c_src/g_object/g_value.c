@@ -308,14 +308,21 @@ static VixResult get_string_as_binary(ErlNifEnv *env, GValue *gvalue) {
   ERL_NIF_TERM bin;
   ssize_t length;
   unsigned char *temp;
+  VixResult res;
 
   str = g_value_get_string(gvalue);
 
-  length = strlen(str);
-  temp = enif_make_new_binary(env, length, &bin);
-  memcpy(temp, str, length);
+  if (str != NULL) {
+    length = strlen(str);
+    temp = enif_make_new_binary(env, length, &bin);
+    memcpy(temp, str, length);
+    SET_VIX_RESULT(res, bin);
+  } else {
+    res.is_success = false;
+    res.result = ATOM_NULL_VALUE;
+  }
 
-  return vix_result(bin);
+  return res;
 }
 
 static VixResult get_uint64(ErlNifEnv *env, GValue *gvalue) {
@@ -340,24 +347,39 @@ static VixResult get_double(ErlNifEnv *env, GValue *gvalue) {
 static VixResult get_boxed(ErlNifEnv *env, GValue *gvalue) {
   gpointer ptr;
   GType type;
+  VixResult res;
 
   // duplicate value so that we can free it ourselves
   ptr = g_value_dup_boxed(gvalue);
-  type = G_VALUE_TYPE(gvalue);
 
-  return vix_result(boxed_to_erl_term(env, ptr, type));
+  if (ptr != NULL) {
+    type = G_VALUE_TYPE(gvalue);
+    SET_VIX_RESULT(res, boxed_to_erl_term(env, ptr, type));
+  } else {
+    res.is_success = false;
+    res.result = ATOM_NULL_VALUE;
+  }
+
+  return res;
 }
 
 static VixResult get_g_object(ErlNifEnv *env, GValue *gvalue) {
   GObject *obj;
+  VixResult res;
 
   obj = g_value_get_object(gvalue);
 
-  // explicitly get a ref for the output property so that we can
-  // unref all output objects of the operation at once
-  g_object_ref(obj);
+  if (obj != NULL) {
+    // explicitly get a ref for the output property so that we can
+    // unref all output objects of the operation at once
+    g_object_ref(obj);
+    SET_VIX_RESULT(res, g_object_to_erl_term(env, obj));
+  } else {
+    res.is_success = false;
+    res.result = ATOM_NULL_VALUE;
+  }
 
-  return vix_result(g_object_to_erl_term(env, obj));
+  return res;
 }
 
 VixResult get_erl_term_from_g_object_property(ErlNifEnv *env, GObject *obj,
