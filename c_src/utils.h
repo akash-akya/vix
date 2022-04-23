@@ -6,14 +6,16 @@
 
 /* #define DEBUG */
 
-#ifdef DEBUG
-#define debug(...)                                                             \
+#define vix_log(...)                                                           \
   do {                                                                         \
     enif_fprintf(stderr, "%s:%d\t(fn \"%s\")  - ", __FILE__, __LINE__,         \
                  __func__);                                                    \
     enif_fprintf(stderr, __VA_ARGS__);                                         \
     enif_fprintf(stderr, "\n");                                                \
   } while (0)
+
+#ifdef DEBUG
+#define debug(...) vix_log(__VA_ARGS__)
 #define start_timing() ErlNifTime __start = enif_monotonic_time(ERL_NIF_USEC)
 #define elapsed_microseconds() (enif_monotonic_time(ERL_NIF_USEC) - __start)
 #else
@@ -24,10 +26,13 @@
 
 #define error(...)                                                             \
   do {                                                                         \
-    enif_fprintf(stderr, "%s:%d\t(fn: \"%s\")  - ", __FILE__, __LINE__,        \
-                 __func__);                                                    \
-    enif_fprintf(stderr, __VA_ARGS__);                                         \
-    enif_fprintf(stderr, "\n");                                                \
+    char value[10] = {0};                                                      \
+    size_t value_size = 10;                                                    \
+    if (enif_getenv("VIX_LOG_ERROR", value, &value_size) == 0) {               \
+      if (strcmp(value, "true") == 0) {                                        \
+        vix_log(__VA_ARGS__);                                                  \
+      }                                                                        \
+    }                                                                          \
   } while (0)
 
 #define ASSERT_ARGC(argc, count)                                               \
