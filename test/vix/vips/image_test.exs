@@ -133,4 +133,30 @@ defmodule Vix.Vips.ImageTest do
     {:ok, im} = Image.new_from_file(img_path("alpha_band.png"))
     assert Image.has_alpha?(im)
   end
+
+  test "new_from_enum", %{dir: dir} do
+    {:ok, image} =
+      File.stream!(img_path("puppies.jpg"), [], 1024)
+      |> Image.new_from_enum("")
+
+    out_path = Temp.path!(suffix: ".png", basedir: dir)
+    :ok = Image.write_to_file(image, out_path)
+
+    stat = File.stat!(out_path)
+    assert stat.size > 0 and stat.type == :regular
+  end
+
+  test "write_to_stream", %{dir: dir} do
+    {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
+
+    out_path = Temp.path!(suffix: ".png", basedir: dir)
+
+    :ok =
+      Image.write_to_stream(im, ".png")
+      |> Stream.into(File.stream!(out_path))
+      |> Stream.run()
+
+    stat = File.stat!(out_path)
+    assert stat.size > 0 and stat.type == :regular
+  end
 end

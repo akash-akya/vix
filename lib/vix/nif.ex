@@ -62,6 +62,12 @@ defmodule Vix.Nif do
   def nif_image_hasalpha(_vips_image),
     do: :erlang.nif_error(:nif_library_not_loaded)
 
+  def nif_image_new_from_source(_vips_source, _suffix),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
+  def nif_image_to_target(_vips_image, _vips_target, _suffix),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
   # VipsImage *UNSAFE*
   def nif_image_update_metadata(_vips_image, _name, _value),
     do: :erlang.nif_error(:nif_library_not_loaded)
@@ -163,5 +169,21 @@ defmodule Vix.Nif do
     do: :erlang.nif_error(:nif_library_not_loaded)
 
   def nif_foreign_find_save(_filename),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
+  # OS Specific
+  def nif_pipe_open(_mode),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
+  def nif_write(_fd, _bin),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
+  def nif_read(_fd, _max_size),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
+  def nif_source_new,
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
+  def nif_target_new,
     do: :erlang.nif_error(:nif_library_not_loaded)
 end

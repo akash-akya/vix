@@ -83,6 +83,12 @@ extern ERL_NIF_TERM ATOM_FALSE;
 
 extern ERL_NIF_TERM ATOM_NULL_VALUE;
 
+extern ERL_NIF_TERM ATOM_UNDEFINED;
+
+extern ERL_NIF_TERM ATOM_EAGAIN;
+
+extern const int VIX_FD_CLOSED;
+
 ERL_NIF_TERM raise_exception(ErlNifEnv *env, const char *msg);
 
 ERL_NIF_TERM raise_badarg(ErlNifEnv *env, const char *reason);
@@ -90,6 +96,8 @@ ERL_NIF_TERM raise_badarg(ErlNifEnv *env, const char *reason);
 ERL_NIF_TERM make_ok(ErlNifEnv *env, ERL_NIF_TERM term);
 
 ERL_NIF_TERM make_error(ErlNifEnv *env, const char *reason);
+
+ERL_NIF_TERM make_error_term(ErlNifEnv *env, ERL_NIF_TERM term);
 
 ERL_NIF_TERM make_atom(ErlNifEnv *env, const char *name);
 
@@ -100,6 +108,8 @@ bool get_binary(ErlNifEnv *env, ERL_NIF_TERM bin_term, char *str, ssize_t size);
 VixResult vix_result(ERL_NIF_TERM term);
 
 int utils_init(ErlNifEnv *env);
+
+int close_fd(int *fd);
 
 void notify_consumed_timeslice(ErlNifEnv *env, ErlNifTime start,
                                ErlNifTime stop);
