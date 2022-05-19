@@ -1,8 +1,12 @@
 #include "utils.h"
+#include <errno.h>
 #include <glib-object.h>
 #include <stdbool.h>
+#include <unistd.h>
 
 int MAX_G_TYPE_NAME_LENGTH = 1024;
+
+const int VIX_FD_CLOSED = -1;
 
 ERL_NIF_TERM ATOM_OK;
 ERL_NIF_TERM ATOM_ERROR;
@@ -10,6 +14,8 @@ ERL_NIF_TERM ATOM_NIL;
 ERL_NIF_TERM ATOM_TRUE;
 ERL_NIF_TERM ATOM_FALSE;
 ERL_NIF_TERM ATOM_NULL_VALUE;
+ERL_NIF_TERM ATOM_UNDEFINED;
+ERL_NIF_TERM ATOM_EAGAIN;
 
 ERL_NIF_TERM make_ok(ErlNifEnv *env, ERL_NIF_TERM term) {
   return enif_make_tuple2(env, ATOM_OK, term);
@@ -17,6 +23,10 @@ ERL_NIF_TERM make_ok(ErlNifEnv *env, ERL_NIF_TERM term) {
 
 ERL_NIF_TERM make_error(ErlNifEnv *env, const char *reason) {
   return enif_make_tuple2(env, ATOM_ERROR, make_binary(env, reason));
+}
+
+ERL_NIF_TERM make_error_term(ErlNifEnv *env, ERL_NIF_TERM term) {
+  return enif_make_tuple2(env, ATOM_ERROR, term);
 }
 
 ERL_NIF_TERM raise_exception(ErlNifEnv *env, const char *msg) {
@@ -79,8 +89,26 @@ int utils_init(ErlNifEnv *env) {
   ATOM_TRUE = make_atom(env, "true");
   ATOM_FALSE = make_atom(env, "false");
   ATOM_NULL_VALUE = make_atom(env, "null_value");
+  ATOM_UNDEFINED = make_atom(env, "undefined");
+  ATOM_EAGAIN = make_atom(env, "eagain");
 
   return 0;
+}
+
+int close_fd(int *fd) {
+  int ret = 0;
+
+  if (*fd != VIX_FD_CLOSED) {
+    ret = close(*fd);
+
+    if (ret != 0) {
+      error("failed to close fd: %d, error: %s", *fd, strerror(errno));
+    } else {
+      *fd = VIX_FD_CLOSED;
+    }
+  }
+
+  return ret;
 }
 
 void notify_consumed_timeslice(ErlNifEnv *env, ErlNifTime start,

@@ -670,3 +670,82 @@ exit:
   notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
   return ret;
 }
+
+ERL_NIF_TERM nif_image_new_from_source(ErlNifEnv *env, int argc,
+                                       const ERL_NIF_TERM argv[]) {
+  ASSERT_ARGC(argc, 2);
+
+  VipsImage *image;
+  VipsSource *source;
+  ERL_NIF_TERM ret;
+  ErlNifTime start;
+  char suffix[VIPS_PATH_MAX];
+
+  start = enif_monotonic_time(ERL_NIF_USEC);
+
+  if (!erl_term_to_g_object(env, argv[0], (GObject **)&source)) {
+    ret = make_error(env, "Failed to get VipsSource");
+    goto exit;
+  }
+
+  if (!get_binary(env, argv[1], suffix, VIPS_PATH_MAX)) {
+    ret = make_error(env, "Failed to get suffix");
+    goto exit;
+  }
+
+  image = vips_image_new_from_source(source, suffix, NULL);
+  if (!image) {
+    error("Failed to create image from fd. error: %s", vips_error_buffer());
+    vips_error_clear();
+    ret = make_error(env, "Failed to create image from VipsSource");
+    goto exit;
+  }
+
+  ret = make_ok(env, g_object_to_erl_term(env, (GObject *)image));
+
+exit:
+  notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
+  return ret;
+}
+
+ERL_NIF_TERM nif_image_to_target(ErlNifEnv *env, int argc,
+                                 const ERL_NIF_TERM argv[]) {
+  ASSERT_ARGC(argc, 3);
+
+  VipsImage *image;
+  VipsTarget *target;
+  ERL_NIF_TERM ret;
+  ErlNifTime start;
+  char suffix[VIPS_PATH_MAX];
+
+  start = enif_monotonic_time(ERL_NIF_USEC);
+
+  if (!erl_term_to_g_object(env, argv[0], (GObject **)&image)) {
+    ret = make_error(env, "Failed to get VipsImage");
+    goto exit;
+  }
+
+  if (!erl_term_to_g_object(env, argv[1], (GObject **)&target)) {
+    ret = make_error(env, "Failed to get VipsTarget");
+    goto exit;
+  }
+
+  if (!get_binary(env, argv[2], suffix, VIPS_PATH_MAX)) {
+    ret = make_error(env, "Failed to get suffix");
+    goto exit;
+  }
+
+  if (vips_image_write_to_target(image, suffix, target, NULL)) {
+    error("Failed to create image from fd. error: %s", vips_error_buffer());
+    vips_error_clear();
+    ret = make_error(env, "Failed to write to target");
+    goto exit;
+  }
+
+  vips_target_finish(target);
+  ret = ATOM_OK;
+
+exit:
+  notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
+  return ret;
+}
