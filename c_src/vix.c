@@ -69,6 +69,8 @@ static ErlNifFunc nif_funcs[] = {
      ERL_NIF_DIRTY_JOB_IO_BOUND},
     {"nif_image_write_to_buffer", 2, nif_image_write_to_buffer,
      ERL_NIF_DIRTY_JOB_IO_BOUND},
+    {"nif_image_write_to_array", 1, nif_image_write_to_array,
+     ERL_NIF_DIRTY_JOB_CPU_BOUND},
     {"nif_image_new", 0, nif_image_new, ERL_NIF_DIRTY_JOB_CPU_BOUND},
     {"nif_image_new_temp_file", 1, nif_image_new_temp_file,
      ERL_NIF_DIRTY_JOB_IO_BOUND},

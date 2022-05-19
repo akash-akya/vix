@@ -17,6 +17,7 @@ defmodule Vix.Vips.Image do
   alias Vix.Type
   alias Vix.Nif
   alias Vix.Vips.MutableImage
+  alias Vix.Vips.Enum.VipsBandFormat, as: BandFormat
 
   @behaviour Type
 
@@ -199,6 +200,37 @@ defmodule Vix.Vips.Image do
           {:ok, binary()} | {:error, term()}
   def write_to_buffer(%Image{ref: vips_image}, suffix) do
     Nif.nif_image_write_to_buffer(vips_image, normalize_string(suffix))
+  end
+
+  @doc """
+  Make a copy of the image's raw data array.
+
+  VIPS images are three-dimensional arrays, the dimensions being
+  width, height and bands.
+
+  Each dimension can be up to 2 ** 31 pixels (or band elements).
+  An image has a format, meaning the machine number type used to
+  represent each value. VIPS supports 10 formats, from 8-bit unsigned
+  integer up to 128-bit double complex.
+
+  In VIPS, images are uninterpreted arrays, meaning that from
+  the point of view of most operations, they are just large
+  collections of numbers. There's no difference between an RGBA
+  (RGB with alpha) image and a CMYK image, for example, they are
+  both just four-band images.
+
+  This function is intended to support interoperability of image
+  data between different libraries.  Since the array is created as
+  a NIF resource it will be correctly garbage collected when
+  the last reference falls out of scope.
+
+  """
+  @spec write_to_array(__MODULE__.t()) ::
+    {:ok, {binary(), integer(), integer(), pos_integer(), BandFormat.t()}} | {:error, term()}
+  def write_to_array(%Image{ref: vips_image} = image) do
+    with {:ok, array} <- Nif.nif_image_write_to_array(vips_image) do
+      {:ok, {array, width(image), height(image), bands(image), format(image)}}
+    end
   end
 
   @doc """
