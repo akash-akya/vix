@@ -267,15 +267,15 @@ defmodule Vix.Vips.OperationHelper do
       Enum.map(args, fn {name, spec_details, priority, flags} ->
         {desc, spec_type, value_type, data} = spec_details
 
-        %GParamSpec{
-          param_name: name,
+        GParamSpec.new(%{
+          name: name,
           desc: desc,
-          spec_type: to_string(spec_type),
-          value_type: to_string(value_type),
+          spec_type: spec_type,
+          value_type: value_type,
           data: data,
           priority: priority,
           flags: flags
-        }
+        })
       end)
 
     {description, args}
