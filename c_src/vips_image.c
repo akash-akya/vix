@@ -17,6 +17,12 @@ static ERL_NIF_TERM vips_image_header_read_error(ErlNifEnv *env,
   return make_error(env, "Failed to read image metadata");
 }
 
+static void free_erl_env(VipsBlob *source, ErlNifEnv *env) {
+  debug("Free ErlNifEnv");
+  enif_free_env(env);
+  return;
+}
+
 ERL_NIF_TERM nif_image_new_from_file(ErlNifEnv *env, int argc,
                                      const ERL_NIF_TERM argv[]) {
   ASSERT_ARGC(argc, 1);
@@ -665,6 +671,81 @@ ERL_NIF_TERM nif_image_hasalpha(ErlNifEnv *env, int argc,
   } else {
     ret = make_ok(env, ATOM_FALSE);
   }
+
+exit:
+  notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
+  return ret;
+}
+
+ERL_NIF_TERM nif_image_new_from_binary(ErlNifEnv *env, int argc,
+                                       const ERL_NIF_TERM argv[]) {
+  ASSERT_ARGC(argc, 5);
+
+  VipsImage *image;
+  ERL_NIF_TERM ret, bin_term;
+  ErlNifTime start;
+  ErlNifEnv *new_env;
+  ErlNifBinary bin;
+  int width, height, bands, band_format;
+
+  start = enif_monotonic_time(ERL_NIF_USEC);
+
+  if (!enif_is_binary(env, argv[0])) {
+    error("failed to get binary from erl term");
+    ret = enif_make_badarg(env);
+    goto exit;
+  }
+
+  if (!enif_get_int(env, argv[1], &width)) {
+    error("failed to get width");
+    ret = enif_make_badarg(env);
+    goto exit;
+  }
+
+  if (!enif_get_int(env, argv[2], &height)) {
+    error("failed to get height");
+    ret = enif_make_badarg(env);
+    goto exit;
+  }
+
+  if (!enif_get_int(env, argv[3], &bands)) {
+    error("failed to get bands");
+    ret = enif_make_badarg(env);
+    goto exit;
+  }
+
+  if (!enif_get_int(env, argv[4], &band_format)) {
+    error("failed to get band_format");
+    ret = enif_make_badarg(env);
+    goto exit;
+  }
+
+  new_env = enif_alloc_env();
+  bin_term = enif_make_copy(new_env, argv[0]);
+
+  if (!enif_inspect_binary(new_env, bin_term, &bin)) {
+    error("failed to get binary from erl term");
+    ret = enif_make_badarg(env);
+    goto free_and_exit;
+  }
+
+  image = vips_image_new_from_memory(bin.data, bin.size, width, height, bands,
+                                     band_format);
+
+  if (!image) {
+    error("Failed to create image from memory. error: %s", vips_error_buffer());
+    vips_error_clear();
+    ret = make_error(env, "Failed to create image from memory");
+    goto free_and_exit;
+  }
+
+  g_signal_connect(image, "close", G_CALLBACK(free_erl_env), new_env);
+
+  ret = make_ok(env, g_object_to_erl_term(env, (GObject *)image));
+  goto exit;
+
+free_and_exit:
+  enif_free_env(new_env);
 
 exit:
   notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));

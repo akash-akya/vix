@@ -107,6 +107,8 @@ defmodule Vix.Vips.Image do
   end
 
   @doc """
+  Create a new image based on an existing image with each pixel set to `value`
+
   Creates a new image with width, height, format, interpretation, resolution and offset taken from the input image, but with each band set from `value`.
   """
   @spec new_from_image(__MODULE__.t(), [float()]) :: {:ok, __MODULE__.t()} | {:error, term()}
@@ -118,6 +120,8 @@ defmodule Vix.Vips.Image do
   end
 
   @doc """
+  Create a new image from formatted binary
+
   Create a new image from formatted binary `bin`. Binary should be an
   image encoded in a format such as JPEG. It tries to recognize the
   format by checking the binary.
@@ -126,6 +130,9 @@ defmodule Vix.Vips.Image do
   corresponding loader operation function directly from
   `Vix.Vips.Operation` instead. For example to load jpeg, you can use
   `Vix.Vips.Operation.jpegload_buffer/2`
+
+  `bin` should be formatted binary (ie. JPEG, PNG etc). For loading
+  unformatted binary (raw pixel data) see `new_from_binary/5`.
 
   The options available depend on the file format. Try something like:
 
@@ -142,6 +149,48 @@ defmodule Vix.Vips.Image do
          {:ok, {ref, _optional}} <- Vix.Vips.OperationHelper.operation_call(loader, [bin], opts) do
       {:ok, wrap_type(ref)}
     end
+  end
+
+  @doc """
+  Create a new image from raw pixel data
+
+  Creates an image by wrapping passed raw pixel data. This function
+  does not copy the passed binary, instead it just creates a reference
+  to the binary term (zero-copy). So this function is very efficient.
+
+  This function is useful when you are getting raw pixel data from
+  some other library like
+  [`eVision`](https://github.com/cocoa-xu/evision) or
+  [`Nx`](https://github.com/elixir-nx/) and want to perform some
+  operation on it using Vix.
+
+  Binary should be sequence of pixel data, for example: RGBRGBRGB. and
+  order should be left-to-right, top-to-bottom.
+
+  `bands` should be number values which represent the each pixel. For
+  example: if each pixel is RGB then `bands` will be 3. If each pixel
+  is RGBA then `bands` will be 4.
+
+  `band_format` refers to type of each band. Usually it will be
+  `:VIPS_FORMAT_UCHAR`.
+
+
+  `bin` should be raw pixel data binary. For loading
+  formatted binary (JPEG, PNG) see `new_from_buffer/2`.
+  """
+  @spec new_from_binary(
+          binary(),
+          pos_integer(),
+          pos_integer(),
+          pos_integer(),
+          Vix.Vips.Operation.vips_band_format()
+        ) :: {:ok, __MODULE__.t()} | {:error, term()}
+  def new_from_binary(bin, width, height, bands, band_format)
+      when width > 0 and height > 0 and bands > 0 do
+    band_format = Vix.Vips.Enum.VipsBandFormat.to_nif_term(band_format, nil)
+
+    Nif.nif_image_new_from_binary(bin, width, height, bands, band_format)
+    |> wrap_type()
   end
 
   @doc """
