@@ -220,14 +220,16 @@ exit:
   return ret;
 }
 
-ERL_NIF_TERM nif_image_write_to_array(ErlNifEnv *env, int argc,
+ERL_NIF_TERM nif_image_write_to_binary(ErlNifEnv *env, int argc,
                                        const ERL_NIF_TERM argv[]) {
   ASSERT_ARGC(argc, 1);
 
   VipsImage *image;
+  VipsImage *binary;
   ErlNifTime start;
   ERL_NIF_TERM ret;
-  void *array;
+  ERL_NIF_TERM bin_term;
+  void *bin;
   size_t size;
 
   start = enif_monotonic_time(ERL_NIF_USEC);
@@ -237,17 +239,21 @@ ERL_NIF_TERM nif_image_write_to_array(ErlNifEnv *env, int argc,
     goto exit;
   }
 
-  array = vips_image_write_to_memory(image, &size);
+  binary = vips_image_write_to_memory(image, &size);
 
-  if (!array) {
-    error("Failed to write VipsImage to array. error: %s",
+  if (!binary) {
+    error("Failed to write VipsImage to binary. error: %s",
           vips_error_buffer());
     vips_error_clear();
-    ret = make_error(env, "Failed to write VipsImage to array");
+    ret = make_error(env, "Failed to write VipsImage to binary");
     goto exit;
   }
 
-  ret = make_ok(env, g_object_to_erl_term(env, (GObject *)array));
+  bin = enif_make_new_binary(env, size, &bin_term);
+  memcpy(bin, binary, size);
+  g_free(binary);
+
+  ret = make_ok(env, enif_make_tuple2(env, bin_term, enif_make_uint64(env, size)));
 
 exit:
   notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));

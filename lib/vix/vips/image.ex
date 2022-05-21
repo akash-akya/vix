@@ -329,13 +329,15 @@ defmodule Vix.Vips.Image do
   the last reference falls out of scope.
 
   """
-  @spec write_to_array(__MODULE__.t()) ::
-    {:ok, {binary(), integer(), integer(), pos_integer(), BandFormat.t()}} | {:error, term()}
-  def write_to_array(%Image{ref: vips_image} = image) do
-    with {:ok, array} <- Nif.nif_image_write_to_array(vips_image) do
-      {:ok, {array, width(image), height(image), bands(image), format(image)}}
+  @spec write_to_binary(__MODULE__.t()) ::
+    {:ok, {binary(), integer(), integer(), integer(), pos_integer(), BandFormat.t()}} |
+    {:error, term()}
+  def write_to_binary(%Image{ref: vips_image} = image) do
+    with {:ok, binary, size} <- Nif.nif_image_write_to_binary(vips_image) do
+      {:ok, Vix.Tensor.binary_to_tensor(binary, size, image)}
     end
   end
+
 
   @doc """
   Make a VipsImage which, when written to, will create a temporary file on disc.
