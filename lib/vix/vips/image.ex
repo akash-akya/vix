@@ -17,7 +17,6 @@ defmodule Vix.Vips.Image do
   alias Vix.Type
   alias Vix.Nif
   alias Vix.Vips.MutableImage
-  alias Vix.Vips.Enum.VipsBandFormat, as: BandFormat
   alias Vix.Pipe
 
   @behaviour Type
@@ -330,10 +329,9 @@ defmodule Vix.Vips.Image do
 
   """
   @spec write_to_binary(__MODULE__.t()) ::
-    {:ok, {binary(), integer(), integer(), integer(), pos_integer(), BandFormat.t()}} |
-    {:error, term()}
+    {:ok, Vix.Tensor.t()} | {:error, term()}
   def write_to_binary(%Image{ref: vips_image} = image) do
-    with {:ok, binary, size} <- Nif.nif_image_write_to_binary(vips_image) do
+    with {:ok, {binary, size}} <- Nif.nif_image_write_to_binary(vips_image) do
       {:ok, Vix.Tensor.binary_to_tensor(binary, size, image)}
     end
   end
