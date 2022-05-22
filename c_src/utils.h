@@ -69,6 +69,14 @@ typedef struct _VixResult {
   ERL_NIF_TERM result;
 } VixResult;
 
+/* size of the data is not really needed. but can be useful for debugging */
+typedef struct _VixBinaryResource {
+  void *data;
+  size_t size;
+} VixBinaryResource;
+
+extern ErlNifResourceType *VIX_BINARY_RT;
+
 extern int MAX_G_TYPE_NAME_LENGTH;
 
 extern ERL_NIF_TERM ATOM_OK;
@@ -113,4 +121,7 @@ int close_fd(int *fd);
 
 void notify_consumed_timeslice(ErlNifEnv *env, ErlNifTime start,
                                ErlNifTime stop);
+
+ERL_NIF_TERM to_binary_term(ErlNifEnv *env, void *data, size_t size);
+
 #endif
