@@ -6,7 +6,7 @@ defmodule Vix.Tensor do
   defstruct [
     data: nil,
     shape: {0, 0, 0},
-    names: [:x, :y, :band],
+    names: [:width, :height, :bands],
     type: {}
   ]
 
@@ -15,7 +15,7 @@ defmodule Vix.Tensor do
     struct(__MODULE__,
       data: binary,
       shape: {Image.width(image), Image.height(image), Image.bands(image)},
-      names: [:x, :y, :band],
+      names: [:width, :height, :bands],
       type: nx_type(image)
     )
   end
