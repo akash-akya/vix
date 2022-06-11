@@ -17,7 +17,8 @@ defmodule VixBench.MixProject do
       "bench.op": ["run op.exs"],
       "bench.stream": ["run stream.exs"],
       "bench.from_enum": ["run from_enum.exs"],
-      "bench.to_stream": ["run to_stream.exs"]
+      "bench.to_stream": ["run to_stream.exs"],
+      "bench.from_binary": ["run from_binary.exs"]
     ]
   end
 

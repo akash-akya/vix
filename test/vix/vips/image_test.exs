@@ -159,4 +159,25 @@ defmodule Vix.Vips.ImageTest do
     stat = File.stat!(out_path)
     assert stat.size > 0 and stat.type == :regular
   end
+
+  test "new_from_binary", %{dir: dir} do
+    {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
+    # same image in raw pixel format
+    bin = File.read!(img_path("puppies.raw"))
+
+    {:ok, image} =
+      Image.new_from_binary(
+        bin,
+        Image.width(im),
+        Image.height(im),
+        Image.bands(im),
+        Image.format(im)
+      )
+
+    out_path = Temp.path!(suffix: ".png", basedir: dir)
+    :ok = Image.write_to_file(image, out_path)
+
+    stat = File.stat!(out_path)
+    assert stat.size > 0 and stat.type == :regular
+  end
 end

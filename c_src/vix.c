@@ -83,7 +83,8 @@ static ErlNifFunc nif_funcs[] = {
     {"nif_image_hasalpha", 1, nif_image_hasalpha, 0},
     {"nif_image_new_from_source", 2, nif_image_new_from_source,
      ERL_NIF_DIRTY_JOB_IO_BOUND},
-    {"nif_image_to_target", 3, nif_image_to_target,
+    {"nif_image_to_target", 3, nif_image_to_target, ERL_NIF_DIRTY_JOB_IO_BOUND},
+    {"nif_image_new_from_binary", 5, nif_image_new_from_binary,
      ERL_NIF_DIRTY_JOB_IO_BOUND},
 
     /* VipsImage UNSAFE */
