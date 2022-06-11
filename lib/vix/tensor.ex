@@ -18,14 +18,8 @@ defmodule Vix.Tensor do
     )
   end
 
-  # NOTE: This isn't really the right way to determine
-  # the bit sizes of these types. Is there a way to get
-  # this information from an existing NIF call, or do
-  # we need a call to return format bit sizes?
-
+  # should we support :VIPS_FORMAT_COMPLEX and :VIPS_FORMAT_DPCOMPLEX ?
   defp nx_type(image) do
-    word_size = :erlang.system_info(:wordsize)
-
     case Image.format(image) do
       :VIPS_FORMAT_UCHAR ->
         {:u, 8}
@@ -40,16 +34,16 @@ defmodule Vix.Tensor do
         {:s, 16}
 
       :VIPS_FORMAT_UINT ->
-        {:u, word_size}
+        {:u, 32}
 
       :VIPS_FORMAT_INT ->
-        {:s, word_size}
+        {:s, 32}
 
       :VIPS_FORMAT_FLOAT ->
-        {:u, word_size}
+        {:f, 32}
 
       :VIPS_FORMAT_DOUBLE ->
-        {:u, word_size}
+        {:f, 64}
 
       other ->
         raise ArgumentError, "Cannot convert this image type to binary. Found #{inspect(other)}"
