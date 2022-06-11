@@ -181,7 +181,7 @@ defmodule Vix.Vips.ImageTest do
     assert stat.size > 0 and stat.type == :regular
   end
 
-  test "write_to_binary", %{dir: dir} do
+  test "write_to_binary" do
     {:ok, im} = Image.new_from_file(img_path("black.jpg"))
     {:ok, bin} = Image.write_to_binary(im)
 
