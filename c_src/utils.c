@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <unistd.h>
 
+ErlNifResourceType *VIX_BINARY_RT;
+
 int MAX_G_TYPE_NAME_LENGTH = 1024;
 
 const int VIX_FD_CLOSED = -1;
@@ -82,6 +84,12 @@ VixResult vix_result(ERL_NIF_TERM term) {
   return (VixResult){.is_success = true, .result = term};
 }
 
+static void vix_binary_dtor(ErlNifEnv *env, void *ptr) {
+  VixBinaryResource *vix_bin_r = (VixBinaryResource *)ptr;
+  g_free(vix_bin_r->data);
+  debug("vix_binary_resource dtor");
+}
+
 int utils_init(ErlNifEnv *env) {
   ATOM_OK = make_atom(env, "ok");
   ATOM_ERROR = make_atom(env, "error");
@@ -91,6 +99,15 @@ int utils_init(ErlNifEnv *env) {
   ATOM_NULL_VALUE = make_atom(env, "null_value");
   ATOM_UNDEFINED = make_atom(env, "undefined");
   ATOM_EAGAIN = make_atom(env, "eagain");
+
+  VIX_BINARY_RT = enif_open_resource_type(
+      env, NULL, "vix_binary_resource", (ErlNifResourceDtor *)vix_binary_dtor,
+      ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER, NULL);
+
+  if (!VIX_BINARY_RT) {
+    error("Failed to open vix_binary_resource");
+    return 1;
+  }
 
   return 0;
 }
@@ -121,4 +138,20 @@ void notify_consumed_timeslice(ErlNifEnv *env, ErlNifTime start,
   else if (pct == 0)
     pct = 1;
   enif_consume_timeslice(env, pct);
+}
+
+ERL_NIF_TERM to_binary_term(ErlNifEnv *env, void *data, size_t size) {
+  VixBinaryResource *vix_bin_r =
+      enif_alloc_resource(VIX_BINARY_RT, sizeof(VixBinaryResource));
+  ERL_NIF_TERM bin_term;
+
+  vix_bin_r->data = data;
+  vix_bin_r->size = size;
+
+  bin_term = enif_make_resource_binary(env, vix_bin_r, vix_bin_r->data,
+                                       vix_bin_r->size);
+
+  enif_release_resource(vix_bin_r);
+
+  return bin_term;
 }

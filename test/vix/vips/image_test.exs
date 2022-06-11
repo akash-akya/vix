@@ -180,4 +180,14 @@ defmodule Vix.Vips.ImageTest do
     stat = File.stat!(out_path)
     assert stat.size > 0 and stat.type == :regular
   end
+
+  test "write_to_binary", %{dir: dir} do
+    {:ok, im} = Image.new_from_file(img_path("black.jpg"))
+    {:ok, bin} = Image.write_to_binary(im)
+
+    expected_bin_size = Image.width(im) * Image.height(im) * Image.bands(im)
+
+    assert IO.iodata_length(bin) == expected_bin_size
+    assert :binary.copy(<<0>>, expected_bin_size) == bin
+  end
 end

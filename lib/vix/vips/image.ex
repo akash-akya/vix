@@ -355,6 +355,14 @@ defmodule Vix.Vips.Image do
   end
 
   @doc """
+
+  """
+  @spec write_to_binary(__MODULE__.t()) :: {:ok, binary()} | {:error, term()}
+  def write_to_binary(%Image{ref: vips_image}) do
+    Nif.nif_image_write_to_binary(vips_image)
+  end
+
+  @doc """
   Make a VipsImage which, when written to, will create a temporary file on disc.
 
   The file will be automatically deleted when the image is destroyed. format is something like `"%s.v"` for a vips file.

@@ -830,3 +830,37 @@ exit:
   notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
   return ret;
 }
+
+ERL_NIF_TERM nif_image_write_to_binary(ErlNifEnv *env, int argc,
+                                       const ERL_NIF_TERM argv[]) {
+  ASSERT_ARGC(argc, 1);
+
+  VipsImage *image;
+  ErlNifTime start;
+  ERL_NIF_TERM ret;
+  void *bin;
+  size_t size;
+
+  start = enif_monotonic_time(ERL_NIF_USEC);
+
+  if (!erl_term_to_g_object(env, argv[0], (GObject **)&image)) {
+    ret = make_error(env, "Failed to get VipsImage");
+    goto exit;
+  }
+
+  bin = vips_image_write_to_memory(image, &size);
+
+  if (!bin) {
+    error("Failed to write VipsImage to memory. error: %s",
+          vips_error_buffer());
+    vips_error_clear();
+    ret = make_error(env, "Failed to write VipsImage to memory");
+    goto exit;
+  }
+
+  ret = make_ok(env, to_binary_term(env, bin, size));
+
+exit:
+  notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
+  return ret;
+}
