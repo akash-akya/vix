@@ -169,14 +169,22 @@ defmodule Vix.Vips.Image do
 
   `bands` should be number values which represent the each pixel. For
   example: if each pixel is RGB then `bands` will be 3. If each pixel
-  is RGBA then `bands` will be 4.
-
-  `band_format` refers to type of each band. Usually it will be
-  `:VIPS_FORMAT_UCHAR`.
-
+  is RGBA then `bands` will be 4.  `band_format` refers to type of
+  each band. Usually it will be `:VIPS_FORMAT_UCHAR`.
 
   `bin` should be raw pixel data binary. For loading
   formatted binary (JPEG, PNG) see `new_from_buffer/2`.
+
+  ##  Endianness
+
+  Byte order of the data *must* be in native endianness. This matters
+  if you are generating or manipulating binary by using bitstring
+  syntax. By default bitstring treat binary byte order as `big` endian
+  which might *not* be native. Always use `native` specifier to
+  ensure. See [Elixir
+  docs](https://hexdocs.pm/elixir/Kernel.SpecialForms.html#%3C%3C%3E%3E/1-endianness)
+  for more details.
+
   """
   @spec new_from_binary(
           binary(),
@@ -378,6 +386,15 @@ defmodule Vix.Vips.Image do
 
   Libvips might run all the operations to produce the pixel data
   depending on the caching mechanism and how image is built.
+
+  ##  Endianness
+
+  Returned binary term will be in native endianess. By default
+  bitstring treats byte order as `big` endian which might *not* be
+  native. Always use `native` specifier to ensure. See [Elixir
+  docs](https://hexdocs.pm/elixir/Kernel.SpecialForms.html#%3C%3C%3E%3E/1-endianness)
+  for more details.
+
   """
   @spec write_to_tensor(__MODULE__.t()) :: {:ok, Vix.Tensor.t()} | {:error, term()}
   def write_to_tensor(%Image{} = image) do

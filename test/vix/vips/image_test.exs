@@ -200,4 +200,31 @@ defmodule Vix.Vips.ImageTest do
     expected_bin_size = Image.width(im) * Image.height(im) * Image.bands(im)
     assert tensor.data == :binary.copy(<<0>>, expected_bin_size)
   end
+
+  test "new_from_binary and write_to_binary endianness handling", %{dir: dir} do
+    {width, height} = {125, 125}
+
+    bin =
+      for y <- 1..height, into: <<>> do
+        for x <- 1..width, into: <<>> do
+          <<y * 2.0::native-float-32, 0::native-float-32, x * 2.0::native-float-32>>
+        end
+      end
+
+    {:ok, img} = Image.new_from_binary(bin, width, height, 3, :VIPS_FORMAT_FLOAT)
+
+    # endianess of the new image should be native
+    {:ok, png} = Image.write_to_buffer(img, ".png")
+    assert File.read!(img_path("gradient.png")) == png
+
+    out_path = Temp.path!(suffix: ".v", basedir: dir)
+    :ok = Image.write_to_file(img, out_path)
+
+    {:ok, vimg} = Image.new_from_file(out_path)
+    {:ok, vbin} = Image.write_to_binary(vimg)
+
+    # endianness of binary returned by the libvips must be same as
+    # what we wrote. which is native
+    assert bin == vbin
+  end
 end
