@@ -1,7 +1,7 @@
 defmodule Vix.MixProject do
   use Mix.Project
 
-  @version "0.9.0"
+  @version "0.10.0"
   @scm_url "https://github.com/akash-akya/vix"
 
   def project do
