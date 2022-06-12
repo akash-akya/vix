@@ -1,7 +1,13 @@
 defmodule Vix.Tensor do
-  @moduledoc false
-
   alias Vix.Vips.Image
+
+  @moduledoc """
+  Struct to hold raw pixel data returned by the Libvips along with metadata about the binary.
+
+  Useful for interoperability between different libraries. See `Vix.Vips.Image.write_to_tensor/1`
+  """
+
+  @type t() :: %__MODULE__{}
 
   defstruct data: nil,
             shape: {0, 0, 0},
