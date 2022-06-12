@@ -355,7 +355,46 @@ defmodule Vix.Vips.Image do
   end
 
   @doc """
+  Returns raw pixel data of the image as `Vix.Tensor`
 
+  VIPS images are three-dimensional arrays, the dimensions being
+  width, height and bands.
+
+  Each dimension can be up to 2 ** 31 pixels (or band elements).
+  An image has a format, meaning the machine number type used to
+  represent each value. VIPS supports 10 formats, from 8-bit unsigned
+  integer up to 128-bit double complex.
+
+  In VIPS, images are uninterpreted arrays, meaning that from
+  the point of view of most operations, they are just large
+  collections of numbers. There's no difference between an RGBA
+  (RGB with alpha) image and a CMYK image, for example, they are
+  both just four-band images.
+
+  This function is intended to support interoperability of image
+  data between different libraries.  Since the array is created as
+  a NIF resource it will be correctly garbage collected when
+  the last reference falls out of scope.
+
+  Libvips might run all the operations to produce the pixel data
+  depending on the caching mechanism and how image is built.
+  """
+  @spec write_to_tensor(__MODULE__.t()) :: {:ok, Vix.Tensor.t()} | {:error, term()}
+  def write_to_tensor(%Image{} = image) do
+    with {:ok, binary} <- write_to_binary(image) do
+      {:ok, Vix.Tensor.binary_to_tensor(binary, byte_size(binary), image)}
+    end
+  end
+
+  @doc """
+  Returns raw pixel data of the image as binary term
+
+  Please check `write_to_tensor` for more details. This function just
+  returns the data instead of the `Vix.Tensor` struct.
+
+  Prefer using `write_to_tensor` instead of this function. This is
+  only useful if you already know the details about the returned
+  binary blob. Such as height, width and bands.
   """
   @spec write_to_binary(__MODULE__.t()) :: {:ok, binary()} | {:error, term()}
   def write_to_binary(%Image{ref: vips_image}) do
