@@ -165,14 +165,14 @@ defmodule Vix.Vips.ImageTest do
     # same image in raw pixel format
     bin = File.read!(img_path("puppies.raw"))
 
-    {:ok, image} =
-      Image.new_from_binary(
-        bin,
-        Image.width(im),
-        Image.height(im),
-        Image.bands(im),
-        Image.format(im)
-      )
+    assert {:ok, image} =
+             Image.new_from_binary(
+               bin,
+               Image.width(im),
+               Image.height(im),
+               Image.bands(im),
+               Image.format(im)
+             )
 
     out_path = Temp.path!(suffix: ".png", basedir: dir)
     :ok = Image.write_to_file(image, out_path)
@@ -183,11 +183,21 @@ defmodule Vix.Vips.ImageTest do
 
   test "write_to_binary" do
     {:ok, im} = Image.new_from_file(img_path("black.jpg"))
-    {:ok, bin} = Image.write_to_binary(im)
+    assert {:ok, bin} = Image.write_to_binary(im)
 
     expected_bin_size = Image.width(im) * Image.height(im) * Image.bands(im)
 
     assert IO.iodata_length(bin) == expected_bin_size
     assert :binary.copy(<<0>>, expected_bin_size) == bin
+  end
+
+  test "write_to_tensor" do
+    {:ok, im} = Image.new_from_file(img_path("black.jpg"))
+    assert {:ok, %Vix.Tensor{} = tensor} = Image.write_to_tensor(im)
+
+    assert tensor.shape == {Image.width(im), Image.height(im), Image.bands(im)}
+
+    expected_bin_size = Image.width(im) * Image.height(im) * Image.bands(im)
+    assert tensor.data == :binary.copy(<<0>>, expected_bin_size)
   end
 end

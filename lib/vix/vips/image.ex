@@ -380,8 +380,8 @@ defmodule Vix.Vips.Image do
   depending on the caching mechanism and how image is built.
   """
   @spec write_to_tensor(__MODULE__.t()) :: {:ok, Vix.Tensor.t()} | {:error, term()}
-  def write_to_tensor(%Image{ref: vips_image} = image) do
-    with {:ok, binary} <- write_to_binary(vips_image) do
+  def write_to_tensor(%Image{} = image) do
+    with {:ok, binary} <- write_to_binary(image) do
       {:ok, Vix.Tensor.binary_to_tensor(binary, byte_size(binary), image)}
     end
   end
