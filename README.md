@@ -4,21 +4,28 @@
 [![Hex.pm](https://img.shields.io/hexpm/v/vix.svg)](https://hex.pm/packages/vix)
 [![docs](https://img.shields.io/badge/docs-hexpm-blue.svg)](https://hexdocs.pm/vix/)
 
-Vix is Elixir extension for [vips](https://libvips.github.io/libvips/) image processing library.
+Vix is an Elixir extension for [libvips](https://libvips.github.io/libvips/) image processing library.
 
-### Why Vix
+About libvips from its documentation:
 
-Vix is a **NIF** based bindings library for libvips. Vix does not spawn OS processes for the operations like other libraries. And it can make full use of libvips [optimizations](https://libvips.github.io/libvips/API/current/How-it-works.md.html) such as joining of operations in the pipeline, cache etc.
+> libvips is a [demand-driven, horizontally threaded](https://github.com/libvips/libvips/wiki/Why-is-libvips-quick) image processing library. Compared to similar libraries, [libvips runs quickly and uses little memory](https://github.com/libvips/libvips/wiki/Speed-and-memory-use).
 
-Operation bindings are generated using vips introspection, so the generated documentation and bindings always matches the vips version installed.
+## About Vix
+
+Vix is a **NIF** based bindings library for libvips.
+
+**Major Features:**
+
+* Vix can take full advantage of libvips [optimizations](https://libvips.github.io/libvips/API/current/How-it-works.md.html), such as joining of operations in the pipeline, cache. Since Vix is native binding
+* Experimental support for streaming. User can read or write images without keeping complete image in memory. See `Vix.Vips.Image.new_from_enum/1` and `Vix.Vips.Image.write_to_stream/2`
+* Efficient interoperability (zero-copy) with other libraries such as Nx, eVision. See `Vix.Vips.Image.new_from_binary/5` and `Vix.Vips.Image.write_to_tensor/1`
+* Ergonomic bindings with auto generated documentation for the operations using vips introspection. So they always match the libvips installed. If newer libvips update adds or modify operations, you don't have to wait for vix to be updated, bindings for the operations along with documentation will be available automatically
 
 Check [vips operation documentation](https://hexdocs.pm/vix/Vix.Vips.Operation.html) for the list of available operations and spec.
 
-### What is Vips
+#### Should I use Vix or [Image](https://github.com/kipcole9/image)?
 
-From vips documentation:
-
-> libvips is a [demand-driven, horizontally threaded](https://github.com/libvips/libvips/wiki/Why-is-libvips-quick) image processing library. Compared to similar libraries, [libvips runs quickly and uses little memory](https://github.com/libvips/libvips/wiki/Speed-and-memory-use).
+Vix is focused on bridging beam and libvips, and tries to be close to libvips interface to support large set of use cases. Because of this doing some basic operation might feel unintuitive. [Image](https://github.com/kipcole9/image) an excellent library by [@kipcole9](https://github.com/kipcole9) builds on top of Vix and provides more elixir friendly wrapper functions for common operations along with many additional features such handling Exif, Math operators, and more. And all of this is accompanied by good documentation. So for most of the users, using `Vix` via `Image` might be better choice.
 
 ## Introduction
 
@@ -151,7 +158,7 @@ This library is experimental and the code is not well tested, so you might exper
 
   For more details see https://www.libvips.org/install.html
 * pkg-config
-* c compiler
+* C compiler
 
 ## Installation
 
@@ -162,6 +169,3 @@ def deps do
   ]
 end
 ```
-
-### TODO
-- [ ] support mutable operations such as draw*
