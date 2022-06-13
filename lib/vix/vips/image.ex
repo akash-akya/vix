@@ -78,25 +78,35 @@ defmodule Vix.Vips.Image do
   @doc """
   Opens `path` for reading, returns an instance of `t:Vix.Vips.Image.t/0`
 
-  It can load files in many image formats, including VIPS, TIFF, PNG, JPEG, FITS, Matlab, OpenEXR, CSV, WebP, Radiance, RAW, PPM and others.
+  It can load files in many image formats, including VIPS, TIFF, PNG,
+  JPEG, FITS, Matlab, OpenEXR, CSV, WebP, Radiance, RAW, PPM and
+  others.
 
-  Load options may be appended to filename as "[name=value,...]". For example:
+  Load options may be appended to filename as "[name=value,...]". For
+  example:
 
   ```elixir
   Image.new_from_file("fred.jpg[shrink=2]")
   ```
   Will open "fred.jpg", downsampling by a factor of two.
 
-  The full set of options available depend upon the load operation that will be executed. Try something like:
+  The full set of options available depend upon the load operation
+  that will be executed. Try something like:
 
   ```shell
   $ vips jpegload
   ```
-  at the command-line to see a summary of the available options for the JPEG loader.
 
-  If you want more control over the loader, Use specifc format loader from `Vix.Vips.Operation`. For example for jpeg use `Vix.Vips.Operation.jpegload/2`
+  at the command-line to see a summary of the available options for
+  the JPEG loader.
 
-  Loading is fast: only enough of the image is loaded to be able to fill out the header. Pixels will only be decompressed when they are needed.
+  If you want more control over the loader, Use specifc format loader
+  from `Vix.Vips.Operation`. For example for jpeg use
+  `Vix.Vips.Operation.jpegload/2`
+
+  Loading is fast: only enough of the image is loaded to be able to
+  fill out the header. Pixels will only be decompressed when they are
+  needed.
   """
   @spec new_from_file(String.t()) :: {:ok, __MODULE__.t()} | {:error, term()}
   def new_from_file(path) do
@@ -109,7 +119,9 @@ defmodule Vix.Vips.Image do
   @doc """
   Create a new image based on an existing image with each pixel set to `value`
 
-  Creates a new image with width, height, format, interpretation, resolution and offset taken from the input image, but with each band set from `value`.
+  Creates a new image with width, height, format, interpretation,
+  resolution and offset taken from the input image, but with each band
+  set from `value`.
   """
   @spec new_from_image(__MODULE__.t(), [float()]) :: {:ok, __MODULE__.t()} | {:error, term()}
   def new_from_image(%Image{ref: vips_image}, value) do
@@ -134,7 +146,9 @@ defmodule Vix.Vips.Image do
   `bin` should be formatted binary (ie. JPEG, PNG etc). For loading
   unformatted binary (raw pixel data) see `new_from_binary/5`.
 
-  The options available depend on the file format. Try something like:
+  Optional param `opts` is passed to the image loader. Options
+  available depend on the file format. You can find all options
+  available like this:
 
   ```sh
   $ vips jpegload_buffer
@@ -208,10 +222,13 @@ defmodule Vix.Vips.Image do
   > This function is experimental and might cause crashes, use with caution
 
   Returns an image which will lazily pull data from passed
-  Enumerable.
+  Enumerable. `enum` should be stream of bytes of an encoded image
+  such as JPEG. This functions recognizes the image format and
+  metadata by reading starting bytes and wraps passed Enumerable as an
+  image. Remaining bytes are read on-demand.
 
-  Useful when working with big images in streaming systems. Where you
-  don't want to load complete input image data to memory.
+  Useful when working with big images. Where you don't want to load
+  complete input image data to memory.
 
   ```elixir
   {:ok, image} =
@@ -221,9 +238,26 @@ defmodule Vix.Vips.Image do
   :ok = Image.write_to_file(image, "puppies.png")
   ```
 
+  Optional param `opts` string is passed to the image loader. It is a string
+  of the format "[name=value,...]".
+
+  ```elixir
+  Image.new_from_enum(stream, "[shrink=2]")
+  ```
+
+  Will read the stream with downsampling by a factor of two.
+
+  The full set of options available depend upon the image format. You
+  can find all options available at the command-line. To see a summary
+  of the available options for the JPEG loader:
+
+  ```shell
+  $ vips jpegload_source
+  ```
+
   """
   @spec new_from_enum(Enumerable.t(), String.t()) :: {:ok, __MODULE__.t()} | {:error, term()}
-  def new_from_enum(enum, suffix \\ "") do
+  def new_from_enum(enum, opts \\ "") do
     parent = self()
 
     pid =
@@ -240,7 +274,7 @@ defmodule Vix.Vips.Image do
 
     receive do
       {^pid, source} ->
-        Nif.nif_image_new_from_source(source, suffix)
+        Nif.nif_image_new_from_source(source, opts)
         |> wrap_type()
     end
   end
@@ -253,8 +287,9 @@ defmodule Vix.Vips.Image do
 
   Returns a Stream which will lazily pull data from passed image.
 
-  Useful when working with big images in streaming systems. Where you
-  don't want to keep complete output image in memory.
+  Useful when working with big images. Where you don't want to keep
+  complete output image in memory.
+
 
   ```elixir
   {:ok, image} = Image.new_from_file("puppies.jpg")
@@ -263,6 +298,22 @@ defmodule Vix.Vips.Image do
     Image.write_to_stream(image, ".png")
     |> Stream.into(File.stream!("puppies.png")) # or write to S3, web-request
     |> Stream.run()
+  ```
+
+  Second param `suffix` determines the format of the output
+  stream. Save options may be appended to the suffix as
+  "[name=value,...]".
+
+  ```elixir
+  Image.write_to_stream(vips_image, ".jpg[Q=90]")
+  ```
+
+  Options are specific to save operation. You can find out all
+  available options for the save operation at command line. For
+  example:
+
+  ```shell
+  $ vips jpegsave_target
   ```
 
   """
@@ -319,20 +370,24 @@ defmodule Vix.Vips.Image do
   @doc """
   Write `vips_image` to a file.
 
-  Save options may be encoded in the filename or given as a hash. For example:
+  Save options may be encoded in the filename. For example:
 
   ```elixir
   Image.write_to_file(vips_image, "fred.jpg[Q=90]")
   ```
 
-  A saver is selected based on `path`. The full set of save options depend on the selected saver. Try something like:
+  A saver is selected based on image extension in `path`. The full set
+  of save options depend on the selected saver. Try something like:
 
   ```shell
   $ vips jpegsave
   ```
   at the command-line to see all the available options for JPEG save.
 
-  If you want more control over the saver, Use specifc format saver from `Vix.Vips.Operation`. For example for jpeg use `Vix.Vips.Operation.jpegsave/2`
+  If you want more control over the saver, Use specifc format saver
+  from `Vix.Vips.Operation`. For example for jpeg use
+  `Vix.Vips.Operation.jpegsave/2`
+
   """
   @spec write_to_file(__MODULE__.t(), String.t()) :: :ok | {:error, term()}
   def write_to_file(%Image{ref: vips_image}, path) do
@@ -340,17 +395,21 @@ defmodule Vix.Vips.Image do
   end
 
   @doc """
-  Returns `vips_image` as binary based on the format specified by `suffix`. This function is similar to `write_to_file` but instead of writing the output to the file, it returns it as a binary.
+  Returns `vips_image` as binary based on the format specified by `suffix`.
+
+  This function is similar to `write_to_file` but instead of writing
+  the output to the file, it returns it as a binary.
 
   Currently only TIFF, JPEG and PNG formats are supported.
 
-  Save options may be encoded in the filename or given as a hash. For example:
+  Save options may be encoded in the filename. For example:
 
   ```elixir
   Image.write_to_buffer(vips_image, ".jpg[Q=90]")
   ```
 
-  The full set of save options depend on the selected saver. You can get list of available options for the saver
+  The full set of save options depend on the selected saver. You can
+  get list of available options for the saver
 
   ```shell
   $ vips jpegsave

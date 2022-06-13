@@ -59,7 +59,7 @@ defmodule Vix.Nif do
   def nif_image_hasalpha(_vips_image),
     do: :erlang.nif_error(:nif_library_not_loaded)
 
-  def nif_image_new_from_source(_vips_source, _suffix),
+  def nif_image_new_from_source(_vips_source, _opts),
     do: :erlang.nif_error(:nif_library_not_loaded)
 
   def nif_image_to_target(_vips_image, _vips_target, _suffix),

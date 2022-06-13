@@ -760,7 +760,7 @@ ERL_NIF_TERM nif_image_new_from_source(ErlNifEnv *env, int argc,
   VipsSource *source;
   ERL_NIF_TERM ret;
   ErlNifTime start;
-  char suffix[VIPS_PATH_MAX];
+  char opts[VIPS_PATH_MAX];
 
   start = enif_monotonic_time(ERL_NIF_USEC);
 
@@ -769,12 +769,12 @@ ERL_NIF_TERM nif_image_new_from_source(ErlNifEnv *env, int argc,
     goto exit;
   }
 
-  if (!get_binary(env, argv[1], suffix, VIPS_PATH_MAX)) {
-    ret = make_error(env, "Failed to get suffix");
+  if (!get_binary(env, argv[1], opts, VIPS_PATH_MAX)) {
+    ret = make_error(env, "Failed to get opts");
     goto exit;
   }
 
-  image = vips_image_new_from_source(source, suffix, NULL);
+  image = vips_image_new_from_source(source, opts, NULL);
   if (!image) {
     error("Failed to create image from fd. error: %s", vips_error_buffer());
     vips_error_clear();
