@@ -160,6 +160,17 @@ defmodule Vix.Vips.ImageTest do
     assert stat.size > 0 and stat.type == :regular
   end
 
+  test "write_to_stream with invalid suffix", %{dir: dir} do
+    {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
+
+    out_path = Temp.path!(suffix: ".png", basedir: dir)
+
+    :ok =
+      Image.write_to_stream(im, ".invalid")
+      |> Stream.into(File.stream!(out_path))
+      |> Stream.run()
+  end
+
   test "new_from_binary", %{dir: dir} do
     {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
     # same image in raw pixel format
