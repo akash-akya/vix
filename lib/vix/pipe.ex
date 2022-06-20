@@ -35,11 +35,19 @@ defmodule Vix.Pipe do
 
   def read(process, max_size \\ @default_buffer_size)
       when is_integer(max_size) and max_size > 0 do
-    GenServer.call(process, {:read, max_size}, :infinity)
+        IO.puts "Reading"
+    case GenServer.call(process, {:read, max_size}, :infinity) do
+      :eof -> :eof
+      {:ok, result} -> {:ok, result}
+      {:error, reason} -> raise ArgumentError, message: reason
+    end
   end
 
   def write(pipe, iodata) do
-    GenServer.call(pipe, {:write, IO.iodata_to_binary(iodata)}, :infinity)
+    case GenServer.call(pipe, {:write, IO.iodata_to_binary(iodata)}, :infinity) do
+      {:error, reason} -> raise ArgumentError, message: reason
+      other -> other
+    end
   end
 
   def error(pipe, reason) do
