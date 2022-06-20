@@ -7,7 +7,7 @@ defmodule Vix.Pipe do
 
   @moduledoc false
 
-  defstruct [:mode, :read_fd, :write_fd, :write, :read, :source, :target]
+  defstruct [:mode, :read_fd, :write_fd, :write, :read, :source, :target, :error]
 
   defmodule Pending do
     @moduledoc false
@@ -42,12 +42,16 @@ defmodule Vix.Pipe do
     GenServer.call(pipe, {:write, IO.iodata_to_binary(iodata)}, :infinity)
   end
 
+  def error(pipe, reason) do
+    GenServer.call(pipe, {:error, reason}, :infinity)
+  end
+
   def start_link(mode) do
     GenServer.start(__MODULE__, mode)
   end
 
   def stop(pipe) do
-    :ok = GenServer.stop(pipe)
+    GenServer.stop(pipe)
   end
 
   # GenServer
@@ -90,6 +94,10 @@ defmodule Vix.Pipe do
     end
   end
 
+  def handle_call({:read, _size}, from, %__MODULE__{mode: :error, error: reason}) do
+    GenServer.reply(from, {:error, reason})
+  end
+
   def handle_call({:write, binary}, from, %__MODULE__{mode: :write} = state) do
     cond do
       !is_binary(binary) ->
@@ -104,12 +112,24 @@ defmodule Vix.Pipe do
     end
   end
 
+  def handle_call({:write, _size}, from, %__MODULE__{mode: :error, error: reason}) do
+    GenServer.reply(from, {:error, reason})
+  end
+
   def handle_call(:source, _from, %__MODULE__{mode: :write, source: source} = state) do
     {:reply, source, %__MODULE__{state | source: nil}}
   end
 
   def handle_call(:target, _from, %__MODULE__{mode: :read, target: target} = state) do
     {:reply, target, %__MODULE__{state | target: nil}}
+  end
+
+  def handle_call({:error, reason}, _from, %__MODULE__{mode: :write, source: source} = state) do
+    {:reply, source, %{state | mode: :error, error: reason}}
+  end
+
+  def handle_call({:error, reason}, _from, %__MODULE__{mode: :read, target: target} = state) do
+    {:reply, target, %{state | mode: :error, error: reason}}
   end
 
   def handle_info({:select, _write_resource, _ref, :ready_output}, state) do
@@ -137,6 +157,10 @@ defmodule Vix.Pipe do
       {:error, errno} ->
         reply_action(state, :read, {:error, errno})
     end
+  end
+
+  defp do_read(%Pipe{mode: :error, error: reason} = state) do
+    reply_action(state, :error, {:error, reason})
   end
 
   defp do_write(%Pipe{mode: :write, write: %Pending{bin: <<>>}} = state) do

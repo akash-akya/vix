@@ -330,7 +330,13 @@ defmodule Vix.Vips.Image do
             {pipe, target} = Pipe.new_vips_target()
             send(parent, {self(), pipe})
 
-            :ok = Nif.nif_image_to_target(vips_image, target, suffix)
+            case Nif.nif_image_to_target(vips_image, target, suffix) do
+              :ok ->
+                :ok
+
+              {:error, reason} ->
+                Pipe.error(pipe, reason)
+            end
           end)
 
         receive do
@@ -343,6 +349,9 @@ defmodule Vix.Vips.Image do
 
         case ret do
           :eof ->
+            {:halt, pipe}
+
+          {:error, _reason} ->
             {:halt, pipe}
 
           {:ok, bin} ->
