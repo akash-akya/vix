@@ -19,6 +19,10 @@ defmodule Vix.Vips.Image do
   alias Vix.Vips.MutableImage
   alias Vix.Pipe
 
+  defmodule Error do
+    defexception [:message]
+  end
+
   @behaviour Type
 
   @typedoc """
@@ -323,23 +327,11 @@ defmodule Vix.Vips.Image do
 
     Stream.resource(
       fn ->
-        parent = self()
-
-        pid =
-          spawn_link(fn ->
-            {pipe, target} = Pipe.new_vips_target()
-            send(parent, {self(), pipe})
-
-            :ok = Nif.nif_image_to_target(vips_image, target, suffix)
-          end)
-
-        receive do
-          {^pid, pipe} ->
-            pipe
-        end
+        {:ok, pipe} = Vix.Target.new(vips_image, suffix)
+        pipe
       end,
       fn pipe ->
-        ret = Pipe.read(pipe)
+        ret = Vix.Target.read(pipe)
 
         case ret do
           :eof ->
@@ -347,10 +339,13 @@ defmodule Vix.Vips.Image do
 
           {:ok, bin} ->
             {[bin], pipe}
+
+          {:error, reason} ->
+            raise Error, reason
         end
       end,
       fn pipe ->
-        Pipe.stop(pipe)
+        Vix.Target.stop(pipe)
       end
     )
   end
