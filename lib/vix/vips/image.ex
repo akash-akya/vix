@@ -17,7 +17,8 @@ defmodule Vix.Vips.Image do
   alias Vix.Type
   alias Vix.Nif
   alias Vix.Vips.MutableImage
-  alias Vix.Pipe
+
+  require Logger
 
   defmodule Error do
     defexception [:message]
@@ -266,14 +267,24 @@ defmodule Vix.Vips.Image do
 
     pid =
       spawn_link(fn ->
-        {pipe, source} = Pipe.new_vips_source()
+        {pipe, source} = Vix.SourcePipe.new()
         send(parent, {self(), source})
 
-        Enum.each(enum, fn data ->
-          :ok = Pipe.write(pipe, data)
+        Enum.each(enum, fn iodata ->
+          bin =
+            try do
+              IO.iodata_to_binary(iodata)
+            rescue
+              ArgumentError ->
+                Logger.warn("argument must be stream of iodata")
+                Vix.SourcePipe.stop(pipe)
+                exit(:normal)
+            end
+
+          :ok = Vix.SourcePipe.write(pipe, bin)
         end)
 
-        Pipe.stop(pipe)
+        Vix.SourcePipe.stop(pipe)
       end)
 
     receive do
@@ -323,15 +334,13 @@ defmodule Vix.Vips.Image do
   """
   @spec write_to_stream(__MODULE__.t(), String.t()) :: Enumerable.t()
   def write_to_stream(%Image{ref: vips_image}, suffix) do
-    require Logger
-
     Stream.resource(
       fn ->
-        {:ok, pipe} = Vix.Target.new(vips_image, suffix)
+        {:ok, pipe} = Vix.TargetPipe.new(vips_image, suffix)
         pipe
       end,
       fn pipe ->
-        ret = Vix.Target.read(pipe)
+        ret = Vix.TargetPipe.read(pipe)
 
         case ret do
           :eof ->
@@ -345,7 +354,7 @@ defmodule Vix.Vips.Image do
         end
       end,
       fn pipe ->
-        Vix.Target.stop(pipe)
+        Vix.TargetPipe.stop(pipe)
       end
     )
   end

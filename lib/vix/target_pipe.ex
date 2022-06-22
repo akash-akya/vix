@@ -1,4 +1,4 @@
-defmodule Vix.Target do
+defmodule Vix.TargetPipe do
   use GenServer
   require Logger
 
@@ -11,12 +11,7 @@ defmodule Vix.Target do
 
   defmodule Pending do
     @moduledoc false
-
     defstruct size: nil, client_pid: nil
-  end
-
-  defmodule Error do
-    defexception [:message]
   end
 
   @default_buffer_size 65535
@@ -45,21 +40,19 @@ defmodule Vix.Target do
     case Nif.nif_target_new() do
       {:ok, {fd, target}} ->
         pid = start_task(image, target, suffix)
-        {:noreply, %Target{fd: fd, task_pid: pid, pending: %Pending{}}}
+        {:noreply, %TargetPipe{fd: fd, task_pid: pid, pending: %Pending{}}}
 
       {:error, reason} ->
         {:stop, reason, nil}
     end
   end
 
-  def handle_call({:read, size}, from, state) do
-    cond do
-      state.pending.client_pid ->
-        {:reply, {:error, :pending_read}, state}
+  def handle_call({:read, size}, from, %TargetPipe{pending: %Pending{client_pid: nil}} = state) do
+    do_read(%TargetPipe{state | pending: %Pending{size: size, client_pid: from}})
+  end
 
-      true ->
-        do_read(%Target{state | pending: %Pending{size: size, client_pid: from}})
-    end
+  def handle_call({:read, _size}, _from, state) do
+    {:reply, {:error, :pending_read}, state}
   end
 
   def handle_info({:select, _read_resource, _ref, :ready_input}, state) do
@@ -67,21 +60,17 @@ defmodule Vix.Target do
   end
 
   def handle_info({:EXIT, from, result}, %{task_pid: from} = state) do
-    do_read(%Target{state | task_result: result, task_pid: nil})
+    do_read(%TargetPipe{state | task_result: result, task_pid: nil})
   end
 
   defmacrop eof, do: {:ok, <<>>}
   defmacrop eagain, do: {:error, :eagain}
 
-  defp do_read(%Target{task_result: {:error, _reason} = error} = state) do
-    if state.pending.client_pid do
-      reply_action(state, error)
-    else
-      noreply_action(state)
-    end
+  defp do_read(%TargetPipe{task_result: {:error, _reason} = error} = state) do
+    reply_action(state, error)
   end
 
-  defp do_read(%Target{pending: %{size: size}} = state) do
+  defp do_read(%TargetPipe{pending: %{size: size}} = state) do
     case Nif.nif_read(state.fd, size) do
       eof() ->
         reply_action(state, :eof)
@@ -97,9 +86,12 @@ defmodule Vix.Target do
     end
   end
 
-  defp reply_action(%Target{pending: pending} = state, ret) do
-    :ok = GenServer.reply(pending.client_pid, ret)
-    {:noreply, %Target{state | pending: %Pending{}}}
+  defp reply_action(%TargetPipe{pending: pending} = state, ret) do
+    if pending.client_pid do
+      :ok = GenServer.reply(pending.client_pid, ret)
+    end
+
+    {:noreply, %TargetPipe{state | pending: %Pending{}}}
   end
 
   defp noreply_action(state) do
