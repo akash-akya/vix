@@ -150,7 +150,7 @@ defmodule Vix.Vips.ImageTest do
     {:error, "Failed to create image from VipsSource"} = Image.new_from_enum(1..100)
   end
 
-  test "premature end of new_from_enum", %{dir: dir} do
+  test "premature end of new_from_enum" do
     {:error, "Failed to create image from VipsSource"} =
       File.stream!(img_path("puppies.jpg"), [], 100)
       |> Stream.take(1)
