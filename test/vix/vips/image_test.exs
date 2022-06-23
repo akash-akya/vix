@@ -146,6 +146,17 @@ defmodule Vix.Vips.ImageTest do
     assert stat.size > 0 and stat.type == :regular
   end
 
+  test "new_from_enum invalid data write" do
+    {:error, "Failed to create image from VipsSource"} = Image.new_from_enum(1..100)
+  end
+
+  test "premature end of new_from_enum", %{dir: dir} do
+    {:error, "Failed to create image from VipsSource"} =
+      File.stream!(img_path("puppies.jpg"), [], 100)
+      |> Stream.take(1)
+      |> Image.new_from_enum("")
+  end
+
   test "write_to_stream", %{dir: dir} do
     {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
 
@@ -158,6 +169,18 @@ defmodule Vix.Vips.ImageTest do
 
     stat = File.stat!(out_path)
     assert stat.size > 0 and stat.type == :regular
+  end
+
+  test "write_to_stream with invalid suffix", %{dir: dir} do
+    {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
+
+    out_path = Temp.path!(suffix: ".png", basedir: dir)
+
+    assert_raise Vix.Vips.Image.Error, fn ->
+      Image.write_to_stream(im, ".invalid")
+      |> Stream.into(File.stream!(out_path))
+      |> Stream.run()
+    end
   end
 
   test "new_from_binary", %{dir: dir} do
