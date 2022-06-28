@@ -22,6 +22,5 @@ defmodule Vix.Vips.AccessTest do
     {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
     assert im[1..5] == nil
     assert im[-5..-1] == nil
-    assert im[-5..-1//2] == nil
   end
 end

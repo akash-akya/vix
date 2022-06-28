@@ -70,10 +70,16 @@ defmodule Vix.Vips.Image do
     end
   end
 
-  def fetch(image, %Range{first: first, last: last, step: 1}) when first >= 0 and last >= first do
-    case Vix.Vips.Operation.extract_band(image, first, n: last - first + 1) do
-      {:ok, band} -> {:ok, band}
-      {:error, _reason} -> :error
+  def fetch(image, %Range{first: first, last: last} = range)
+      when first >= 0 and last >= first do
+    # TODO: cleanup this when vix requires v1.12.0 and above
+    if Map.get(range, :step, 1) == 1 do
+      case Vix.Vips.Operation.extract_band(image, first, n: last - first + 1) do
+        {:ok, band} -> {:ok, band}
+        {:error, _reason} -> :error
+      end
+    else
+      :error
     end
   end
 
