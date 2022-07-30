@@ -85,7 +85,7 @@ defmodule Vix.Vips.OperationHelper do
 
     Enum.any?(args, fn %{flags: flags, value_type: value_type} ->
       # we do not support mutable operations & operations with VipsSource and VipsTarget as arguments
-      :vips_argument_modify in flags ||
+      # :vips_argument_modify in flags ||
         value_type == "VipsSource" ||
         value_type == "VipsTarget"
     end)

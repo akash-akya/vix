@@ -2,7 +2,7 @@ defmodule Vix.Vips.MutableImage do
   defstruct [:pid]
 
   alias __MODULE__
-  alias Vix.Vips.Image
+  alias Vix.Vips.{Image, Operation}
 
   @moduledoc """
   Vips Mutable Image
@@ -68,6 +68,22 @@ defmodule Vix.Vips.MutableImage do
     GenServer.call(pid, {:get, name})
   end
 
+  @doc """
+  Draws a circle on a mutable image
+  """
+  def draw_circle(%MutableImage{pid: pid}, color, cx, cy, radius, options \\ []) do
+    fill = Keyword.get(options, :fill, false)
+    GenServer.call(pid, {:draw_circle, color, cx, cy, radius, fill})
+  end
+
+  @doc """
+  Draws an image on a mutable image
+  """
+  def draw_image(%MutableImage{pid: pid}, sub_image, cx, cy, options \\ []) do
+    mode = Keyword.get(options, :mode, :VIPS_COMBINE_MODE_ADD)
+    GenServer.call(pid, {:draw_image, sub_image, cx, cy, mode})
+  end
+
   @doc false
   def to_image(%MutableImage{pid: pid}) do
     GenServer.call(pid, :to_image)
@@ -111,6 +127,16 @@ defmodule Vix.Vips.MutableImage do
   @impl true
   def handle_call(:to_image, _from, %{image: image} = state) do
     {:reply, Image.copy_memory(image), state}
+  end
+
+  @impl true
+  def handle_call({:draw_circle, color, cx, cy, radius, fill}, _from, %{image: image} = state) do
+    {:reply, Operation.draw_circle(image, color, cx, cy, radius, fill: fill), state}
+  end
+
+  @impl true
+  def handle_call({:draw_image, sub_image, cx, cy, mode}, _from, %{image: image} = state) do
+    {:reply, Operation.draw_image(image, sub_image, cx, cy, mode: mode), state}
   end
 
   defp wrap_type({:ok, pid}), do: {:ok, %MutableImage{pid: pid}}
