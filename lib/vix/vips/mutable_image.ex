@@ -71,13 +71,26 @@ defmodule Vix.Vips.MutableImage do
   @doc """
   Draws a circle on a mutable image
   """
+  @spec draw_circle(__MODULE__.t(), [float()], non_neg_integer(), non_neg_integer(), non_neg_integer(), Keyword.t()) ::
+    :ok | {:error, term()}
   def draw_circle(%MutableImage{pid: pid}, color, cx, cy, radius, options \\ []) do
     GenServer.call(pid, {:draw_circle, color, cx, cy, radius, options})
   end
 
   @doc """
-  Draws an image on a mutable image
+  Draws a line on a mutable image
   """
+  @spec draw_line(__MODULE__.t(), [float()], non_neg_integer(), non_neg_integer(), non_neg_integer(), non_neg_integer(), Keyword.t()) ::
+    :ok | {:error, term()}
+  def draw_line(%MutableImage{pid: pid}, color, x1, y1, x2, y2, options \\ []) do
+    GenServer.call(pid, {:draw_line, color, x1, y1, x2, y2, options})
+  end
+
+  @doc """
+  Draws a sub-image on a mutable image
+  """
+  @spec draw_image(__MODULE__.t(), Vix.Vips.Image.t(), non_neg_integer(), non_neg_integer(), Keyword.t()) ::
+    :ok | {:error, term()}
   def draw_image(%MutableImage{pid: pid}, sub_image, cx, cy, options \\ []) do
     options = Keyword.put(options, :mode, :VIPS_COMBINE_MODE_ADD)
     GenServer.call(pid, {:draw_image, sub_image, cx, cy, options})
@@ -89,6 +102,8 @@ defmodule Vix.Vips.MutableImage do
   `color`.
 
   """
+  @spec draw_flood(__MODULE__.t(), [float()], non_neg_integer(), non_neg_integer(), Keyword.t()) ::
+  {:ok, {[height: integer(), width: integer(), top: integer(), left: integer()]}} | {:error, term()}
   def draw_flood(%MutableImage{pid: pid}, color, x, y, options \\ []) do
     GenServer.call(pid, {:draw_flood, color, x, y, options})
   end
@@ -144,13 +159,19 @@ defmodule Vix.Vips.MutableImage do
   end
 
   @impl true
+  def handle_call({:draw_line, color, x1, y1, x2, y2, options}, _from, %{image: image} = state) do
+    {:reply, Operation.draw_line(image, color, x1, y1, x2, y2, options), state}
+  end
+
+  @impl true
   def handle_call({:draw_image, sub_image, cx, cy, options}, _from, %{image: image} = state) do
     {:reply, Operation.draw_image(image, sub_image, cx, cy, options), state}
   end
 
- def handle_call({:draw_flood, color, x, y, options}, _from, %{image: image} = state) do
-   {:reply, Operation.draw_flood(image, color, x, y, options), state}
- end
+  @impl true
+  def handle_call({:draw_flood, color, x, y, options}, _from, %{image: image} = state) do
+    {:reply, Operation.draw_flood(image, color, x, y, options), state}
+  end
 
   defp wrap_type({:ok, pid}), do: {:ok, %MutableImage{pid: pid}}
   defp wrap_type(value), do: value
