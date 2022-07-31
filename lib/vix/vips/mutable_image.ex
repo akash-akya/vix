@@ -72,16 +72,25 @@ defmodule Vix.Vips.MutableImage do
   Draws a circle on a mutable image
   """
   def draw_circle(%MutableImage{pid: pid}, color, cx, cy, radius, options \\ []) do
-    fill = Keyword.get(options, :fill, false)
-    GenServer.call(pid, {:draw_circle, color, cx, cy, radius, fill})
+    GenServer.call(pid, {:draw_circle, color, cx, cy, radius, options})
   end
 
   @doc """
   Draws an image on a mutable image
   """
   def draw_image(%MutableImage{pid: pid}, sub_image, cx, cy, options \\ []) do
-    mode = Keyword.get(options, :mode, :VIPS_COMBINE_MODE_ADD)
-    GenServer.call(pid, {:draw_image, sub_image, cx, cy, mode})
+    options = Keyword.put(options, :mode, :VIPS_COMBINE_MODE_ADD)
+    GenServer.call(pid, {:draw_image, sub_image, cx, cy, options})
+  end
+
+  @doc """
+  Flood an area of an image with the given `color` up
+  at the given location up to an edge delineated by
+  `color`.
+
+  """
+  def draw_flood(%MutableImage{pid: pid}, color, x, y, options \\ []) do
+    GenServer.call(pid, {:draw_flood, color, x, y, options})
   end
 
   @doc false
@@ -130,14 +139,18 @@ defmodule Vix.Vips.MutableImage do
   end
 
   @impl true
-  def handle_call({:draw_circle, color, cx, cy, radius, fill}, _from, %{image: image} = state) do
-    {:reply, Operation.draw_circle(image, color, cx, cy, radius, fill: fill), state}
+  def handle_call({:draw_circle, color, cx, cy, radius, options}, _from, %{image: image} = state) do
+    {:reply, Operation.draw_circle(image, color, cx, cy, radius, options), state}
   end
 
   @impl true
-  def handle_call({:draw_image, sub_image, cx, cy, mode}, _from, %{image: image} = state) do
-    {:reply, Operation.draw_image(image, sub_image, cx, cy, mode: mode), state}
+  def handle_call({:draw_image, sub_image, cx, cy, options}, _from, %{image: image} = state) do
+    {:reply, Operation.draw_image(image, sub_image, cx, cy, options), state}
   end
+
+ def handle_call({:draw_flood, color, x, y, options}, _from, %{image: image} = state) do
+   {:reply, Operation.draw_flood(image, color, x, y, options), state}
+ end
 
   defp wrap_type({:ok, pid}), do: {:ok, %MutableImage{pid: pid}}
   defp wrap_type(value), do: value
