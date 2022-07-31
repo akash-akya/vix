@@ -21,7 +21,7 @@ defmodule Vix.Vips.FlagHelper do
       quote do
         # Internal module
         @moduledoc false
-        import Bitwise
+        use Bitwise, only_operators: true
 
         @type t() :: unquote(spec)
 
