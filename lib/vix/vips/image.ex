@@ -567,7 +567,8 @@ defmodule Vix.Vips.Image do
         :ok ->
           MutableImage.to_image(mut_image)
         {:ok, result} ->
-          {:ok, {MutableImage.to_image(mut_image), result}}
+          {:ok, image} = MutableImage.to_image(mut_image)
+          {:ok, {image, result}}
       end
     after
       MutableImage.stop(mut_image)
