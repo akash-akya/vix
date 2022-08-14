@@ -21,7 +21,8 @@ defmodule Vix.Vips.FlagHelper do
       quote do
         # Internal module
         @moduledoc false
-        use Bitwise, only_operators: true
+        import Bitwise
+
         @type t() :: unquote(spec)
 
         alias Vix.Type
@@ -41,7 +42,7 @@ defmodule Vix.Vips.FlagHelper do
         @impl Type
         def to_nif_term(flags, _data) do
           Enum.reduce(flags, 0, fn flag, value ->
-            value ||| to_nif_term(flag)
+            bor(value, to_nif_term(flag))
           end)
         end
 
