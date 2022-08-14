@@ -823,8 +823,19 @@ ERL_NIF_TERM nif_image_to_target(ErlNifEnv *env, int argc,
     goto exit;
   }
 
+#if (VIPS_MAJOR_VERSION < 8) ||                           \
+  (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION < 13)
   vips_target_finish(target);
   ret = ATOM_OK;
+#else
+  if (vips_target_end(target) != 0) {
+    error("Failed to end target. error: %s", vips_error_buffer());
+    vips_error_clear();
+    ret = make_error(env, "Failed to end target");
+  } else {
+    ret = ATOM_OK;
+  }
+#endif
 
 exit:
   notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
