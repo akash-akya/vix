@@ -823,8 +823,8 @@ ERL_NIF_TERM nif_image_to_target(ErlNifEnv *env, int argc,
     goto exit;
   }
 
-#if (VIPS_MAJOR_VERSION < 8) ||                           \
-  (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION < 13)
+#if (VIPS_MAJOR_VERSION < 8) ||                                                \
+    (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION < 13)
   vips_target_finish(target);
   ret = ATOM_OK;
 #else
