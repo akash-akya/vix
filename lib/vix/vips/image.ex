@@ -566,6 +566,7 @@ defmodule Vix.Vips.Image do
       case callback.(mut_image) do
         :ok ->
           MutableImage.to_image(mut_image)
+
         {:ok, result} ->
           {:ok, image} = MutableImage.to_image(mut_image)
           {:ok, {image, result}}
