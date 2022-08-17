@@ -1,5 +1,7 @@
 name: Elixir
-on: push
+on:
+  - push
+  - pull_request
 jobs:
   linux:
     runs-on: ubuntu-latest
@@ -7,11 +9,11 @@ jobs:
     strategy:
       matrix:
         include:
-          - elixir: 1.9.x
-            otp: 22.x
           - elixir: 1.10.x
-            otp: 23.x
+            otp: 22.x
           - elixir: 1.12.x
+            otp: 23.x
+          - elixir: 1.14.x
             otp: 24.x
     steps:
       - uses: erlef/setup-beam@v1
@@ -19,23 +21,24 @@ jobs:
           otp-version: ${{matrix.otp}}
           elixir-version: ${{matrix.elixir}}
 
-      - name: Checkout vix
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-      - name: Install vips dependencies
+      - name: Install libvips build dependencies
         run: sudo apt-get install build-essential libxml2-dev libfftw3-dev libmagickwand-dev libopenexr-dev liborc-0.4-0 gobject-introspection libgsf-1-dev libglib2.0-dev liborc-0.4-dev curl
-      - name: Get latest libvips version
+
+      - name: Get latest version of libvips
         run: |
           VIPS_LATEST_RELEASE=$(curl -L -s https://api.github.com/repos/libvips/libvips/releases/latest | grep -o -E "https://(.*)/vips-(.*).tar.gz")
           echo "VIPS_LATEST_RELEASE=${VIPS_LATEST_RELEASE}" >> $GITHUB_ENV
-      - name: Cache vips
+
+      - name: Cache libvips artifacts
         uses: actions/cache@v2
         id: vips-cache
         with:
           path: vips
           key: ${{ runner.os }}-vips-${{ env.VIPS_LATEST_RELEASE }}
 
-      - name: Download and compile vips
+      - name: Compile libvips from source
         if: steps.vips-cache.outputs.cache-hit != 'true'
         run: |
           mkdir vips
@@ -44,20 +47,15 @@ jobs:
           ./configure
           make
 
-      - name: Install vips
+      - name: Install libvips
         run: |
           cd vips
           sudo make install
           sudo ldconfig -v
 
-      - name: Install Dependencies
-        run: mix deps.get
-
-      - name: Compile
-        run: mix compile --force --warnings-as-errors
-
-      - name: Run Tests
-        run: mix test
+      - run: mix deps.get
+      - run: mix compile --force --warnings-as-errors
+      - run: mix test --trace
 
   check_format:
     runs-on: ubuntu-latest
@@ -65,16 +63,13 @@ jobs:
     strategy:
       matrix:
         include:
-          - elixir: 1.12.x
+          - elixir: 1.14.x
             otp: 24.x
     steps:
       - uses: erlef/setup-beam@v1
         with:
           otp-version: ${{matrix.otp}}
           elixir-version: ${{matrix.elixir}}
-
-      - name: Checkout vix
-        uses: actions/checkout@v2
-
-      - name: Check format
-        run: mix format --check-formatted
+      - uses: actions/checkout@v2
+      - run: mix deps.get
+      - run: mix format --check-formatted

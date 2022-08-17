@@ -128,7 +128,6 @@ defmodule Vix.Vips.OperationHelper do
 
     required_input = Enum.sort_by(required_input, & &1.priority)
     required_output = Enum.sort_by(required_output, & &1.priority)
-    {desc, required_input, optional_input, required_output, optional_output}
 
     %{
       desc: desc,

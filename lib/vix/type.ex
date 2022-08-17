@@ -43,6 +43,9 @@ defmodule Vix.Type do
         # TODO: convert type in nif itself, see `get_flags_as_atoms`
         Module.concat(Vix.Vips.Flag, String.to_atom(flag_type))
 
+      "VipsArray" <> nested_type when nested_type in ~w(Int Double Image) ->
+        Module.concat(Vix.Vips.Array, String.to_atom(nested_type))
+
       {:vips_array, nested_type} when nested_type in ~w(Int Double Image Enum.VipsBlendMode) ->
         Module.concat(Vix.Vips.Array, String.to_atom(nested_type))
 

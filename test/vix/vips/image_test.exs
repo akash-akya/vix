@@ -227,6 +227,7 @@ defmodule Vix.Vips.ImageTest do
   test "new_from_binary and write_to_binary endianness handling", %{dir: dir} do
     {width, height} = {125, 125}
 
+    # generate a test pixel data in native endianness
     bin =
       for y <- 1..height, into: <<>> do
         for x <- 1..width, into: <<>> do
@@ -236,9 +237,9 @@ defmodule Vix.Vips.ImageTest do
 
     {:ok, img} = Image.new_from_binary(bin, width, height, 3, :VIPS_FORMAT_FLOAT)
 
-    # endianess of the new image should be native
-    {:ok, png} = Image.write_to_buffer(img, ".png")
-    assert File.read!(img_path("gradient.png")) == png
+    # endianess file read from disk and from memory must be same
+    {:ok, expected} = Image.new_from_file(img_path("gradient.png"))
+    assert_images_equal(expected, img)
 
     out_path = Temp.path!(suffix: ".v", basedir: dir)
     :ok = Image.write_to_file(img, out_path)
@@ -246,8 +247,7 @@ defmodule Vix.Vips.ImageTest do
     {:ok, vimg} = Image.new_from_file(out_path)
     {:ok, vbin} = Image.write_to_binary(vimg)
 
-    # endianness of binary returned by the libvips must be same as
-    # what we wrote. which is native
+    # endianness file written to disk and memory must be same
     assert bin == vbin
   end
 end

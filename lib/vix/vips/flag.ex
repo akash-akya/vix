@@ -22,6 +22,7 @@ defmodule Vix.Vips.FlagHelper do
         # Internal module
         @moduledoc false
         import Bitwise
+
         @type t() :: unquote(spec)
 
         alias Vix.Type
