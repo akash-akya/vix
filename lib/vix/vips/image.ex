@@ -558,13 +558,18 @@ defmodule Vix.Vips.Image do
   ```
   """
   @spec mutate(__MODULE__.t(), (Vix.Vips.MutableImage.t() -> any())) ::
-          {:ok, __MODULE__.t()} | {:error, term()}
+          {:ok, __MODULE__.t()} | {:ok, {__MODULE__.t(), any()}} | {:error, term()}
   def mutate(%Image{} = image, callback) do
     {:ok, mut_image} = MutableImage.new(image)
 
     try do
-      callback.(mut_image)
-      MutableImage.to_image(mut_image)
+      case callback.(mut_image) do
+        :ok ->
+          MutableImage.to_image(mut_image)
+        {:ok, result} ->
+          {:ok, image} = MutableImage.to_image(mut_image)
+          {:ok, {image, result}}
+      end
     after
       MutableImage.stop(mut_image)
     end
