@@ -71,5 +71,5 @@ jobs:
           otp-version: ${{matrix.otp}}
           elixir-version: ${{matrix.elixir}}
       - uses: actions/checkout@v2
+      - run: mix deps.get
       - run: mix format --check-formatted
-        if: matrix.elixir == '1.12.2'
