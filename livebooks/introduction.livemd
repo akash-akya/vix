@@ -107,14 +107,16 @@ Getting a rectangular region from the image
 show(extract_img)
 ```
 
-### Thumbnail.
+### Thumbnail
 
-This function accepts many optional parameters, see vips [thumbnail doc](https://libvips.github.io/libvips/API/current/Using-vipsthumbnail.md.html) for more details.
+This operation is significantly faster than normal resize due to
+several optimizations such as shrink-on-load.  You can read more about
+it in the libvips docs: https://github.com/libvips/libvips/wiki/HOWTO----Image-shrinking
 
-Also see `Operation.thumbnail/3` which accepts image path
+Check Vix docs for more details about several optional parameters
 
 ```elixir
-{:ok, thumb} = Operation.thumbnail_image(img, 100)
+{:ok, thumb} = Operation.thumbnail("~/Downloads/kitty.png", 100)
 show(thumb)
 ```
 

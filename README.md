@@ -73,10 +73,16 @@ alias Vix.Vips.Operation
 # getting a rectangular region from the image (crop)
 {:ok, extract_img} = Operation.extract_area(img, 100, 50, 200, 200)
 
-# create image thumbnail.
-# this function accepts many optional parameters, see: https://libvips.github.io/libvips/API/current/Using-vipsthumbnail.md.html
-# also see `Operation.thumbnail/3` which accepts image path
-{:ok, thumb} = Operation.thumbnail_image(img, 100)
+# create image thumbnail
+#
+# This operation is significantly faster than normal resize
+# due to several optimizations such as shrink-on-load.
+# You can read more about it in the libvips docs: https://github.com/libvips/libvips/wiki/HOWTO----Image-shrinking
+#
+# Check Vix docs for more details about several optional parameters
+width = 100
+{:ok, thumb} = Operation.thumbnail("~/Downloads/dog.jpg", width)
+
 
 # resize image to 400x600. `resize` function accepts scaling factor.
 # Skip `vscale` if you want to preserve aspect ratio
