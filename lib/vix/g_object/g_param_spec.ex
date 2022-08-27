@@ -2,20 +2,23 @@ defmodule Vix.GObject.GParamSpec do
   @moduledoc false
   @type t :: %{}
 
-  defstruct [:param_name, :desc, :spec_type, :value_type, :data, :priority, :flags]
+  defstruct [:param_name, :desc, :spec_type, :value_type, :data, :priority, :flags, :type]
 
   alias __MODULE__
 
   def new(opt) do
-    %GParamSpec{
+    pspec = %GParamSpec{
       param_name: opt.name,
       desc: opt.desc,
       spec_type: to_string(opt.spec_type),
       value_type: to_string(opt.value_type),
       data: opt.data,
       priority: opt.priority,
-      flags: opt.flags
+      flags: opt.flags,
+      type: nil
     }
+
+    %GParamSpec{pspec | type: type(pspec)}
   end
 
   def type(%GParamSpec{spec_type: "GParamEnum", value_type: value_type}) do
@@ -38,6 +41,14 @@ defmodule Vix.GObject.GParamSpec do
 
   def type(%GParamSpec{value_type: "VipsArray" <> nested_type}) do
     {:vips_array, nested_type}
+  end
+
+  def type(%GParamSpec{value_type: "VipsImage", flags: flags}) do
+    if :vips_argument_modify in flags do
+      "MutableVipsImage"
+    else
+      "VipsImage"
+    end
   end
 
   def type(%GParamSpec{value_type: value_type}) do

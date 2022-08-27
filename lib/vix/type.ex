@@ -73,6 +73,9 @@ defmodule Vix.Type do
       "VipsBlob" ->
         Vips.Blob
 
+      "MutableVipsImage" ->
+        Vips.MutableImage
+
       "VipsImage" ->
         Vips.Image
 
