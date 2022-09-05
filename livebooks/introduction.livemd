@@ -171,7 +171,7 @@ black = Operation.black!(500, 500, bands: 3)
 
 # create images with different grayscale
 frames = Enum.map(1..255//10, fn n ->
-  Operation.linear!(black, [1], [n,n,n])
+  Operation.linear!(black, [1], [n/255, n/255, n/255])
 end)
 
 {:ok, joined_img} = Operation.arrayjoin(frames, across: 1)
