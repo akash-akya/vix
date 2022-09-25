@@ -1,10 +1,10 @@
-name: Elixir
+name: CI
 on:
   - push
   - pull_request
 jobs:
   linux:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     name: Test - Linux OTP ${{matrix.otp}} / Elixir ${{matrix.elixir}}
     strategy:
       matrix:
@@ -28,7 +28,7 @@ jobs:
 
       - name: Get latest version of libvips
         run: |
-          VIPS_LATEST_RELEASE=$(curl -L -s https://api.github.com/repos/libvips/libvips/releases/latest | grep -o -E "https://(.*)/vips-(.*).tar.gz")
+          VIPS_LATEST_RELEASE="https://github.com/libvips/libvips/releases/download/v8.13.0/vips-8.13.0.tar.gz"
           echo "VIPS_LATEST_RELEASE=${VIPS_LATEST_RELEASE}" >> $GITHUB_ENV
 
       - name: Cache libvips artifacts
@@ -58,7 +58,7 @@ jobs:
       - run: mix test --trace
 
   check_format:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     name: Check format
     strategy:
       matrix:
