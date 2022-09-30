@@ -8,8 +8,8 @@ defmodule Vix.Vips.Image do
   accessing and updating image metadata.
 
   The `Access` behaviour is implemented to allow
-  acccess to image bands. For example `image[1]`. Note that
-  due to the nature of images, `pop/2` and `put_and_udpate/3`
+  access to image bands. For example `image[1]`. Note that
+  due to the nature of images, `pop/2` and `put_and_update/3`
   are not supported.
 
   """
@@ -56,8 +56,8 @@ defmodule Vix.Vips.Image do
   def to_erl_term(ref), do: %Image{ref: ref}
 
   # Implements the Access behaviour for Vix.Vips.Image to allow
-  # acccess to image bands. For example `image[1]`. Note that
-  # due to the nature of images, `pop/2` and `put_and_udpate/3`
+  # access to image bands. For example `image[1]`. Note that
+  # due to the nature of images, `pop/2` and `put_and_update/3`
   # are not supported.
 
   @behaviour Access
@@ -122,7 +122,7 @@ defmodule Vix.Vips.Image do
   at the command-line to see a summary of the available options for
   the JPEG loader.
 
-  If you want more control over the loader, Use specifc format loader
+  If you want more control over the loader, Use specific format loader
   from `Vix.Vips.Operation`. For example for jpeg use
   `Vix.Vips.Operation.jpegload/2`
 
@@ -379,7 +379,7 @@ defmodule Vix.Vips.Image do
   # Copy an image to a memory area.
   # If image is already a memory buffer, just ref and return. If it's
   # a file on disc or a partial, allocate memory and copy the image to
-  # it. Intented to be used with draw operations when they are
+  # it. Intended to be used with draw operations when they are
   # properly supported
   @doc false
   @spec copy_memory(__MODULE__.t()) :: {:ok, __MODULE__.t()} | {:error, term()}
@@ -405,7 +405,7 @@ defmodule Vix.Vips.Image do
   ```
   at the command-line to see all the available options for JPEG save.
 
-  If you want more control over the saver, Use specifc format saver
+  If you want more control over the saver, Use specific format saver
   from `Vix.Vips.Operation`. For example for jpeg use
   `Vix.Vips.Operation.jpegsave/2`
 
@@ -469,7 +469,7 @@ defmodule Vix.Vips.Image do
 
   ##  Endianness
 
-  Returned binary term will be in native endianess. By default
+  Returned binary term will be in native endianness. By default
   bitstring treats byte order as `big` endian which might *not* be
   native. Always use `native` specifier to ensure. See [Elixir
   docs](https://hexdocs.pm/elixir/Kernel.SpecialForms.html#%3C%3C%3E%3E/1-endianness)
@@ -479,7 +479,14 @@ defmodule Vix.Vips.Image do
   @spec write_to_tensor(__MODULE__.t()) :: {:ok, Vix.Tensor.t()} | {:error, term()}
   def write_to_tensor(%Image{} = image) do
     with {:ok, binary} <- write_to_binary(image) do
-      {:ok, Vix.Tensor.binary_to_tensor(binary, byte_size(binary), image)}
+      tensor = %Vix.Tensor{
+        data: binary,
+        shape: {width(image), height(image), bands(image)},
+        names: [:width, :height, :bands],
+        type: Vix.Tensor.type(image)
+      }
+
+      {:ok, tensor}
     end
   end
 
@@ -684,4 +691,35 @@ defmodule Vix.Vips.Image do
 
   defp wrap_type({:ok, ref}), do: {:ok, %Image{ref: ref}}
   defp wrap_type(value), do: value
+
+  # Support for rendering images in Livebook
+
+  if Code.ensure_loaded?(Kino.Render) do
+    defimpl Kino.Render do
+      def to_livebook(image) do
+        attributes = attributes_from_image(image)
+        {:ok, encoded} = Vix.Vips.Image.write_to_buffer(image, ".png")
+        image = Kino.Image.new(encoded, :png)
+        tabs = Kino.Layout.tabs(Attributes: attributes, Image: image)
+        Kino.Render.to_livebook(tabs)
+      end
+
+      def attributes_from_image(image) do
+        data =
+          [
+            {"Width", Vix.Vips.Image.width(image)},
+            {"Height", Vix.Vips.Image.height(image)},
+            {"Bands", Vix.Vips.Image.bands(image)},
+            {"Interpretation", Vix.Vips.Image.interpretation(image)},
+            {"Format", Vix.Vips.Image.format(image)},
+            {"Filename", Vix.Vips.Image.filename(image)},
+            {"Orientation", Vix.Vips.Image.orientation(image)},
+            {"Has alpha band?", Vix.Vips.Image.has_alpha?(image)}
+          ]
+          |> Enum.map(fn {k, v} -> [{"Attribute", k}, {"Value", v}] end)
+
+        Kino.DataTable.new(data, name: "Image Metadata")
+      end
+    end
+  end
 end

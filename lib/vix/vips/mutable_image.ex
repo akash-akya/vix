@@ -66,7 +66,7 @@ defmodule Vix.Vips.MutableImage do
   @supported_gtype ~w(gint guint gdouble gboolean gchararray VipsArrayInt VipsArrayDouble VipsArrayImage VipsRefString VipsBlob VipsImage VipsInterpolate)a
 
   @doc """
-  Create a metadata item on an image of the specifed type.
+  Create a metadata item on an image of the specified type.
   Vix converts value to specified GType
 
   Supported GTypes

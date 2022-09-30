@@ -1,6 +1,6 @@
 # Vix
 
-[![CI](https://github.com/akash-akya/vix/actions/workflows/elixir.yaml/badge.svg)](https://github.com/akash-akya/vix/actions/workflows/elixir.yaml)
+[![CI](https://github.com/akash-akya/vix/actions/workflows/ci.yaml/badge.svg)](https://github.com/akash-akya/vix/actions/workflows/ci.yaml)
 [![Hex.pm](https://img.shields.io/hexpm/v/vix.svg)](https://hex.pm/packages/vix)
 [![docs](https://img.shields.io/badge/docs-hexpm-blue.svg)](https://hexdocs.pm/vix/)
 
