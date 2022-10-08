@@ -66,6 +66,7 @@ defmodule Vix.MixProject do
     [
       {:elixir_make, "~> 0.6", runtime: false},
       {:ex_doc, ">= 0.0.0", only: :dev},
+      {:kino, "~> 0.7", optional: true},
       {:temp, "~> 0.4", only: :test, runtime: false}
     ]
   end
