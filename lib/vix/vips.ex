@@ -90,22 +90,23 @@ defmodule Vix.Vips do
         attributes = attributes_from_image(image)
         {:ok, encoded} = Vix.Vips.Image.write_to_buffer(image, ".png")
         image = Kino.Image.new(encoded, :png)
-        tabs = Kino.Layout.tabs("Attributes": attributes, "Image": image)
+        tabs = Kino.Layout.tabs(Attributes: attributes, Image: image)
         Kino.Render.to_livebook(tabs)
       end
 
       def attributes_from_image(image) do
-        data = [
-          {"Width", Vix.Vips.Image.width(image)},
-          {"Height", Vix.Vips.Image.height(image)},
-          {"Bands", Vix.Vips.Image.bands(image)},
-          {"Interpretation", Vix.Vips.Image.interpretation(image)},
-          {"Format", Vix.Vips.Image.format(image)},
-          {"Filename", Vix.Vips.Image.filename(image)},
-          {"Orientation", Vix.Vips.Image.orientation(image)},
-          {"Has alpha band?", Vix.Vips.Image.has_alpha?(image)}
-        ]
-        |> Enum.map(fn {k, v} -> [{"Attribute", k}, {"Value", v}] end)
+        data =
+          [
+            {"Width", Vix.Vips.Image.width(image)},
+            {"Height", Vix.Vips.Image.height(image)},
+            {"Bands", Vix.Vips.Image.bands(image)},
+            {"Interpretation", Vix.Vips.Image.interpretation(image)},
+            {"Format", Vix.Vips.Image.format(image)},
+            {"Filename", Vix.Vips.Image.filename(image)},
+            {"Orientation", Vix.Vips.Image.orientation(image)},
+            {"Has alpha band?", Vix.Vips.Image.has_alpha?(image)}
+          ]
+          |> Enum.map(fn {k, v} -> [{"Attribute", k}, {"Value", v}] end)
 
         Kino.DataTable.new(data, name: "Image Metadata")
       end
