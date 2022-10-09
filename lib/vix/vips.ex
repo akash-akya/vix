@@ -32,7 +32,7 @@ defmodule Vix.Vips do
 
   The final value is clipped to the range 1 - 1024.
   """
-  @spec concurrency_get() :: {:ok, integer()}
+  @spec concurrency_get() :: integer()
   def concurrency_get do
     Nif.nif_vips_concurrency_get()
   end

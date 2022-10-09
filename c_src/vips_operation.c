@@ -493,7 +493,7 @@ ERL_NIF_TERM nif_vips_cache_set_max(ErlNifEnv *env, int argc,
 ERL_NIF_TERM nif_vips_cache_get_max(ErlNifEnv *env, int argc,
                                     const ERL_NIF_TERM argv[]) {
   ASSERT_ARGC(argc, 0);
-  return make_ok(env, enif_make_int(env, vips_cache_get_max()));
+  return enif_make_int(env, vips_cache_get_max());
 }
 
 ERL_NIF_TERM nif_vips_concurrency_set(ErlNifEnv *env, int argc,
@@ -513,7 +513,7 @@ ERL_NIF_TERM nif_vips_concurrency_set(ErlNifEnv *env, int argc,
 ERL_NIF_TERM nif_vips_concurrency_get(ErlNifEnv *env, int argc,
                                       const ERL_NIF_TERM argv[]) {
   ASSERT_ARGC(argc, 0);
-  return make_ok(env, enif_make_int(env, vips_concurrency_get()));
+  return enif_make_int(env, vips_concurrency_get());
 }
 
 ERL_NIF_TERM nif_vips_cache_set_max_files(ErlNifEnv *env, int argc,
@@ -533,7 +533,7 @@ ERL_NIF_TERM nif_vips_cache_set_max_files(ErlNifEnv *env, int argc,
 ERL_NIF_TERM nif_vips_cache_get_max_files(ErlNifEnv *env, int argc,
                                           const ERL_NIF_TERM argv[]) {
   ASSERT_ARGC(argc, 0);
-  return make_ok(env, enif_make_int(env, vips_cache_get_max_files()));
+  return enif_make_int(env, vips_cache_get_max_files());
 }
 
 ERL_NIF_TERM nif_vips_cache_set_max_mem(ErlNifEnv *env, int argc,
@@ -553,7 +553,7 @@ ERL_NIF_TERM nif_vips_cache_set_max_mem(ErlNifEnv *env, int argc,
 ERL_NIF_TERM nif_vips_cache_get_max_mem(ErlNifEnv *env, int argc,
                                         const ERL_NIF_TERM argv[]) {
   ASSERT_ARGC(argc, 0);
-  return make_ok(env, enif_make_uint64(env, vips_cache_get_max_mem()));
+  return enif_make_uint64(env, vips_cache_get_max_mem());
 }
 
 ERL_NIF_TERM nif_vips_shutdown(ErlNifEnv *env, int argc,
