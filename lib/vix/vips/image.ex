@@ -479,7 +479,14 @@ defmodule Vix.Vips.Image do
   @spec write_to_tensor(__MODULE__.t()) :: {:ok, Vix.Tensor.t()} | {:error, term()}
   def write_to_tensor(%Image{} = image) do
     with {:ok, binary} <- write_to_binary(image) do
-      {:ok, Vix.Tensor.binary_to_tensor(binary, byte_size(binary), image)}
+      tensor = %Vix.Tensor{
+        data: binary,
+        shape: {width(image), height(image), bands(image)},
+        names: [:width, :height, :bands],
+        type: Vix.Tensor.type(image)
+      }
+
+      {:ok, tensor}
     end
   end
 
