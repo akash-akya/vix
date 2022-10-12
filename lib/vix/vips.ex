@@ -20,7 +20,7 @@ defmodule Vix.Vips do
   @doc """
   Sets the number of worker threads that vips should use when running a VipsThreadPool.
 
-  The special value 0 means "default". In this case, the number of threads is set by the environment variable VIPS_CONCURRENCY, or if that is not set, the number of threads availble on the host machine.
+  The special value 0 means "default". In this case, the number of threads is set by the environment variable VIPS_CONCURRENCY, or if that is not set, the number of threads available on the host machine.
   """
   @spec concurrency_set(integer()) :: :ok
   def concurrency_set(concurrency) do
