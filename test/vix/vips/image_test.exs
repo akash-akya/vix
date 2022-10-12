@@ -237,7 +237,7 @@ defmodule Vix.Vips.ImageTest do
 
     {:ok, img} = Image.new_from_binary(bin, width, height, 3, :VIPS_FORMAT_FLOAT)
 
-    # endianess file read from disk and from memory must be same
+    # endianness file read from disk and from memory must be same
     {:ok, expected} = Image.new_from_file(img_path("gradient.png"))
     assert_images_equal(expected, img)
 

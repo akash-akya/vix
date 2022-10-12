@@ -78,7 +78,7 @@ defmodule Vix.Vips.OperationTest do
               "operation build: vips__transform_calc_inverse: singular or near-singular matrix"}
   end
 
-  test "image type mis-match error", %{dir: _dir} do
+  test "image type mismatch error", %{dir: _dir} do
     assert_raise ArgumentError, "expected Vix.Vips.Image. given: :invalid", fn ->
       Operation.invert(:invalid)
     end
