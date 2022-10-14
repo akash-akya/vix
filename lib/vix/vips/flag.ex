@@ -2,10 +2,9 @@ defmodule Vix.Vips.FlagHelper do
   @moduledoc false
 
   def __before_compile__(env) do
-    Vix.Nif.nif_vips_flag_list()
-    |> Enum.map(fn {name, flag} ->
+    for {name, flag} <- Vix.Nif.nif_vips_flag_list() do
       def_vips_flag(name, flag, env)
-    end)
+    end
 
     quote do
     end

@@ -2,10 +2,9 @@ defmodule Vix.Vips.EnumHelper do
   @moduledoc false
 
   def __before_compile__(env) do
-    Vix.Nif.nif_vips_enum_list()
-    |> Enum.map(fn {name, enum} ->
+    for {name, enum} <- Vix.Nif.nif_vips_enum_list() do
       def_vips_enum(name, enum, env)
-    end)
+    end
 
     quote do
     end
