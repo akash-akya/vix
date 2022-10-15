@@ -5,23 +5,35 @@ on:
 jobs:
   linux:
     runs-on: ubuntu-20.04
-    name: Test - Linux OTP ${{matrix.otp}} / Elixir ${{matrix.elixir}}
+    name: Test - Elixir ${{matrix.elixir}} / OTP ${{matrix.otp}}
     strategy:
       matrix:
         include:
-          - elixir: 1.10.x
+          - elixir: 1.7.x
             otp: 22.x
+          - elixir: 1.8.x
+            otp: 22.x
+          - elixir: 1.9.x
+            otp: 22.x
+          - elixir: 1.10.x
+            otp: 23.x
+          - elixir: 1.11.x
+            otp: 23.x
           - elixir: 1.12.x
             otp: 23.x
+          - elixir: 1.13.x
+            otp: 24.x
           - elixir: 1.14.x
             otp: 24.x
+          - elixir: 1.14.x
+            otp: 25.x
     steps:
       - uses: erlef/setup-beam@v1
         with:
           otp-version: ${{matrix.otp}}
           elixir-version: ${{matrix.elixir}}
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Install libvips build dependencies
         run: sudo apt-get install build-essential libxml2-dev libfftw3-dev libmagickwand-dev libopenexr-dev liborc-0.4-0 gobject-introspection libgsf-1-dev libglib2.0-dev liborc-0.4-dev curl
@@ -32,7 +44,7 @@ jobs:
           echo "VIPS_LATEST_RELEASE=${VIPS_LATEST_RELEASE}" >> $GITHUB_ENV
 
       - name: Cache libvips artifacts
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: vips-cache
         with:
           path: vips
@@ -57,14 +69,14 @@ jobs:
       - run: mix compile --force --warnings-as-errors
       - run: mix test --trace
 
-  check_format:
+  lint:
     runs-on: ubuntu-22.04
-    name: Check format
+    name: Lint
     strategy:
       matrix:
         include:
           - elixir: 1.14.x
-            otp: 24.x
+            otp: 25.x
     steps:
       - uses: erlef/setup-beam@v1
         with:
@@ -72,4 +84,5 @@ jobs:
           elixir-version: ${{matrix.elixir}}
       - uses: actions/checkout@v2
       - run: mix deps.get
+      - run: mix deps.unlock --check-unused
       - run: mix format --check-formatted
