@@ -14,7 +14,7 @@ defmodule Vix.TargetPipe do
     defstruct size: nil, client_pid: nil
   end
 
-  @default_buffer_size 65535
+  @default_buffer_size 65_535
 
   def new(vips_image, suffix) do
     GenServer.start_link(__MODULE__, %{image: vips_image, suffix: suffix})

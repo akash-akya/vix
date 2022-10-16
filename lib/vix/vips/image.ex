@@ -14,8 +14,8 @@ defmodule Vix.Vips.Image do
 
   """
 
-  alias Vix.Type
   alias Vix.Nif
+  alias Vix.Type
   alias Vix.Vips.MutableImage
 
   require Logger

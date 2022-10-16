@@ -66,6 +66,7 @@ defmodule Vix.MixProject do
     [
       {:elixir_make, "~> 0.6", runtime: false},
       {:ex_doc, ">= 0.0.0", only: :dev},
+      {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
       if(Version.compare(System.version(), "1.13.0") in [:gt, :eq],
         do: {:kino, "~> 0.7", optional: true}
       ),

@@ -38,7 +38,7 @@ defmodule Vix.Nif do
   def nif_image_write_to_buffer(_vips_image, _suffix),
     do: :erlang.nif_error(:nif_library_not_loaded)
 
-  def nif_image_new(),
+  def nif_image_new,
     do: :erlang.nif_error(:nif_library_not_loaded)
 
   def nif_image_new_temp_file(_format),
@@ -88,43 +88,43 @@ defmodule Vix.Nif do
   def nif_vips_operation_get_arguments(_operation_name),
     do: :erlang.nif_error(:nif_library_not_loaded)
 
-  def nif_vips_operation_list(),
+  def nif_vips_operation_list,
     do: :erlang.nif_error(:nif_library_not_loaded)
 
-  def nif_vips_enum_list(),
+  def nif_vips_enum_list,
     do: :erlang.nif_error(:nif_library_not_loaded)
 
-  def nif_vips_flag_list(),
+  def nif_vips_flag_list,
     do: :erlang.nif_error(:nif_library_not_loaded)
 
   def nif_vips_cache_set_max(_max),
     do: :erlang.nif_error(:nif_library_not_loaded)
 
-  def nif_vips_cache_get_max(),
+  def nif_vips_cache_get_max,
     do: :erlang.nif_error(:nif_library_not_loaded)
 
   def nif_vips_concurrency_set(_concurrency),
     do: :erlang.nif_error(:nif_library_not_loaded)
 
-  def nif_vips_concurrency_get(),
+  def nif_vips_concurrency_get,
     do: :erlang.nif_error(:nif_library_not_loaded)
 
   def nif_vips_cache_set_max_files(_max_files),
     do: :erlang.nif_error(:nif_library_not_loaded)
 
-  def nif_vips_cache_get_max_files(),
+  def nif_vips_cache_get_max_files,
     do: :erlang.nif_error(:nif_library_not_loaded)
 
   def nif_vips_cache_set_max_mem(_max_mem),
     do: :erlang.nif_error(:nif_library_not_loaded)
 
-  def nif_vips_cache_get_max_mem(),
+  def nif_vips_cache_get_max_mem,
     do: :erlang.nif_error(:nif_library_not_loaded)
 
-  def nif_vips_version(),
+  def nif_vips_version,
     do: :erlang.nif_error(:nif_library_not_loaded)
 
-  def nif_vips_shutdown(),
+  def nif_vips_shutdown,
     do: :erlang.nif_error(:nif_library_not_loaded)
 
   def nif_vips_nickname_find(_type_name),

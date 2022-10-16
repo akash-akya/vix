@@ -1,8 +1,8 @@
 defmodule Vix.Vips.OperationHelperTest do
   use ExUnit.Case, async: true
 
-  alias Vix.Vips.OperationHelper
   alias Vix.Vips.Image
+  alias Vix.Vips.OperationHelper
 
   import Vix.Support.Images
 

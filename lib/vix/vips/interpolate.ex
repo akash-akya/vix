@@ -9,8 +9,8 @@ defmodule Vix.Vips.Interpolate do
   Make interpolators for operators like `affine` and `mapim`.
   """
 
-  alias Vix.Type
   alias Vix.Nif
+  alias Vix.Type
 
   @behaviour Type
 

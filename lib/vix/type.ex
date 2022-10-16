@@ -1,7 +1,8 @@
 defmodule Vix.Type do
   @moduledoc false
 
-  alias Vix.{Vips, GObject}
+  alias Vix.GObject
+  alias Vix.Vips
 
   @callback typespec() :: term()
 
@@ -32,6 +33,7 @@ defmodule Vix.Type do
 
   def supported?(type), do: impl(type) != :unsupported
 
+  # TODO: Function is too complex (cyclomatic complexity is 19, max is 9).
   defp impl(type) do
     case type do
       # TODO: we check if enum_type is enum or not just by the name

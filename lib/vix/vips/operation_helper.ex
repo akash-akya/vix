@@ -1,9 +1,9 @@
 defmodule Vix.Vips.OperationHelper do
   @moduledoc false
 
+  alias Vix.GObject.GParamSpec
   alias Vix.Nif
   alias Vix.Type
-  alias Vix.GObject.GParamSpec
 
   def input_to_nif_terms(args, in_pspec) do
     Enum.map(

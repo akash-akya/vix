@@ -2,7 +2,6 @@ defmodule Vix.Vips.ArrayTest do
   use ExUnit.Case, async: true
 
   alias Vix.Vips.Array
-  alias Vix.Vips.Array
 
   describe "Int" do
     test "to_nif_term" do
