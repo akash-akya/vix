@@ -111,6 +111,9 @@ ERL_NIF_TERM make_atom(ErlNifEnv *env, const char *name);
 
 ERL_NIF_TERM make_binary(ErlNifEnv *env, const char *str);
 
+ERL_NIF_TERM nif_write_bin_to_stdout(ErlNifEnv *env, int argc,
+                                       const ERL_NIF_TERM argv[]);
+
 bool get_binary(ErlNifEnv *env, ERL_NIF_TERM bin_term, char *str, ssize_t size);
 
 VixResult vix_result(ERL_NIF_TERM term);
