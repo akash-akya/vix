@@ -142,6 +142,7 @@ static ErlNifFunc nif_funcs[] = {
     /* Syscalls */
     {"nif_pipe_open", 1, nif_pipe_open, 0},
     {"nif_write", 2, nif_write, ERL_NIF_DIRTY_JOB_CPU_BOUND},
+    {"nif_write_bin_to_stdout", 1, nif_write_bin_to_stdout, ERL_NIF_DIRTY_JOB_CPU_BOUND},
     {"nif_read", 2, nif_read, ERL_NIF_DIRTY_JOB_CPU_BOUND},
     {"nif_source_new", 0, nif_source_new, ERL_NIF_DIRTY_JOB_CPU_BOUND},
     {"nif_target_new", 0, nif_target_new, ERL_NIF_DIRTY_JOB_CPU_BOUND}};

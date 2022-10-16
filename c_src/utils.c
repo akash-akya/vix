@@ -155,3 +155,27 @@ ERL_NIF_TERM to_binary_term(ErlNifEnv *env, void *data, size_t size) {
 
   return bin_term;
 }
+
+ERL_NIF_TERM nif_write_bin_to_stdout(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]) {
+  ErlNifBinary binary;
+
+  if (enif_inspect_binary(env, argv[0], &binary)) {
+    char * ptr = (char *)binary.data;
+    const size_t chunk_size = 1024;
+    size_t written = 0;
+
+    while (written != binary.size) {
+        size_t to_write = binary.size - written;
+        if (to_write > chunk_size) to_write = chunk_size;
+        ssize_t bytes_written = write(STDOUT_FILENO, ptr, to_write);
+        if (bytes_written <= 0) {
+            continue;
+        }
+        ptr += bytes_written;
+        written += bytes_written;
+    }
+    return ATOM_OK;
+  }
+  return enif_make_badarg(env);
+}
+

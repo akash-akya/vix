@@ -189,4 +189,7 @@ defmodule Vix.Nif do
 
   def nif_target_new,
     do: :erlang.nif_error(:nif_library_not_loaded)
+
+  def nif_write_bin_to_stdout(_string),
+    do: :erlang.nif_error(:nif_library_not_loaded)
 end
