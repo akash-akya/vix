@@ -1,8 +1,8 @@
 defmodule Vix.Vips.MutableImageTest do
   use ExUnit.Case, async: true
 
-  alias Vix.Vips.MutableImage
   alias Vix.Vips.Image
+  alias Vix.Vips.MutableImage
 
   import Vix.Support.Images
 

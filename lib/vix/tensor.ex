@@ -55,6 +55,7 @@ defmodule Vix.Tensor do
   """
   @spec type(image :: Image.t()) :: tensor_type()
   def type(image) do
+    # TODO: Function is too complex (cyclomatic complexity is 10, max is 9).
     # should we support :VIPS_FORMAT_COMPLEX and :VIPS_FORMAT_DPCOMPLEX ?
     case Image.format(image) do
       :VIPS_FORMAT_UCHAR ->

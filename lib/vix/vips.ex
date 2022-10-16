@@ -1,4 +1,8 @@
 defmodule Vix.Vips do
+  @moduledoc """
+  Module for Vix.Vips.
+  """
+
   alias Vix.Nif
 
   @doc """

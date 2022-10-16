@@ -82,7 +82,8 @@ jobs:
         with:
           otp-version: ${{matrix.otp}}
           elixir-version: ${{matrix.elixir}}
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - run: mix deps.get
       - run: mix deps.unlock --check-unused
       - run: mix format --check-formatted
+      - run: mix credo --strict

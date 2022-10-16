@@ -1,4 +1,8 @@
 defmodule Vix.Vips.MutableOperation do
+  @moduledoc """
+  Module for Vix.Vips.MutableOperation.
+  """
+
   import Vix.Vips.OperationHelper
 
   defmodule Error do

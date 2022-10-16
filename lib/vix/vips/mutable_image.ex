@@ -2,8 +2,8 @@ defmodule Vix.Vips.MutableImage do
   defstruct [:pid]
 
   alias __MODULE__
-  alias Vix.Vips.Image
   alias Vix.Type
+  alias Vix.Vips.Image
 
   @moduledoc """
   Vips Mutable Image
