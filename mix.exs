@@ -16,6 +16,15 @@ defmodule Vix.MixProject do
       make_clean: ["clean"],
       deps: deps(),
 
+      # Coverage
+      test_coverage: [tool: ExCoveralls],
+      preferred_cli_env: [
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.post": :test,
+        "coveralls.html": :test
+      ],
+
       # Package
       package: package(),
       description: description(),
@@ -66,8 +75,9 @@ defmodule Vix.MixProject do
     maybe_kino() ++
       [
         {:elixir_make, "~> 0.6", runtime: false},
-        {:ex_doc, ">= 0.0.0", only: :dev},
         {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
+        {:ex_doc, ">= 0.0.0", only: :dev},
+        {:excoveralls, "~> 0.15", only: :test},
         {:temp, "~> 0.4", only: :test, runtime: false}
       ]
   end
