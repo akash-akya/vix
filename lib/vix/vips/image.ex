@@ -17,6 +17,7 @@ defmodule Vix.Vips.Image do
   alias Vix.Nif
   alias Vix.Type
   alias Vix.Vips.MutableImage
+  alias Vix.Vips.Operation
 
   require Logger
 
@@ -70,15 +71,38 @@ defmodule Vix.Vips.Image do
     end
   end
 
-  def fetch(image, %Range{first: first, last: last} = range)
+  def fetch(image, %Range{first: first, last: last, step: 1})
       when first >= 0 and last >= first do
-    # TODO: cleanup this when vix requires v1.12.0 and above
-    if Map.get(range, :step, 1) == 1 do
-      case Vix.Vips.Operation.extract_band(image, first, n: last - first + 1) do
-        {:ok, band} -> {:ok, band}
-        {:error, _reason} -> :error
-      end
-    else
+    case Vix.Vips.Operation.extract_band(image, first, n: last - first + 1) do
+      {:ok, band} -> {:ok, band}
+      {:error, _reason} -> :error
+    end
+  end
+
+  def fetch(image, [[width, height]]) do
+    fetch(image, [[width, height, :all]])
+  end
+
+  def fetch(image, [[:all, height, bands]]) do
+    fetch(image, [[0..Image.width(image) - 1, height, bands]])
+  end
+
+  def fetch(image, [[width, :all, bands]]) do
+    fetch(image, [[width, 0..Image.height(image) - 1, width, bands]])
+  end
+
+  def fetch(image, [[width, height, :all]]) do
+    fetch(image, [[width, height, 0..Image.bands(image) - 1]])
+  end
+
+  def fetch(image,[[width, height, bands]]) do
+    with {:ok, left, width} <- validate_dimension(width, width(image)),
+         {:ok, top, height} <- validate_dimension(height, height(image)),
+         {:ok, first_band, bands} <- validate_dimension(bands, bands(image)),
+         {:ok, region} <- Operation.extract_area(image, top, left, width, height),
+         {:ok, slice} <- Operation.extract_band(region, first_band, n: bands) do
+      {:ok, slice}
+    else _ ->
       :error
     end
   end
@@ -95,6 +119,22 @@ defmodule Vix.Vips.Image do
   @impl Access
   def pop(_image, _band, _default \\ nil) do
     raise "pop/3 for Vix.Vips.Image is not supported."
+  end
+
+  # For positive ranges start from the left and top
+  defp validate_dimension(%{first: first, last: last, step: 1}, max)
+      when first >= 0 and last > first and last < max do
+    {:ok, first, last - first + 1}
+  end
+
+  # FOr negative ranges start from the right and bottom
+  defp validate_dimension(%{first: first, last: last, step: 1}, max)
+      when first < 0 and last < first and last < max do
+    {:ok, (max + first), (max + last) - (max + first) + 1}
+  end
+
+  defp validate_dimension(_dim, _max) do
+    :error
   end
 
   @doc """
