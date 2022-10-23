@@ -133,14 +133,16 @@ show(resized_img)
 
 ### Flip
 
-<!-- livebook:{"livebook_object":"cell_input","name":"Direction","props":{"options":["horizontal","vertical"]},"reactive":true,"type":"select","value":"horizontal"} -->
+```elixir
+direction_input =
+  Kino.Input.select("Direction: ",
+    VIPS_DIRECTION_HORIZONTAL: "Horizontal",
+    VIPS_DIRECTION_VERTICAL: "Vertical"
+  )
+```
 
 ```elixir
-direction =
-  case IO.gets("Direction: ") do
-    "horizontal\n" -> :VIPS_DIRECTION_HORIZONTAL
-    "vertical\n" -> :VIPS_DIRECTION_VERTICAL
-  end
+direction = Kino.Input.read(direction_input)
 
 {:ok, flipped_img} = Operation.flip(img, direction)
 show(flipped_img)
