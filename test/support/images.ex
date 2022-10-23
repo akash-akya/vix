@@ -28,4 +28,8 @@ defmodule Vix.Support.Images do
   def shape(image) do
     {Image.width(image), Image.height(image), Image.bands(image)}
   end
+
+  def range_has_step do
+    Map.has_key?(1..2, :step)
+  end
 end

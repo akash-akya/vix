@@ -38,11 +38,19 @@ defmodule Vix.Vips.AccessTest do
     assert shape(im[[-3..-1, -3..-1, -2..-1]]) == {3, 3, 2}
   end
 
-  @tag :range_with_step
-  test "Access behaviour for Vix.Vipx.Image with slicing and mixed positive/negative ranges" do
-    {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
-    assert shape(im[[0..-1//1, :all, :all]]) == {518, 389, 3}
-    assert shape(im[[0..-1//1, 1..-1//1, -2..-1//1]]) == {518, 388, 2}
+  if range_has_step() do
+    test "Access behaviour for Vix.Vipx.Image with slicing and mixed positive/negative ranges" do
+      {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
+      assert shape(im[[0..-1//1, :all, :all]]) == {518, 389, 3}
+      assert shape(im[[0..-1//1, 1..-1//1, -2..-1//1]]) == {518, 388, 2}
+    end
+
+    test "Access behaviour with invalid dimensions and invalid step" do
+      {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
+
+      # Step != 1
+      assert im[[0..-3//2, :all, :all]] == nil
+    end
   end
 
   test "Access behaviour with invalid dimensions" do
@@ -58,11 +66,4 @@ defmodule Vix.Vips.AccessTest do
     assert im[[0..-3, :all, :all]] == nil
   end
 
-  @tag :range_with_step
-  test "Access behaviour with invalid dimensions and invalid step" do
-    {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
-
-    # Step != 1
-    assert im[[0..-3//2, :all, :all]] == nil
-  end
 end
