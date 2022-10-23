@@ -1,10 +1,8 @@
 # Introduction
 
-## Install dependencies
-
 ```elixir
 Mix.install([
-  {:kino, "~> 0.3.0"},
+  {:kino, "~> 0.7.0"},
   {:vix, "~> 0.5"}
 ])
 ```
