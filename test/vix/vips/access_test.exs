@@ -65,5 +65,4 @@ defmodule Vix.Vips.AccessTest do
     # Index not increasing
     assert im[[0..-3, :all, :all]] == nil
   end
-
 end
