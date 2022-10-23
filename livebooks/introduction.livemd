@@ -152,10 +152,12 @@ show(flipped_img)
 
 Text operation takes multiple optional parameters. See [libvips doc](https://libvips.github.io/libvips/API/current/libvips-create.html#vips-text ) for more details
 
-<!-- livebook:{"livebook_object":"cell_input","name":"Text","reactive":true,"type":"text","value":"<b>Vix</b> is <span foreground=\"red\">awesome!</span>"} -->
+```elixir
+text_input = Kino.Input.text("Text: ")
+```
 
 ```elixir
-str = String.trim(IO.gets("Text: "))
+str = String.trim(Kino.Input.read(text_input))
 {:ok, {text, _}} = Operation.text(str, dpi: 300, rgba: true)
 
 # add text to an image
