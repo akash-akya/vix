@@ -54,6 +54,13 @@ defmodule Vix.Vips.AccessTest do
       # Step != 1
       assert im[[Map.put(0..-3, :step, 2), :all, :all]] == nil
     end
+
+    test "Access behaviour with invalid dimensions when ranges have steps" do
+      {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
+
+      # Index not increasing
+      assert im[[0..-3, :all, :all]] == nil
+    end
   end
 
   test "Access behaviour with invalid dimensions" do
@@ -64,8 +71,5 @@ defmodule Vix.Vips.AccessTest do
 
     # Index larger than the image
     assert im[[0..1_000, :all, :all]] == nil
-
-    # Index not increasing
-    assert im[[0..-3, :all, :all]] == nil
   end
 end
