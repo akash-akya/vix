@@ -234,10 +234,7 @@ defmodule Vix.Vips.Image do
   end
 
   defp single_step_range?(%Range{} = range) do
-    cond do
-      Map.get(range, :step) == 1 -> true
-      Map.has_key?(range, :step) -> false
-    end
+    Map.get(range, :step) == 1 || !Map.has_key?(range, :step)
   end
 
   defp extract_area(image, left, top, width, height) do
