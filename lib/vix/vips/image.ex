@@ -169,9 +169,8 @@ defmodule Vix.Vips.Image do
     with {:ok, left, width} <- validate_dimension(width, width(image)),
          {:ok, top, height} <- validate_dimension(height, height(image)),
          {:ok, first_band, bands} <- validate_dimension(bands, bands(image)),
-         {:ok, area} <- extract_area(image, left, top, width, height),
-         {:ok, slice} <- extract_band(area, first_band, n: bands) do
-      {:ok, slice}
+         {:ok, area} <- extract_area(image, left, top, width, height) do
+      extract_band(area, first_band, n: bands)
     end
   end
 
