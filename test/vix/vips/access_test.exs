@@ -23,4 +23,40 @@ defmodule Vix.Vips.AccessTest do
     assert im[1..5] == nil
     assert im[-5..-1] == nil
   end
+
+  test "Access behaviour for Vix.Vipx.Image with slicing" do
+    {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
+    assert shape(im[[:all, :all]]) == shape(im)
+    assert shape(im[[:all, :all, :all]]) == shape(im)
+    assert shape(im[[0..2, :all, :all]]) == {3, 389, 3}
+    assert shape(im[[0..2, 0..2, 0..1]]) == {3, 3, 2}
+  end
+
+  test "Access behaviour for Vix.Vipx.Image with slicing and negative ranges" do
+    {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
+    assert shape(im[[-3..-1, :all, :all]]) == {3, 389, 3}
+    assert shape(im[[-3..-1, -3..-1, -2..-1]]) == {3, 3, 2}
+  end
+
+  test "Access behaviour for Vix.Vipx.Image with slicing and mixed positive/negative ranges" do
+    {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
+    assert shape(im[[0..-1//1, :all, :all]]) == {518, 389, 3}
+    assert shape(im[[0..-1//1, 1..-1//1, -2..-1//1]]) == {518, 388, 2}
+  end
+
+  test "Access behaviour with invalid dimensions" do
+    {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
+
+    # Negative indicies can't include 0 since thats a wrap-around
+    assert im[[-3..0, :all, :all]] == nil
+
+    # Index larger than the image
+    assert im[[0..1_000, :all, :all]] == nil
+
+    # Index not increasing
+    assert im[[0..-3, :all, :all]] == nil
+
+    # Step != 1
+    assert im[[0..-3//2, :all, :all]] == nil
+  end
 end
