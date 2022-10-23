@@ -75,5 +75,4 @@ defmodule Vix.Vips.AccessTest do
       assert im[[0..-3, :all, :all]] == nil
     end
   end
-
 end
