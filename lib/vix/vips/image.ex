@@ -33,8 +33,8 @@ defmodule Vix.Vips.Image do
 
   Ranges can receive negative positions and they will read from
   the back. In such cases, the range step must be explicitly given
-  and the right-side of the range must be equal or greater than
-  the left-side:
+  (on Elixir 1.12 and later) and the right-side of the range must
+  be equal or greater than the left-side:
 
       #=> i[0..-1//1]
       %Vix.Vips.Image{ref: #Reference<0.2448791511.2685009949.153703>}
@@ -133,19 +133,25 @@ defmodule Vix.Vips.Image do
   end
 
   # Extract a range of bands
-  def fetch(image, %Range{first: first, last: last, step: 1})
-      when first >= 0 and last >= first do
-    case Vix.Vips.Operation.extract_band(image, first, n: last - first + 1) do
-      {:ok, band} -> {:ok, band}
-      {:error, _reason} -> :error
+  def fetch(image, %Range{first: first, last: last} = range) when first >= 0 and last >= first do
+    if single_step_range?(range) do
+      case Vix.Vips.Operation.extract_band(image, first, n: last - first + 1) do
+        {:ok, band} -> {:ok, band}
+        {:error, _reason} -> :error
+      end
+    else
+      :error
     end
   end
 
-  def fetch(image, %Range{first: first, last: last, step: 1})
-      when first >= 0 and last < 0 do
-    case bands(image) + last do
-      last when last >= 0 -> fetch(image, first..last)
-      _other -> :error
+  def fetch(image, %Range{first: first, last: last} = range) when first >= 0 and last < 0 do
+    if single_step_range?(range) do
+      case bands(image) + last do
+        last when last >= 0 -> fetch(image, first..last)
+        _other -> :error
+      end
+    else
+      :error
     end
   end
 
@@ -194,26 +200,41 @@ defmodule Vix.Vips.Image do
   end
 
   # For positive ranges start from the left and top
-  defp validate_dimension(%{first: first, last: last, step: 1}, width)
+  defp validate_dimension(%{first: first, last: last} = range, width)
        when first >= 0 and last > first and last < width do
-    {:ok, first, last - first + 1}
+    if single_step_range?(range) do
+      {:ok, first, last - first + 1}
+    else
+      :error
+    end
   end
 
   # For negative ranges start from the right and bottom
-  defp validate_dimension(%{first: first, last: last, step: 1}, width)
+  defp validate_dimension(%{first: first, last: last} = range, width)
        when first < 0 and last < 0 and last > first and abs(first) < width do
-    {:ok, width + first, width + last - (width + first) + 1}
+    if single_step_range?(range) do
+      {:ok, width + first, width + last - (width + first) + 1}
+    else
+      :error
+    end
   end
 
   # Positive start to a negative end
-  defp validate_dimension(%{first: first, last: last, step: 1}, width)
+  defp validate_dimension(%{first: first, last: last} = range, width)
        when first >= 0 and last < 0 and abs(last) <= width do
-    {:ok, first, width + last - first + 1}
+    if single_step_range?(range) do
+      {:ok, first, width + last - first + 1}
+    else
+      :error
+    end
   end
 
   defp validate_dimension(_dim, _width) do
     :error
   end
+
+  defp single_step_range?(%Range{step: 1}), do: true
+  defp single_step_range?(range), do: !Map.has_key?(range, :step)
 
   defp extract_area(image, left, top, width, height) do
     case Operation.extract_area(image, left, top, width, height) do
