@@ -203,13 +203,13 @@ defmodule Vix.Vips.Image do
   # For negative ranges start from the right and bottom
   defp validate_dimension(%{first: first, last: last, step: 1}, width)
        when first < 0 and last < 0 and last > first and abs(first) < width do
-    {:ok, width + first, (width + last) - (width + first) + 1}
+    {:ok, width + first, width + last - (width + first) + 1}
   end
 
   # Positive start to a negative end
   defp validate_dimension(%{first: first, last: last, step: 1}, width)
        when first >= 0 and last < 0 and abs(last) <= width do
-    {:ok, first, (width + last) - first + 1}
+    {:ok, first, width + last - first + 1}
   end
 
   defp validate_dimension(_dim, _width) do
@@ -229,7 +229,6 @@ defmodule Vix.Vips.Image do
       _other -> :error
     end
   end
-
 
   @doc """
   Opens `path` for reading, returns an instance of `t:Vix.Vips.Image.t/0`
