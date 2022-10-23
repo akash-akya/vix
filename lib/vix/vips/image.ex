@@ -233,8 +233,12 @@ defmodule Vix.Vips.Image do
     :error
   end
 
-  defp single_step_range?(%Range{step: 1}), do: true
-  defp single_step_range?(range), do: !Map.has_key?(range, :step)
+  defp single_step_range?(%Range{} = range) do
+    cond do
+      Map.get(range, :step) == 1 -> true
+      Map.has_key?(range, :step) -> false
+    end
+  end
 
   defp extract_area(image, left, top, width, height) do
     case Operation.extract_area(image, left, top, width, height) do
