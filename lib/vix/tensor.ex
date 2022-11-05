@@ -53,37 +53,21 @@ defmodule Vix.Tensor do
   can use this function.
 
   """
-  @spec type(image :: Image.t()) :: tensor_type()
+  @spec type(image :: Image.t()) :: tensor_type() | no_return()
   def type(image) do
-    # TODO: Function is too complex (cyclomatic complexity is 10, max is 9).
-    # should we support :VIPS_FORMAT_COMPLEX and :VIPS_FORMAT_DPCOMPLEX ?
-    case Image.format(image) do
-      :VIPS_FORMAT_UCHAR ->
-        {:u, 8}
-
-      :VIPS_FORMAT_CHAR ->
-        {:s, 8}
-
-      :VIPS_FORMAT_USHORT ->
-        {:u, 16}
-
-      :VIPS_FORMAT_SHORT ->
-        {:s, 16}
-
-      :VIPS_FORMAT_UINT ->
-        {:u, 32}
-
-      :VIPS_FORMAT_INT ->
-        {:s, 32}
-
-      :VIPS_FORMAT_FLOAT ->
-        {:f, 32}
-
-      :VIPS_FORMAT_DOUBLE ->
-        {:f, 64}
-
-      other ->
-        raise ArgumentError, "Cannot convert this image type to binary. Found #{inspect(other)}"
-    end
+    # TODO: should we support :VIPS_FORMAT_COMPLEX and :VIPS_FORMAT_DPCOMPLEX ?
+    image |> Image.format() |> nx_type()
   end
+
+  defp nx_type(:VIPS_FORMAT_UCHAR), do: {:u, 8}
+  defp nx_type(:VIPS_FORMAT_CHAR), do: {:s, 8}
+  defp nx_type(:VIPS_FORMAT_USHORT), do: {:u, 16}
+  defp nx_type(:VIPS_FORMAT_SHORT), do: {:s, 16}
+  defp nx_type(:VIPS_FORMAT_UINT), do: {:u, 32}
+  defp nx_type(:VIPS_FORMAT_INT), do: {:s, 32}
+  defp nx_type(:VIPS_FORMAT_FLOAT), do: {:f, 32}
+  defp nx_type(:VIPS_FORMAT_DOUBLE), do: {:f, 64}
+
+  defp nx_type(other),
+    do: raise(ArgumentError, "Cannot convert this image type to binary. Found #{inspect(other)}")
 end
