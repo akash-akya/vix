@@ -33,65 +33,40 @@ defmodule Vix.Type do
 
   def supported?(type), do: impl(type) != :unsupported
 
-  # TODO: Function is too complex (cyclomatic complexity is 19, max is 9).
-  defp impl(type) do
-    case type do
-      # TODO: we check if enum_type is enum or not just by the name
-      {:enum, enum_type} ->
-        # TODO: convert type in nif itself, see `get_enum_as_atom`
-        Module.concat(Vix.Vips.Enum, String.to_atom(enum_type))
-
-      {:flags, flag_type} ->
-        # TODO: convert type in nif itself, see `get_flags_as_atoms`
-        Module.concat(Vix.Vips.Flag, String.to_atom(flag_type))
-
-      "VipsArray" <> nested_type when nested_type in ~w(Int Double Image) ->
-        Module.concat(Vix.Vips.Array, String.to_atom(nested_type))
-
-      {:vips_array, nested_type} when nested_type in ~w(Int Double Image Enum.VipsBlendMode) ->
-        Module.concat(Vix.Vips.Array, String.to_atom(nested_type))
-
-      {_spec_type, _value_type} ->
-        :unsupported
-
-      "gint" ->
-        GObject.Int
-
-      "guint64" ->
-        GObject.UInt64
-
-      "gdouble" ->
-        GObject.Double
-
-      "gboolean" ->
-        GObject.Boolean
-
-      "gchararray" ->
-        GObject.String
-
-      "VipsRefString" ->
-        Vips.RefString
-
-      "VipsBlob" ->
-        Vips.Blob
-
-      "MutableVipsImage" ->
-        Vips.MutableImage
-
-      "VipsImage" ->
-        Vips.Image
-
-      "VipsSource" ->
-        Vips.Source
-
-      "VipsTarget" ->
-        Vips.Target
-
-      "VipsInterpolate" ->
-        Vips.Interpolate
-
-      _type ->
-        :unsupported
-    end
+  # TODO:
+  # we check if enum_type is enum or not just by the name
+  # convert type in nif itself, see `get_enum_as_atom`
+  defp impl({:enum, enum_type}) do
+    Module.concat(Vix.Vips.Enum, String.to_atom(enum_type))
   end
+
+  # TODO: convert type in nif itself, see `get_flags_as_atoms`
+  defp impl({:flags, flag_type}) do
+    Module.concat(Vix.Vips.Flag, String.to_atom(flag_type))
+  end
+
+  defp impl("VipsArray" <> nested_type) when nested_type in ~w(Int Double Image) do
+    Module.concat(Vix.Vips.Array, String.to_atom(nested_type))
+  end
+
+  defp impl({:vips_array, nested_type})
+       when nested_type in ~w(Int Double Image Enum.VipsBlendMode) do
+    Module.concat(Vix.Vips.Array, String.to_atom(nested_type))
+  end
+
+  defp impl({_spec_type, _value_type}), do: :unsupported
+
+  defp impl("gint"), do: GObject.Int
+  defp impl("guint64"), do: GObject.UInt64
+  defp impl("gdouble"), do: GObject.Double
+  defp impl("gboolean"), do: GObject.Boolean
+  defp impl("gchararray"), do: GObject.String
+  defp impl("VipsRefString"), do: Vips.RefString
+  defp impl("VipsBlob"), do: Vips.Blob
+  defp impl("MutableVipsImage"), do: Vips.MutableImage
+  defp impl("VipsImage"), do: Vips.Image
+  defp impl("VipsSource"), do: Vips.Source
+  defp impl("VipsTarget"), do: Vips.Target
+  defp impl("VipsInterpolate"), do: Vips.Interpolate
+  defp impl(_type), do: :unsupported
 end
