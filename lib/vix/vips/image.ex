@@ -120,7 +120,7 @@ defmodule Vix.Vips.Image do
   def fetch(image, band) when is_integer(band) and band >= 0 do
     case Vix.Vips.Operation.extract_band(image, band) do
       {:ok, band} -> {:ok, band}
-      {:error, _reason} -> :error
+      {:error, _reason} -> raise ArgumentError, "Invalid band requested. Found #{inspect band}"
     end
   end
 
@@ -128,33 +128,19 @@ defmodule Vix.Vips.Image do
   def fetch(image, band) when is_integer(band) and band < 0 do
     case bands(image) + band do
       band when band >= 0 -> fetch(image, band)
-      _other -> :error
+      _other -> raise ArgumentError, "Invalid band requested. Found #{inspect band}"
     end
   end
 
-  # Extract a range of bands
-  def fetch(image, %Range{first: first, last: last} = range) when first >= 0 and last >= first do
+  def fetch(image, %Range{} = range) do
     if single_step_range?(range) do
-      case Vix.Vips.Operation.extract_band(image, first, n: last - first + 1) do
-        {:ok, band} -> {:ok, band}
-        {:error, _reason} -> :error
-      end
+      fetch_range(image, range)
     else
-      :error
+      raise ArgumentError, "Range arguments must have a step of 1. Found #{inspect range}"
     end
   end
 
-  def fetch(image, %Range{first: first, last: last} = range) when first >= 0 and last < 0 do
-    if single_step_range?(range) do
-      case bands(image) + last do
-        last when last >= 0 -> fetch(image, first..last)
-        _other -> :error
-      end
-    else
-      :error
-    end
-  end
-
+  # Slicing the image
   def fetch(image, [width, height]) do
     fetch(image, [width, height, :all])
   end
@@ -180,10 +166,6 @@ defmodule Vix.Vips.Image do
     end
   end
 
-  def fetch(_image, %Range{}) do
-    :error
-  end
-
   @impl Access
   def get_and_update(_image, _key, _fun) do
     raise "get_and_update/3 for Vix.Vips.Image is not supported."
@@ -194,44 +176,76 @@ defmodule Vix.Vips.Image do
     raise "pop/3 for Vix.Vips.Image is not supported."
   end
 
+  # Extract a range of bands
+  def fetch_range(image, %Range{first: first, last: last}) when first >= 0 and last >= first do
+    case Vix.Vips.Operation.extract_band(image, first, n: last - first + 1) do
+      {:ok, band} -> {:ok, band}
+      {:error, _reason} -> raise "Invalid band range #{inspect first..last}"
+    end
+  end
+
+  def fetch_range(image, %Range{first: first, last: last}) when first >= 0 and last < 0 do
+    case bands(image) + last do
+      last when last >= 0 -> fetch(image, first..last)
+      _other -> raise ArgumentError, "Resolved invalid band range #{first..last}}"
+    end
+  end
+
+  def fetch_range(image, %Range{first: first, last: last}) when last < 0 and first < last do
+    bands = bands(image)
+    if (last = bands + last) > 0 do
+      fetch(image, (bands + first)..last)
+    else
+      raise ArgumentError, "Resolved invalid range #{(bands + first)..last}"
+    end
+  end
+
+  def fetch_range(_image, %Range{} = range) do
+    raise ArgumentError, "Invalid range #{inspect range}"
+  end
+
   # For integer dimensions treat is as the number of pixels
   defp validate_dimension(dim, width) when is_integer(dim) and dim < width do
     {:ok, 0, dim}
   end
 
   # For positive ranges start from the left and top
-  defp validate_dimension(%{first: first, last: last} = range, width)
-       when first >= 0 and last > first and last < width do
+  defp validate_dimension(%Range{} = range, width) do
     if single_step_range?(range) do
-      {:ok, first, last - first + 1}
+      validate_range_dimension(range, width)
     else
-      :error
+      raise ArgumentError, "Range arguments must have a step of 1. Found #{inspect range}"
     end
+  end
+
+  defp validate_dimension(dim, width) do
+    raise ArgumentError, "Invalid dimension #{inspect dim}. Dimension must be between 0 and #{inspect width - 1}"
+  end
+
+  # For positive ranges start from the left and top
+  defp validate_range_dimension(%{first: first, last: last}, width)
+       when first >= 0 and last > first and last < width do
+    {:ok, first, last - first + 1}
   end
 
   # For negative ranges start from the right and bottom
-  defp validate_dimension(%{first: first, last: last} = range, width)
+  defp validate_range_dimension(%{first: first, last: last}, width)
        when first < 0 and last < 0 and last > first and abs(first) < width do
-    if single_step_range?(range) do
-      {:ok, width + first, width + last - (width + first) + 1}
-    else
-      :error
-    end
+    {:ok, width + first, width + last - (width + first) + 1}
   end
 
   # Positive start to a negative end
-  defp validate_dimension(%{first: first, last: last} = range, width)
+  defp validate_range_dimension(%{first: first, last: last}, width)
        when first >= 0 and last < 0 and abs(last) <= width do
-    if single_step_range?(range) do
-      {:ok, first, width + last - first + 1}
-    else
-      :error
-    end
+    {:ok, first, width + last - first + 1}
   end
 
-  defp validate_dimension(_dim, _width) do
-    :error
+  defp validate_range_dimension(range, _width) do
+    raise ArgumentError, "Invalid range #{inspect range}"
   end
+
+  # We can do this as a guard in later Elixir versions but
+  # Vix is intendede to run on a wide range of Elixir versions.
 
   defp single_step_range?(%Range{} = range) do
     Map.get(range, :step) == 1 || !Map.has_key?(range, :step)
@@ -240,14 +254,14 @@ defmodule Vix.Vips.Image do
   defp extract_area(image, left, top, width, height) do
     case Operation.extract_area(image, left, top, width, height) do
       {:ok, image} -> {:ok, image}
-      _other -> :error
+      _other -> raise "Requested area could not be extracted"
     end
   end
 
   defp extract_band(area, first_band, options) do
     case Operation.extract_band(area, first_band, options) do
       {:ok, image} -> {:ok, image}
-      _other -> :error
+      _other -> raise "Requested band(s) could not be extracted"
     end
   end
 

@@ -15,13 +15,22 @@ defmodule Vix.Vips.AccessTest do
 
   test "Access behaviour for Vix.Vips.Image with invalid integer band" do
     {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
-    assert im[5] == nil
+
+    assert_raise ArgumentError, "Invalid band requested. Found 5", fn ->
+      im[5]
+    end
   end
 
   test "Access behaviour for Vix.Vips.Image with invalid range band" do
     {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
-    assert im[1..5] == nil
-    assert im[-5..-1] == nil
+
+    assert_raise RuntimeError, "Invalid band range 1..5", fn ->
+      im[1..5]
+    end
+
+    assert_raise ArgumentError, "Invalid range -2..2", fn ->
+      im[-5..-1]
+    end
   end
 
   test "Access behaviour for Vix.Vips.Image with slicing" do
@@ -42,10 +51,14 @@ defmodule Vix.Vips.AccessTest do
     {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
 
     # Negative indicies can't include 0 since thats a wrap-around
-    assert im[[-3..0, :all, :all]] == nil
+    assert_raise ArgumentError, "Invalid range -3..0", fn ->
+      im[[-3..0, :all, :all]]
+    end
 
     # Index larger than the image
-    assert im[[0..1_000, :all, :all]] == nil
+    assert_raise ArgumentError, "Invalid range 0..1000", fn ->
+      im[[0..1_000, :all, :all]]
+    end
   end
 
   # We can't use the 1..3//1 syntax since it fails on older
@@ -65,14 +78,18 @@ defmodule Vix.Vips.AccessTest do
       {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
 
       # Step != 1
-      assert im[[Map.put(0..-3, :step, 2), :all, :all]] == nil
+      assert_raise ArgumentError, "Range arguments must have a step of 1. Found 0..-3//2", fn ->
+        im[[Map.put(0..-3, :step, 2), :all, :all]]
+      end
     end
 
     test "Access behaviour with invalid dimensions when ranges have steps" do
       {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
 
       # Index not increasing
-      assert im[[0..-3, :all, :all]] == nil
+      assert_raise ArgumentError, "Range arguments must have a step of 1. Found 0..-3//-1", fn ->
+        im[[0..-3, :all, :all]]
+      end
     end
   end
 end
