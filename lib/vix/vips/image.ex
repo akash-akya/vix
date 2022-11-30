@@ -120,7 +120,7 @@ defmodule Vix.Vips.Image do
   def fetch(image, band) when is_integer(band) and band >= 0 do
     case Vix.Vips.Operation.extract_band(image, band) do
       {:ok, band} -> {:ok, band}
-      {:error, _reason} -> raise ArgumentError, "Invalid band requested. Found #{inspect band}"
+      {:error, _reason} -> raise ArgumentError, "Invalid band requested. Found #{inspect(band)}"
     end
   end
 
@@ -128,7 +128,7 @@ defmodule Vix.Vips.Image do
   def fetch(image, band) when is_integer(band) and band < 0 do
     case bands(image) + band do
       band when band >= 0 -> fetch(image, band)
-      _other -> raise ArgumentError, "Invalid band requested. Found #{inspect band}"
+      _other -> raise ArgumentError, "Invalid band requested. Found #{inspect(band)}"
     end
   end
 
@@ -136,7 +136,7 @@ defmodule Vix.Vips.Image do
     if single_step_range?(range) do
       fetch_range(image, range)
     else
-      raise ArgumentError, "Range arguments must have a step of 1. Found #{inspect range}"
+      raise ArgumentError, "Range arguments must have a step of 1. Found #{inspect(range)}"
     end
   end
 
@@ -180,7 +180,7 @@ defmodule Vix.Vips.Image do
   def fetch_range(image, %Range{first: first, last: last}) when first >= 0 and last >= first do
     case Vix.Vips.Operation.extract_band(image, first, n: last - first + 1) do
       {:ok, band} -> {:ok, band}
-      {:error, _reason} -> raise "Invalid band range #{inspect first..last}"
+      {:error, _reason} -> raise "Invalid band range #{inspect(first..last)}"
     end
   end
 
@@ -193,6 +193,7 @@ defmodule Vix.Vips.Image do
 
   def fetch_range(image, %Range{first: first, last: last}) when last < 0 and first < last do
     bands = bands(image)
+
     if (last = bands + last) > 0 do
       fetch(image, (bands + first)..last)
     else
@@ -201,7 +202,7 @@ defmodule Vix.Vips.Image do
   end
 
   def fetch_range(_image, %Range{} = range) do
-    raise ArgumentError, "Invalid range #{inspect range}"
+    raise ArgumentError, "Invalid range #{inspect(range)}"
   end
 
   # For integer dimensions treat is as the number of pixels
@@ -214,12 +215,13 @@ defmodule Vix.Vips.Image do
     if single_step_range?(range) do
       validate_range_dimension(range, width)
     else
-      raise ArgumentError, "Range arguments must have a step of 1. Found #{inspect range}"
+      raise ArgumentError, "Range arguments must have a step of 1. Found #{inspect(range)}"
     end
   end
 
   defp validate_dimension(dim, width) do
-    raise ArgumentError, "Invalid dimension #{inspect dim}. Dimension must be between 0 and #{inspect width - 1}"
+    raise ArgumentError,
+          "Invalid dimension #{inspect(dim)}. Dimension must be between 0 and #{inspect(width - 1)}"
   end
 
   # For positive ranges start from the left and top
@@ -241,7 +243,7 @@ defmodule Vix.Vips.Image do
   end
 
   defp validate_range_dimension(range, _width) do
-    raise ArgumentError, "Invalid range #{inspect range}"
+    raise ArgumentError, "Invalid range #{inspect(range)}"
   end
 
   # We can do this as a guard in later Elixir versions but
