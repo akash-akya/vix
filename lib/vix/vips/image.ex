@@ -193,8 +193,9 @@ defmodule Vix.Vips.Image do
 
   def fetch_range(image, %Range{first: first, last: last}) when last < 0 and first < last do
     bands = bands(image)
+    last = bands + last
 
-    if (last = bands + last) > 0 do
+    if last > 0 do
       fetch(image, (bands + first)..last)
     else
       raise ArgumentError, "Resolved invalid range #{(bands + first)..last}"
