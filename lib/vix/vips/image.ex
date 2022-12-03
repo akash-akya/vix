@@ -22,9 +22,10 @@ defmodule Vix.Vips.Image do
       #=> i[-1]
       %Vix.Vips.Image{ref: #Reference<0.2448791511.2685009949.153540>}
 
-  Out of bound access will return nil:
+
+  Out of bound access will throw an `ArgumentError` exception:
       #=> i[-4]
-      nil
+      ** (ArgumentError) Invalid band requested. Found -4
 
   Access also accepts ranges. Ranges in Elixir are inclusive:
 
