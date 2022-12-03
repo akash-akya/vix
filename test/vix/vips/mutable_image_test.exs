@@ -58,7 +58,8 @@ defmodule Vix.Vips.MutableImageTest do
     assert {:ok, {_, 518}} = Vix.Vips.Image.mutate(i, fn m -> Vix.Vips.MutableImage.width(m) end)
     assert {:ok, {_, 389}} = Vix.Vips.Image.mutate(i, fn m -> Vix.Vips.MutableImage.height(m) end)
     assert {:ok, {_, 3}} = Vix.Vips.Image.mutate(i, fn m -> Vix.Vips.MutableImage.bands(m) end)
-    assert {:ok, {_, false}} = Vix.Vips.Image.mutate(i, fn m -> Vix.Vips.MutableImage.has_alpha?(m) end)
 
+    assert {:ok, {_, false}} =
+             Vix.Vips.Image.mutate(i, fn m -> Vix.Vips.MutableImage.has_alpha?(m) end)
   end
 end
