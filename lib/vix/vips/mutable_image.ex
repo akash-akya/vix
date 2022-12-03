@@ -56,6 +56,43 @@ defmodule Vix.Vips.MutableImage do
   end
 
   @doc """
+  Return the number of bands of a mutable image.
+  """
+  def bands(%MutableImage{pid: pid}) do
+    GenServer.call(pid, :bands)
+  end
+
+  @doc """
+  Return the width of a mutable image.
+  """
+  def width(%MutableImage{pid: pid}) do
+    GenServer.call(pid, :width)
+  end
+
+  @doc """
+  Return the height of a mutable image.
+  """
+  def height(%MutableImage{pid: pid}) do
+    GenServer.call(pid, :height)
+  end
+
+  @doc """
+  Return a boolean indicating if a mutable image
+  has an alpha band.
+  """
+  def has_alpha?(%MutableImage{pid: pid}) do
+    GenServer.call(pid, :has_alpha?)
+  end
+
+  @doc """
+  Return the shape of the umage as
+  `{width, height, bands}`.
+  """
+  def shape(%MutableImage{pid: pid}) do
+    GenServer.call(pid, :shape)
+  end
+
+  @doc """
   Set the value of existing metadata item on an image. Value is converted to match existing value GType
   """
   @spec update(__MODULE__.t(), String.t(), term()) :: :ok | {:error, term()}
@@ -146,6 +183,35 @@ defmodule Vix.Vips.MutableImage do
   @impl true
   def handle_call({:operation, callback}, _from, %{image: image} = state) do
     {:reply, callback.(image), state}
+  end
+
+  @impl true
+  def handle_call(:width, _from, %{image: image} = state) do
+    {:reply, {:ok, Image.width(image)}, state}
+  end
+
+  @impl true
+  def handle_call(:height, _from, %{image: image} = state) do
+    {:reply, {:ok, Image.height(image)}, state}
+  end
+
+  @impl true
+  def handle_call(:bands, _from, %{image: image} = state) do
+    {:reply, {:ok, Image.bands(image)}, state}
+  end
+
+  @impl true
+  def handle_call(:has_alpha?, _from, %{image: image} = state) do
+    {:reply, {:ok, Image.has_alpha?(image)}, state}
+  end
+
+  @impl true
+  def handle_call(:shape, _from, %{image: image} = state) do
+    width = Image.width(image)
+    height = Image.height(image)
+    bands = Image.bands(image)
+
+    {:reply, {:ok, {width, height, bands}}, state}
   end
 
   defp wrap_type({:ok, pid}), do: {:ok, %MutableImage{pid: pid}}
