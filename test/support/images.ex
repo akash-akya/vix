@@ -2,6 +2,7 @@ defmodule Vix.Support.Images do
   @moduledoc false
 
   import ExUnit.Assertions
+  alias Vix.Vips.Image
 
   @images_path Path.join(__DIR__, "../images")
 
@@ -22,5 +23,13 @@ defmodule Vix.Support.Images do
       {:error, reason} ->
         flunk("Failed to compare images, error: #{inspect(reason)}")
     end
+  end
+
+  def shape(image) do
+    {Image.width(image), Image.height(image), Image.bands(image)}
+  end
+
+  def range_has_step do
+    Map.has_key?(1..2, :step)
   end
 end
