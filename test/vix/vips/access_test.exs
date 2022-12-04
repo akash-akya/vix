@@ -84,8 +84,8 @@ defmodule Vix.Vips.AccessTest do
     {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
     assert shape(im[[]]) == {518, 389, 3}
     assert shape(im[[height: 0..10]]) == {518, 11, 3}
-    assert shape(im[[bands: 2, height: 0..10]]) == {518, 11, 1}
-    assert shape(im[[bands: -2..-1]]) == {518, 389, 2}
+    assert shape(im[[band: 2, height: 0..10]]) == {518, 11, 1}
+    assert shape(im[[band: -2..-1]]) == {518, 389, 2}
   end
 
   # We can't use the 1..3//1 syntax since it fails on older

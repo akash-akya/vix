@@ -12,20 +12,25 @@ defmodule Vix.Vips.Image do
   Vix images implement Elixir's access syntax. This allows developers
   to slice images and easily access sub-dimensions and values.
 
-  Access accepts integers. Integers will extract an image band:
+  ### Integer
+  Access accepts integers. Integers will extract an image band using parameter as index:
+
       #=> {:ok, i} = Image.new_from_file("./test/images/puppies.jpg")
       {:ok, %Vix.Vips.Image{ref: #Reference<0.2448791511.2685009949.153539>}}
       #=> i[0]
       %Vix.Vips.Image{ref: #Reference<0.2448791511.2685009949.153540>}
 
   If a negative index is given, it accesses the band from the back:
+
       #=> i[-1]
       %Vix.Vips.Image{ref: #Reference<0.2448791511.2685009949.153540>}
 
-
   Out of bound access will throw an `ArgumentError` exception:
+
       #=> i[-4]
       ** (ArgumentError) Invalid band requested. Found -4
+
+  ### Range
 
   Access also accepts ranges. Ranges in Elixir are inclusive:
 
@@ -42,28 +47,56 @@ defmodule Vix.Vips.Image do
 
   To slice across multiple dimensions, you can wrap the ranges in a list.
   The list will be of the form `[with_slice, height_slice, band_slice]`.
-  The slices can be ranges or the keyword `:all`.
 
       # Returns an image that slices a 10x10 pixel square
-      # from the top left of the image. It returns all image
-      #=> i[[0..9,0..9,:all]]
+      # from the top left of the image with three bands
+      #=> i[[0..9, 0..9, 0..3]]
       %Vix.Vips.Image{ref: #Reference<0.2448791511.2685009949.153738>}
 
-  The `width_slice` and `height_slice` are always required. The `band_slice`
-  can be omitted and will default to `:all`.
+  If number of dimensions are less than 3 then remaining dimensions
+  are returned in full
 
-      # Is equivalent to `i[[0..9,0..9,:all]]`
-      #=> i[[0..9,0..9]]
+      # If `i` size is 100x100 with 3 bands
+      #=> i[[0..9, 0..9]] # equivalent to `i[[0..9, 0..9, 0..2]]`
       %Vix.Vips.Image{ref: #Reference<0.2448791511.2685009949.153740>}
+
+      #=> i[[0..9]] # equivalent to `i[[0..9, 0..99, 0..2]]`
+      %Vix.Vips.Image{ref: #Reference<0.2448791511.2685009949.153703>}
 
   Slices can include negative ranges in which case the indexes
   are calculated from the right and bottom of the image.
 
       # Slices the bottom right 10x10 pixels of the image
       # and returns all bands.
-      #=> i[[-10..-1,-10..-1,:all]]
+      #=> i[[-10..-1, -10..-1]]
       %Vix.Vips.Image{ref: #Reference<0.2448791511.2685009949.153742>}
 
+  Slice can mix integers and ranges
+
+      # Slices the bottom right 10x1 pixels of the image
+      # and returns all bands.
+      #=> i[[-10..-1, -1]]
+      %Vix.Vips.Image{ref: #Reference<0.2448791511.2685009949.153742>}
+
+  ### Keyword List
+
+  Access also accepts keyword list. Where key can be any of `width`,
+  `height`, `band`.  and value must be an `integer`, `range`. This is
+  useful for complex scenarios when you want omit dimensions arbitrary
+  dimensions.
+
+      # Slices an image with height 10 with max width and all bands
+      #=> i[[height: 0..10]]
+      %Vix.Vips.Image{ref: #Reference<0.2448791511.2685009949.153742>}
+
+      # Slices an image with single band 1
+      #=> i[[band: 1]]
+      %Vix.Vips.Image{ref: #Reference<0.2448791511.2685009949.153742>}
+
+      # Slices the bottom right 10x10 pixels of the image
+      # and returns all bands.
+      #=> i[[width: -10..-1, height: -10..-1]]
+      %Vix.Vips.Image{ref: #Reference<0.2448791511.2685009949.153742>}
   """
 
   alias Vix.Nif
@@ -146,7 +179,7 @@ defmodule Vix.Vips.Image do
     with {:ok, args} <- normalize_access_args(args),
          {:ok, left, width} <- validate_dimension(args[:width], width(image)),
          {:ok, top, height} <- validate_dimension(args[:height], height(image)),
-         {:ok, first_band, bands} <- validate_dimension(args[:bands], bands(image)),
+         {:ok, first_band, bands} <- validate_dimension(args[:band], bands(image)),
          {:ok, area} <- extract_area(image, left, top, width, height) do
       extract_band(area, first_band, n: bands)
     else
@@ -860,10 +893,10 @@ defmodule Vix.Vips.Image do
   defp normalize_access_args(args) do
     cond do
       Keyword.keyword?(args) ->
-        {:ok, Keyword.take(args, ~w(width height bands)a)}
+        {:ok, Keyword.take(args, ~w(width height band)a)}
 
       length(args) <= 3 && Enum.all?(args, &(is_integer(&1) || match?(%Range{}, &1))) ->
-        {:ok, Enum.zip(~w(width height bands)a, args)}
+        {:ok, Enum.zip(~w(width height band)a, args)}
 
       true ->
         {:error, :invalid_list}
