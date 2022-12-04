@@ -33,18 +33,37 @@ defmodule Vix.Vips.AccessTest do
     end
   end
 
-  test "Access behaviour for Vix.Vips.Image with slicing" do
+  test "Access behaviour for Vix.Vips.Image with slicing and integer values" do
     {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
-    assert shape(im[[:all, :all]]) == shape(im)
-    assert shape(im[[:all, :all, :all]]) == shape(im)
-    assert shape(im[[0..2, :all, :all]]) == {3, 389, 3}
+    assert shape(im[[]]) == shape(im)
+    assert shape(im[[1]]) == {1, 389, 3}
+    assert shape(im[[0..2, 5, -1]]) == {3, 1, 1}
+  end
+
+  test "Access behaviour for Vix.Vips.Image with slicing and range values" do
+    {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
+    assert shape(im[[]]) == shape(im)
+    assert shape(im[[0..2]]) == {3, 389, 3}
+    assert shape(im[[0..2, 0..3]]) == {3, 4, 3}
     assert shape(im[[0..2, 0..2, 0..1]]) == {3, 3, 2}
   end
 
   test "Access behaviour for Vix.Vips.Image with slicing and negative ranges" do
     {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
-    assert shape(im[[-3..-1, :all, :all]]) == {3, 389, 3}
+    assert shape(im[[-3..-1]]) == {3, 389, 3}
     assert shape(im[[-3..-1, -3..-1, -2..-1]]) == {3, 3, 2}
+  end
+
+  test "Access behaviour for Vix.Vips.Image with invalid argument" do
+    {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
+
+    assert_raise ArgumentError,
+                 "Argument must be list of integers or ranges or keyword list",
+                 fn -> im[[:foo]] end
+
+    assert_raise ArgumentError,
+                 "Argument must be list of integers or ranges or keyword list",
+                 fn -> im[[nil, 1]] end
   end
 
   test "Access behaviour with invalid dimensions" do
@@ -52,13 +71,21 @@ defmodule Vix.Vips.AccessTest do
 
     # Negative indicies can't include 0 since thats a wrap-around
     assert_raise ArgumentError, "Invalid range -3..0", fn ->
-      im[[-3..0, :all, :all]]
+      im[[-3..0]]
     end
 
     # Index larger than the image
     assert_raise ArgumentError, "Invalid range 0..1000", fn ->
-      im[[0..1_000, :all, :all]]
+      im[[0..1_000]]
     end
+  end
+
+  test "Access behaviour for Vix.Vips.Image with slicing and keyword list" do
+    {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
+    assert shape(im[[]]) == {518, 389, 3}
+    assert shape(im[[height: 0..10]]) == {518, 11, 3}
+    assert shape(im[[bands: 2, height: 0..10]]) == {518, 11, 1}
+    assert shape(im[[bands: -2..-1]]) == {518, 389, 2}
   end
 
   # We can't use the 1..3//1 syntax since it fails on older
@@ -68,7 +95,7 @@ defmodule Vix.Vips.AccessTest do
   if range_has_step() do
     test "Access behaviour for Vix.Vips.Image with slicing and mixed positive/negative ranges" do
       {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
-      assert shape(im[[Map.put(0..-1, :step, 1), :all, :all]]) == {518, 389, 3}
+      assert shape(im[[Map.put(0..-1, :step, 1)]]) == {518, 389, 3}
 
       im = im[[Map.put(0..-1, :step, 1), Map.put(1..-1, :step, 1), Map.put(-2..-1, :step, 1)]]
       assert shape(im) == {518, 388, 2}
@@ -79,7 +106,7 @@ defmodule Vix.Vips.AccessTest do
 
       # Step != 1
       assert_raise ArgumentError, "Range arguments must have a step of 1. Found 0..-3//2", fn ->
-        im[[Map.put(0..-3, :step, 2), :all, :all]]
+        im[[Map.put(0..-3, :step, 2)]]
       end
     end
 
@@ -88,7 +115,7 @@ defmodule Vix.Vips.AccessTest do
 
       # Index not increasing
       assert_raise ArgumentError, "Range arguments must have a step of 1. Found 0..-3//-1", fn ->
-        im[[0..-3, :all, :all]]
+        im[[0..-3]]
       end
     end
   end
