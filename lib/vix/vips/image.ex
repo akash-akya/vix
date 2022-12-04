@@ -142,28 +142,16 @@ defmodule Vix.Vips.Image do
   end
 
   # Slicing the image
-  def fetch(image, [width, height]) do
-    fetch(image, [width, height, :all])
-  end
-
-  def fetch(image, [:all, height, bands]) do
-    fetch(image, [0..(Image.width(image) - 1), height, bands])
-  end
-
-  def fetch(image, [width, :all, bands]) do
-    fetch(image, [width, 0..(Image.height(image) - 1), bands])
-  end
-
-  def fetch(image, [width, height, :all]) do
-    fetch(image, [width, height, 0..(Image.bands(image) - 1)])
-  end
-
-  def fetch(image, [width, height, bands]) do
-    with {:ok, left, width} <- validate_dimension(width, width(image)),
-         {:ok, top, height} <- validate_dimension(height, height(image)),
-         {:ok, first_band, bands} <- validate_dimension(bands, bands(image)),
+  def fetch(image, args) when is_list(args) do
+    with {:ok, args} <- normalize_access_args(args),
+         {:ok, left, width} <- validate_dimension(args[:width], width(image)),
+         {:ok, top, height} <- validate_dimension(args[:height], height(image)),
+         {:ok, first_band, bands} <- validate_dimension(args[:bands], bands(image)),
          {:ok, area} <- extract_area(image, left, top, width, height) do
       extract_band(area, first_band, n: bands)
+    else
+      {:error, _} ->
+        raise ArgumentError, "Argument must be list of integers or ranges or keyword list"
     end
   end
 
@@ -207,9 +195,19 @@ defmodule Vix.Vips.Image do
     raise ArgumentError, "Invalid range #{inspect(range)}"
   end
 
-  # For integer dimensions treat is as the number of pixels
-  defp validate_dimension(dim, width) when is_integer(dim) and dim < width do
-    {:ok, 0, dim}
+  # For nil use maximum value
+  defp validate_dimension(nil, limit), do: {:ok, 0, limit}
+
+  # For integer treat it as single band
+  defp validate_dimension(index, limit) when is_integer(index) do
+    index = if index < 0, do: limit + index, else: index
+
+    if index < limit do
+      {:ok, index, 1}
+    else
+      raise ArgumentError,
+            "Invalid dimension #{inspect(index)}. Dimension must be between 0 and #{inspect(index - 1)}"
+    end
   end
 
   # For positive ranges start from the left and top
@@ -221,30 +219,25 @@ defmodule Vix.Vips.Image do
     end
   end
 
-  defp validate_dimension(dim, width) do
-    raise ArgumentError,
-          "Invalid dimension #{inspect(dim)}. Dimension must be between 0 and #{inspect(width - 1)}"
-  end
-
   # For positive ranges start from the left and top
-  defp validate_range_dimension(%{first: first, last: last}, width)
+  defp validate_range_dimension(%Range{first: first, last: last}, width)
        when first >= 0 and last > first and last < width do
     {:ok, first, last - first + 1}
   end
 
   # For negative ranges start from the right and bottom
-  defp validate_range_dimension(%{first: first, last: last}, width)
-       when first < 0 and last < 0 and last > first and abs(first) < width do
-    {:ok, width + first, width + last - (width + first) + 1}
+  defp validate_range_dimension(%Range{first: first, last: last}, limit)
+       when first < 0 and last < 0 and last > first and abs(first) < limit do
+    {:ok, limit + first, limit + last - (limit + first) + 1}
   end
 
   # Positive start to a negative end
-  defp validate_range_dimension(%{first: first, last: last}, width)
-       when first >= 0 and last < 0 and abs(last) <= width do
-    {:ok, first, width + last - first + 1}
+  defp validate_range_dimension(%Range{first: first, last: last}, limit)
+       when first >= 0 and last < 0 and abs(last) <= limit do
+    {:ok, first, limit + last - first + 1}
   end
 
-  defp validate_range_dimension(range, _width) do
+  defp validate_range_dimension(range, _limit) do
     raise ArgumentError, "Invalid range #{inspect(range)}"
   end
 
@@ -863,6 +856,19 @@ defmodule Vix.Vips.Image do
 
   defp wrap_type({:ok, ref}), do: {:ok, %Image{ref: ref}}
   defp wrap_type(value), do: value
+
+  defp normalize_access_args(args) do
+    cond do
+      Keyword.keyword?(args) ->
+        {:ok, Keyword.take(args, ~w(width height bands)a)}
+
+      length(args) <= 3 && Enum.all?(args, &(is_integer(&1) || match?(%Range{}, &1))) ->
+        {:ok, Enum.zip(~w(width height bands)a, args)}
+
+      true ->
+        {:error, :invalid_list}
+    end
+  end
 
   # Support for rendering images in Livebook
 
