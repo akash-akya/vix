@@ -6,13 +6,18 @@ defmodule Vix.Vips.OperationHelper do
   alias Vix.Type
 
   def input_to_nif_terms(args, in_pspec) do
-    Enum.map(
-      args,
-      fn {name, value} ->
-        pspec = Map.get(in_pspec, name)
-        {name, Type.to_nif_term(pspec.type, value, pspec.data)}
+    args
+    |> Enum.reduce([], fn {name, value}, terms ->
+      # skip unsupported additional arguments
+      case Map.fetch(in_pspec, name) do
+        :error ->
+          terms
+
+        {:ok, pspec} ->
+          term = Type.to_nif_term(pspec.type, value, pspec.data)
+          [{name, term} | terms]
       end
-    )
+    end)
   end
 
   def vips_enum_list do
