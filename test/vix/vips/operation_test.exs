@@ -70,6 +70,11 @@ defmodule Vix.Vips.OperationTest do
     assert Operation.find_trim(im) == {:ok, {41, 44, 45, 45, []}}
   end
 
+  test "when unsupported argument is passed", %{dir: _dir} do
+    buf = File.read!(img_path("alpha_band.png"))
+    assert {:ok, {%Image{}, _}} = Operation.pngload_buffer(buf, foo: "bar")
+  end
+
   test "operation error", %{dir: _dir} do
     {:ok, im} = Image.new_from_file(img_path("black_on_white.jpg"))
 
