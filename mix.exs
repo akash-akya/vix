@@ -11,7 +11,7 @@ defmodule Vix.MixProject do
       elixir: "~> 1.7",
       start_permanent: Mix.env() == :prod,
       elixirc_paths: elixirc_paths(Mix.env()),
-      compilers: [:elixir_make] ++ Mix.compilers(),
+      compilers: compilers(),
       make_targets: ["all"],
       make_clean: ["clean"],
       deps: deps(),
@@ -50,7 +50,7 @@ defmodule Vix.MixProject do
 
   def application do
     [
-      extra_applications: [:logger]
+      extra_applications: [:logger, :public_key]
     ]
   end
 
@@ -63,7 +63,7 @@ defmodule Vix.MixProject do
       maintainers: ["Akash Hiremath"],
       licenses: ["MIT"],
       files:
-        ~w(lib .formatter.exs mix.exs README* LICENSE* Makefile c_src/Makefile c_src/*.{h,c} c_src/g_object/*.{h,c}),
+        ~w(lib mix.exs README.md LICENSE Makefile c_src/Makefile c_src/*.{h,c} c_src/g_object/*.{h,c}),
       links: %{
         GitHub: @scm_url,
         libvips: "https://libvips.github.io/libvips"
@@ -75,6 +75,9 @@ defmodule Vix.MixProject do
     maybe_kino() ++
       [
         {:elixir_make, "~> 0.6", runtime: false},
+        {:castore, "~> 0.1"},
+
+        # development & test
         {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
         {:ex_doc, ">= 0.0.0", only: :dev},
         {:excoveralls, "~> 0.15", only: :test},
@@ -92,4 +95,22 @@ defmodule Vix.MixProject do
 
   defp elixirc_paths(:test), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib"]
+
+  defp compilers do
+    if System.get_env("VIX_PRECOMPILE") == "false" do
+      [:elixir_make] ++ Mix.compilers()
+    else
+      if File.exists?(Path.join(priv_dir(), "precompiled_libvips")) do
+        [:elixir_make] ++ Mix.compilers()
+      else
+        File.mkdir_p("priv")
+        Code.require_file("compiler_scripts/precompiler.exs")
+        [:libvips_precompiled, :elixir_make] ++ Mix.compilers()
+      end
+    end
+  end
+
+  def priv_dir do
+    Path.join([File.cwd!(), "priv"])
+  end
 end

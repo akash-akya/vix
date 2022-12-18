@@ -33,6 +33,7 @@ eips-*.tar
 # Ignore compilation files
 
 /priv
+/obj
 
 *.o
 
