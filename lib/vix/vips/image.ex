@@ -911,7 +911,7 @@ defmodule Vix.Vips.Image do
         attributes = attributes_from_image(image)
         {:ok, encoded} = Vix.Vips.Image.write_to_buffer(image, ".png")
         image = Kino.Image.new(encoded, :png)
-        tabs = Kino.Layout.tabs(Attributes: attributes, Image: image)
+        tabs = Kino.Layout.tabs(Image: image, Attributes: attributes)
         Kino.Render.to_livebook(tabs)
       end
 
@@ -924,7 +924,6 @@ defmodule Vix.Vips.Image do
             {"Interpretation", Vix.Vips.Image.interpretation(image)},
             {"Format", Vix.Vips.Image.format(image)},
             {"Filename", Vix.Vips.Image.filename(image)},
-            {"Orientation", Vix.Vips.Image.orientation(image)},
             {"Has alpha band?", Vix.Vips.Image.has_alpha?(image)}
           ]
           |> Enum.map(fn {k, v} -> [{"Attribute", k}, {"Value", v}] end)
