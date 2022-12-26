@@ -1,8 +1,7 @@
-# Based on c_src.mk from erlang.mk by Loic Hoguin <essen@ninenines.eu>
+MIX_APP_PATH ?= ..
 
-PREFIX = ../priv
-BUILD  = ../obj
-
+PREFIX = $(MIX_APP_PATH)/priv
+PRECOMPILED_LIBVIPS = $(PREFIX)/precompiled_libvips
 VIX = $(PREFIX)/vix.so
 
 # System type and C compiler/flags.
@@ -14,8 +13,6 @@ ifeq ($(UNAME_SYS), Darwin)
 	LDFLAGS += -flat_namespace -undefined suppress
 else ifeq ($(UNAME_SYS), Linux)
 	CFLAGS += -O2 -Wall -Werror -Wextra -Wno-unused-parameter -Wmissing-prototypes -std=c11
-else
-	# unsupported
 endif
 
 CFLAGS   += -D_POSIX_C_SOURCE=200809L -fPIC -I $(ERTS_INCLUDE_DIR) -I $(ERL_INTERFACE_INCLUDE_DIR)
@@ -47,29 +44,39 @@ c_verbose = $(c_verbose_$(V))
 link_verbose_0 = @echo " LD    " $(@F);
 link_verbose = $(link_verbose_$(V))
 
-SRC = $(shell find . -type f \( -name "*.c" \))
-OBJ = $(addprefix $(BUILD)/,$(addsuffix .o,$(basename $(SRC))))
-OBJ_DIRS = $(addprefix $(BUILD)/,$(shell find . -mindepth 1 -type d))
+SRC = $(shell find . -type f -name "*.c")
+
+# Object files are put in `c_src` directory.
+# Maybe we should put in `${MIX_APP_PATH}/priv`?
+# but then we need to compile NIF for each env
+OBJ = $(addsuffix .o,$(basename $(SRC)))
 
 calling_from_make:
 	cd .. && mix compile
 
 all: install
 
-install: $(PREFIX) $(BUILD) $(OBJ_DIRS) $(VIX)
+install: $(PREFIX) $(VIX)
 
-$(OBJ): Makefile
+$(OBJ): Makefile $(PRECOMPILED_LIBVIPS)
 
-$(BUILD)/%.o: %.c
+%.o: %.c
 	$(c_verbose) $(CC) -c $(CFLAGS) -o $@ $<
 
 $(VIX): $(OBJ)
 	$(link_verbose) $(CC) $^ -o $@ $(LDFLAGS) $(LDLIBS)
 
-$(PREFIX) $(BUILD) $(OBJ_DIRS):
+$(PREFIX):
 	@mkdir -p $@
 
-clean:
-	@$(RM) $(VIX) $(OBJ)
+$(PRECOMPILED_LIBVIPS):
+	@MIX_EXS="../mix.exs" mix run --no-start --no-compile --no-deps-check ../compiler_scripts/precompiler.exs
 
-.PHONY: all clean calling_from_make install
+clean:
+	$(RM) $(VIX) $(OBJ)
+
+clean_precompiled_libvips: clean
+	$(RM) $(PREFIX)/libvips-*.tar.gz
+	$(RM) -r $(PREFIX)/precompiled_libvips
+
+.PHONY: all clean clean_precompiled_libvips calling_from_make install
