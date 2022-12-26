@@ -16,6 +16,18 @@ defmodule Vix.MixProject do
       make_clean: ["clean"],
       deps: deps(),
 
+      # elixir_make specific config
+      make_precompiler: {:nif, CCPrecompiler},
+      make_precompiler_url:
+        "https://github.com/akash-akya/vix/releases/download/v#{@version}/@{artefact_filename}",
+      make_precompiler_priv_paths: [
+        "vix.*",
+        "precompiled_libvips/lib/*.dylib",
+        "precompiled_libvips/lib/*.so",
+        "precompiled_libvips/lib/*.dll"
+      ],
+      make_force_build: true,
+
       # Coverage
       test_coverage: [tool: ExCoveralls],
       preferred_cli_env: [
@@ -74,7 +86,10 @@ defmodule Vix.MixProject do
   defp deps do
     maybe_kino() ++
       [
-        {:elixir_make, "~> 0.6", runtime: false},
+        {:elixir_make, "~> 0.7", runtime: false},
+        {:cc_precompiler, "~> 0.1", runtime: false},
+
+        # to fetching pre-compiled package
         {:castore, "~> 0.1"},
 
         # development & test
@@ -100,13 +115,15 @@ defmodule Vix.MixProject do
     if System.get_env("VIX_PRECOMPILE") == "false" do
       [:elixir_make] ++ Mix.compilers()
     else
-      if File.exists?(Path.join(priv_dir(), "precompiled_libvips")) do
-        [:elixir_make] ++ Mix.compilers()
-      else
-        File.mkdir_p("priv")
-        Code.require_file("compiler_scripts/precompiler.exs")
-        [:libvips_precompiled, :elixir_make] ++ Mix.compilers()
-      end
+      [:elixir_make] ++ Mix.compilers()
+
+      # if File.exists?(Path.join(priv_dir(), "precompiled_libvips")) do
+      #   [:elixir_make] ++ Mix.compilers()
+      # else
+      #   File.mkdir_p("priv")
+      #   Code.require_file("compiler_scripts/precompiler.exs")
+      #   [:libvips_precompiled, :elixir_make] ++ Mix.compilers()
+      # end
     end
   end
 

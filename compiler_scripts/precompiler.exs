@@ -1,19 +1,7 @@
-defmodule Mix.Tasks.Compile.LibvipsPrecompiled do
-  use Mix.Task
-
+defmodule Vix.LibvipsPrecompiled do
   require Logger
 
-  @requirements ["app.config"]
-  @switches [force: :boolean, verbose: :boolean, all_warnings: :boolean]
-
-  @moduledoc """
-  Fetch precompiled libvips
-  """
-
-  @impl true
-  def run(args) do
-    {_opts, _, _} = OptionParser.parse(args, switches: @switches)
-
+  def run do
     {:ok, _} = Application.ensure_all_started(:inets)
     {:ok, _} = Application.ensure_all_started(:ssl)
 
@@ -27,13 +15,14 @@ defmodule Mix.Tasks.Compile.LibvipsPrecompiled do
     target = current_target()
     {url, filename} = url(version, target)
 
-    {:ok, path} = download(url, Path.join("priv", filename))
+    {:ok, path} = download(url, Path.join(priv_dir(), filename))
     :ok = extract(path)
 
     :ok
   end
 
   @release_tag "8.13.3-rc2"
+
   @filename "libvips-<%= version %>-<%= os %>-<%= arch %>.tar.gz"
   @url "https://github.com/akash-akya/sharp-libvips/releases/download/v<%= tag %>/<%= filename %>"
 
@@ -64,15 +53,11 @@ defmodule Mix.Tasks.Compile.LibvipsPrecompiled do
   end
 
   defp extract(path) do
-    Logger.debug("Extracting #{path}")
-    destination = to_charlist(Path.join("priv", "precompiled_libvips"))
+    Logger.debug("Extracting to #{path}")
+    destination = to_charlist(Path.join(priv_dir(), "precompiled_libvips"))
     _ = File.rmdir(destination)
 
-    :ok =
-      :erl_tar.extract(
-        to_charlist(path),
-        [{:cwd, destination}, :compressed]
-      )
+    :ok = :erl_tar.extract(to_charlist(path), [{:cwd, destination}, :compressed])
 
     :ok
   end
@@ -80,9 +65,9 @@ defmodule Mix.Tasks.Compile.LibvipsPrecompiled do
   def download(url, path) do
     hostname = String.to_charlist(URI.parse(url).host)
 
-    Logger.debug("Downloading #{url}")
+    Logger.debug("Fetching #{url}")
     _ = File.rm(path)
-    _ = File.mkdir_p(Path.dirname(path))
+    File.mkdir_p!(Path.dirname(path))
 
     {:ok, :saved_to_file} =
       :httpc.request(
@@ -187,4 +172,10 @@ defmodule Mix.Tasks.Compile.LibvipsPrecompiled do
         {:error, "cannot decide current target"}
     end
   end
+
+  defp priv_dir do
+    Path.join(Mix.Project.app_path(), "priv")
+  end
 end
+
+Vix.LibvipsPrecompiled.run()
