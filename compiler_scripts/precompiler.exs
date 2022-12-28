@@ -108,11 +108,8 @@ defmodule Vix.LibvipsPrecompiled do
   end
 
   defp current_target_from_env do
-    arch = System.get_env("TARGET_ARCH")
-    os = System.get_env("TARGET_OS")
-    abi = System.get_env("TARGET_ABI")
-
-    if !Enum.all?([arch, os, abi], &Kernel.is_nil/1) do
+    if target = System.get_env("CC_PRECOMPILER_CURRENT_TARGET") do
+      [arch, os, abi] = String.split(target, "-")
       {arch, os, abi}
     end
   end

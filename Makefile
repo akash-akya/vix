@@ -7,6 +7,9 @@ all:
 clean:
 	@$(MAKE) -C c_src clean
 
-.PHONY: all clean calling_from_make
+clean_precompiled_libvips:
+	@$(MAKE) -C c_src clean_precompiled_libvips
+
+.PHONY: all clean calling_from_make clean_precompiled_libvips
 
 # .SILENT:
