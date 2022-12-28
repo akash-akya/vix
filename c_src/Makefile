@@ -4,6 +4,9 @@ PREFIX = $(MIX_APP_PATH)/priv
 PRECOMPILED_LIBVIPS = $(PREFIX)/precompiled_libvips
 VIX = $(PREFIX)/vix.so
 
+VIX_PREFER_PRECOMPILED ?= TRUE
+VIX_PREFER_PRECOMPILED := $(shell echo "$(VIX_PREFER_PRECOMPILED)" | tr '[:lower:]' '[:upper:]')
+
 # System type and C compiler/flags.
 
 UNAME_SYS := $(shell uname -s)
@@ -19,7 +22,7 @@ CFLAGS   += -D_POSIX_C_SOURCE=200809L -fPIC -I $(ERTS_INCLUDE_DIR) -I $(ERL_INTE
 LDLIBS   += -L $(ERL_INTERFACE_LIB_DIR)
 LDFLAGS  += -shared
 
-ifeq ($(VIX_PRECOMPILE), false)
+ifeq ($(VIX_PREFER_PRECOMPILED), FALSE)
 	CFLAGS += `pkg-config vips --cflags`
 	LDLIBS += `pkg-config vips --libs`
 else

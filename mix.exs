@@ -11,22 +11,24 @@ defmodule Vix.MixProject do
       elixir: "~> 1.7",
       start_permanent: Mix.env() == :prod,
       elixirc_paths: elixirc_paths(Mix.env()),
-      compilers: compilers(),
+      compilers: [:elixir_make] ++ Mix.compilers(),
       make_targets: ["all"],
       make_clean: ["clean"],
       deps: deps(),
+      aliases: aliases(),
 
-      # elixir_make specific config
+      # elixir_make config
       make_precompiler: {:nif, CCPrecompiler},
-      make_precompiler_url:
-        "https://github.com/akash-akya/vix/releases/download/v#{@version}/@{artefact_filename}",
+      make_precompiler_url: "#{@scm_url}/releases/download/v#{@version}/@{artefact_filename}",
       make_precompiler_priv_paths: [
         "vix.*",
         "precompiled_libvips/lib/*.dylib",
         "precompiled_libvips/lib/*.so",
         "precompiled_libvips/lib/*.dll"
       ],
-      make_force_build: true,
+      cc_precompiler: [
+        cleanup: "clean_precompiled_libvips"
+      ],
 
       # Coverage
       test_coverage: [tool: ExCoveralls],
@@ -86,10 +88,8 @@ defmodule Vix.MixProject do
   defp deps do
     maybe_kino() ++
       [
-        {:elixir_make, "~> 0.7", runtime: false},
-        {:cc_precompiler, "~> 0.1", runtime: false},
-
-        # to fetching pre-compiled package
+        {:elixir_make, "~> 0.8 or ~> 0.7.3", runtime: false},
+        {:cc_precompiler, "~> 0.2 or ~> 0.1.4", runtime: false},
         {:castore, "~> 0.1"},
 
         # development & test
@@ -111,23 +111,12 @@ defmodule Vix.MixProject do
   defp elixirc_paths(:test), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib"]
 
-  defp compilers do
-    if System.get_env("VIX_PRECOMPILE") == "false" do
-      [:elixir_make] ++ Mix.compilers()
-    else
-      [:elixir_make] ++ Mix.compilers()
-
-      # if File.exists?(Path.join(priv_dir(), "precompiled_libvips")) do
-      #   [:elixir_make] ++ Mix.compilers()
-      # else
-      #   File.mkdir_p("priv")
-      #   Code.require_file("compiler_scripts/precompiler.exs")
-      #   [:libvips_precompiled, :elixir_make] ++ Mix.compilers()
-      # end
-    end
-  end
-
-  def priv_dir do
-    Path.join([File.cwd!(), "priv"])
+  defp aliases do
+    [
+      precompile: [
+        "cmd make clean_precompiled_libvips",
+        "elixir_make.precompile"
+      ]
+    ]
   end
 end
