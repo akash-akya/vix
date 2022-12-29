@@ -18,7 +18,7 @@ defmodule Vix.MixProject do
       aliases: aliases(),
 
       # elixir_make config
-      make_precompiler: {:nif, CCPrecompiler},
+      make_precompiler: make_precompiler(),
       make_precompiler_url: "#{@scm_url}/releases/download/v#{@version}/@{artefact_filename}",
       make_precompiler_priv_paths: [
         "vix.*",
@@ -26,6 +26,7 @@ defmodule Vix.MixProject do
         "precompiled_libvips/lib/*.so",
         "precompiled_libvips/lib/*.dll"
       ],
+      make_force_build: make_force_build(),
       cc_precompiler: [
         cleanup: "clean_precompiled_libvips"
       ],
@@ -113,10 +114,26 @@ defmodule Vix.MixProject do
 
   defp aliases do
     [
+      deep_clean: "cmd make clean_precompiled_libvips",
       precompile: [
-        "cmd make clean_precompiled_libvips",
+        "deep_clean",
         "elixir_make.precompile"
       ]
     ]
+  end
+
+  defp make_precompiler do
+    if compilation_mode() == "PLATFORM_PROVIDED_LIBVIPS" do
+      nil
+    else
+      {:nif, CCPrecompiler}
+    end
+  end
+
+  defp make_force_build, do: compilation_mode() == "PRECOMPILED_LIBVIPS"
+
+  defp compilation_mode do
+    (System.get_env("VIX_COMPILATION_MODE") || "PRECOMPILED_NIF_AND_LIBVIPS")
+    |> String.upcase()
   end
 end

@@ -1,11 +1,10 @@
 MIX_APP_PATH ?= ..
 
 PREFIX = $(MIX_APP_PATH)/priv
-PRECOMPILED_LIBVIPS = $(PREFIX)/precompiled_libvips
 VIX = $(PREFIX)/vix.so
 
-VIX_PREFER_PRECOMPILED ?= TRUE
-VIX_PREFER_PRECOMPILED := $(shell echo "$(VIX_PREFER_PRECOMPILED)" | tr '[:lower:]' '[:upper:]')
+VIX_COMPILATION_MODE ?= PRECOMPILED_NIF_AND_LIBVIPS
+VIX_COMPILATION_MODE := $(shell echo "$(VIX_COMPILATION_MODE)" | tr '[:lower:]' '[:upper:]')
 
 # System type and C compiler/flags.
 
@@ -22,13 +21,22 @@ CFLAGS   += -D_POSIX_C_SOURCE=200809L -fPIC -I $(ERTS_INCLUDE_DIR) -I $(ERL_INTE
 LDLIBS   += -L $(ERL_INTERFACE_LIB_DIR)
 LDFLAGS  += -shared
 
-ifeq ($(VIX_PREFER_PRECOMPILED), FALSE)
+ifeq ($(VIX_COMPILATION_MODE), PLATFORM_PROVIDED_LIBVIPS)
 	CFLAGS += `pkg-config vips --cflags`
 	LDLIBS += `pkg-config vips --libs`
 else
-	PRECOMPILED_PATH = $(PREFIX)/precompiled_libvips
-	CFLAGS  += -pthread -I $(PRECOMPILED_PATH)/include -I $(PRECOMPILED_PATH)/lib/glib-2.0/include -I $(PRECOMPILED_PATH)/include/glib-2.0
-	LDLIBS  += -L $(PRECOMPILED_PATH)/lib
+	PRECOMPILED_LIBVIPS_PATH = $(PREFIX)/precompiled_libvips
+
+	ifeq ($(VIX_COMPILATION_MODE), PRECOMPILED_LIBVIPS)
+		# force fetching libvips if previously configured to use PRECOMPILED_NIF_AND_LIBVIPS
+		# since the precompiled vix does not bundle `include`
+		PRECOMPILED_LIBVIPS_PREREQUISITE = $(PRECOMPILED_LIBVIPS_PATH)/include
+	else
+		PRECOMPILED_LIBVIPS_PREREQUISITE = $(PRECOMPILED_LIBVIPS_PATH)
+	endif
+
+	CFLAGS  += -pthread -I $(PRECOMPILED_LIBVIPS_PATH)/include -I $(PRECOMPILED_LIBVIPS_PATH)/lib/glib-2.0/include -I $(PRECOMPILED_LIBVIPS_PATH)/include/glib-2.0
+	LDLIBS  += -L $(PRECOMPILED_LIBVIPS_PATH)/lib
 
 	ifeq ($(UNAME_SYS), Darwin)
 		LDFLAGS += -Wl,-rpath,@loader_path/precompiled_libvips/lib
@@ -61,7 +69,7 @@ all: install
 
 install: $(PREFIX) $(VIX)
 
-$(OBJ): Makefile $(PRECOMPILED_LIBVIPS)
+$(OBJ): Makefile $(PRECOMPILED_LIBVIPS_PREREQUISITE)
 
 %.o: %.c
 	$(c_verbose) $(CC) -c $(CFLAGS) -o $@ $<
@@ -72,7 +80,7 @@ $(VIX): $(OBJ)
 $(PREFIX):
 	@mkdir -p $@
 
-$(PRECOMPILED_LIBVIPS):
+$(PRECOMPILED_LIBVIPS_PREREQUISITE):
 	@MIX_EXS="../mix.exs" mix run --no-start --no-compile --no-deps-check ../compiler_scripts/precompiler.exs
 
 clean:
