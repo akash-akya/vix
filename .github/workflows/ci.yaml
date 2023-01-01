@@ -5,7 +5,9 @@ on:
 jobs:
   linux:
     runs-on: ubuntu-20.04
-    name: Test - Elixir ${{matrix.elixir}} / OTP ${{matrix.otp}}
+    name: Test Compiled - Elixir ${{matrix.elixir}} / OTP ${{matrix.otp}}
+    env:
+      VIX_COMPILATION_MODE: PLATFORM_PROVIDED_LIBVIPS
     strategy:
       matrix:
         include:
@@ -67,6 +69,54 @@ jobs:
 
       - run: mix deps.get
       - run: mix compile --force --warnings-as-errors
+      - run: mix test --trace
+
+  linux-precompiled-libvips:
+    runs-on: ubuntu-20.04
+    name: Test Pre-compiled libvips - Elixir ${{matrix.elixir}} / OTP ${{matrix.otp}}
+    env:
+      VIX_COMPILATION_MODE: PRECOMPILED_LIBVIPS
+    strategy:
+      matrix:
+        include:
+          - elixir: 1.14.x
+            otp: 25.x
+    steps:
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: ${{matrix.otp}}
+          elixir-version: ${{matrix.elixir}}
+      - uses: actions/checkout@v3
+      - run: mix deps.get
+      - run: mix test --trace
+
+  linux-precompiled:
+    runs-on: ubuntu-20.04
+    name: Test Pre-compiled - Elixir ${{matrix.elixir}} / OTP ${{matrix.otp}}
+    strategy:
+      matrix:
+        include:
+          - elixir: 1.14.x
+            otp: 25.x
+    steps:
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: ${{matrix.otp}}
+          elixir-version: ${{matrix.elixir}}
+      - uses: actions/checkout@v3
+      - run: mix deps.get
+      - run: mix test --trace
+
+  macos-precompiled:
+    runs-on: macos-11
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install erlang and elixir
+        run: |
+          brew install erlang elixir
+          mix local.hex --force
+          mix local.rebar --force
+      - run: mix deps.get
       - run: mix test --trace
 
   lint:
