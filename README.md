@@ -19,9 +19,30 @@ Vix is a **NIF** based bindings library for libvips.
 * Vix can take full advantage of libvips [optimizations](https://libvips.github.io/libvips/API/current/How-it-works.md.html), such as joining of operations in the pipeline, cache. Since Vix is native binding
 * Experimental support for streaming. User can read or write images without keeping complete image in memory. See `Vix.Vips.Image.new_from_enum/1` and `Vix.Vips.Image.write_to_stream/2`
 * Efficient interoperability (zero-copy) with other libraries such as Nx, eVision. See `Vix.Vips.Image.new_from_binary/5` and `Vix.Vips.Image.write_to_tensor/1`
+* By default vix provides pre built NIF and libvips binaries for major platforms, so you don't have to worry about bringing the libvips dependencies and compiling NIF. Just add vix and you are good to go! See below for more details
 * Ergonomic bindings with auto generated documentation for the operations using vips introspection. So they always match the libvips installed. If newer libvips update adds or modify operations, you don't have to wait for vix to be updated, bindings for the operations along with documentation will be available automatically
 
 Check [vips operation documentation](https://hexdocs.pm/vix/Vix.Vips.Operation.html) for the list of available operations and spec.
+
+### Pre-compiled NIF and libvips
+
+Vix can work with either pre-built binaries or platform provided binaries.
+
+By defaults vix provides pre built NIF and libvips and use that for operation. This makes deployment and release breeze. You don't have to install neither build tools nor libvips. But if you find that the pre built NIF and libvips is missing some additional features or support for additional file format then you can bring your own libvips and ask vix to use that instead. Vix makes sure to generate functions and documentation based on the dependencies you bring. For example, if you install libvips with tiff support, vix will generate tiff related bindings for you.
+
+You can choose this using `VIX_COMPILATION_MODE` env variable. This variable must be set both during compilation and runtime. Possible values are:
+
+* `PRECOMPILED_NIF_AND_LIBVIPS` (Default): Uses vix provided NIF and libvips. No need to install any additional dependencies. Big thanks to [sharp](https://github.com/lovell/sharp) library maintainers, Pre compiled libvips is based on: https://github.com/lovell/sharp-libvips/.
+
+* `PLATFORM_PROVIDED_LIBVIPS`: Uses platform provided libvips and NIF will be compiled during compilation phase. You need to install required build tools to compile NIF. To build NIF you need these:
+
+    - libvips with development headers
+      * **macOS**: using brew `brew install libvips`
+      * **Linux**: using deb `apt install libvips-dev`
+
+      For more details see https://www.libvips.org/install.html
+    - `pkg-config`
+    - C compiler
 
 #### Should I use Vix or [Image](https://github.com/kipcole9/image)?
 
@@ -152,19 +173,6 @@ Livebook implementing picture language defined in [*Structural and Interpretatio
 
 Vix NIF code writes logs to stderr on certain errors. This is disabled by default. To enable logging set `VIX_LOG_ERROR` environment variable to `true`.
 
-### Warning
-
-This library is experimental and the code is not well tested, so you might experience crashes.
-
-### Requirements
-
-* libvips with development headers
-  * **macOS**: using brew `brew install libvips`
-  * **Linux**: using deb `apt install libvips-dev`
-
-  For more details see https://www.libvips.org/install.html
-* pkg-config
-* C compiler
 
 ## Installation
 
