@@ -907,25 +907,31 @@ defmodule Vix.Vips.Image do
 
   if Code.ensure_loaded?(Kino.Render) do
     defimpl Kino.Render do
+      alias Vix.Vips.Image
+
       def to_livebook(image) do
         attributes = attributes_from_image(image)
-        {:ok, encoded} = Vix.Vips.Image.write_to_buffer(image, ".png")
+        {:ok, encoded} = Image.write_to_buffer(image, ".png")
         image = Kino.Image.new(encoded, :png)
         tabs = Kino.Layout.tabs(Image: image, Attributes: attributes)
         Kino.Render.to_livebook(tabs)
       end
 
-      def attributes_from_image(image) do
+      defp attributes_from_image(image) do
         data =
-          [
-            {"Width", Vix.Vips.Image.width(image)},
-            {"Height", Vix.Vips.Image.height(image)},
-            {"Bands", Vix.Vips.Image.bands(image)},
-            {"Interpretation", Vix.Vips.Image.interpretation(image)},
-            {"Format", Vix.Vips.Image.format(image)},
-            {"Filename", Vix.Vips.Image.filename(image)},
-            {"Has alpha band?", Vix.Vips.Image.has_alpha?(image)}
-          ]
+          for field <- ~w(width height bands interpretation format filename) do
+            case Image.header_value(image, field) do
+              {:ok, value} ->
+                {String.capitalize(field), value}
+
+              {:error, _error} ->
+                nil
+            end
+          end
+          |> Enum.filter(& &1)
+
+        data =
+          (data ++ [{"Has alpha band?", Image.has_alpha?(image)}])
           |> Enum.map(fn {k, v} -> [{"Attribute", k}, {"Value", v}] end)
 
         Kino.DataTable.new(data, name: "Image Metadata")
