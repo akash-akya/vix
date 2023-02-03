@@ -20,8 +20,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential automake autoconf pkg-config bc m4 unzip zip \
-            gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
-            gcc-riscv64-linux-gnu g++-riscv64-linux-gnu
+            gcc-aarch64-linux-gnu
       - name: Mix Test
         run: |
           mix deps.get

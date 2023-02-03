@@ -26,20 +26,19 @@ Check [vips operation documentation](https://hexdocs.pm/vix/Vix.Vips.Operation.h
 
 ### Pre-compiled NIF and libvips
 
-Vix can work with either pre-built binaries or platform provided binaries.
+Vix can use either pre-built binaries or platform provided binaries.
 
-By defaults vix provides pre built NIF and libvips and use that for operation. This makes deployment and release breeze. You don't have to install neither build tools nor libvips. But if you find that the pre built NIF and libvips is missing some additional features or support for additional file format then you can bring your own libvips and ask vix to use that instead. Vix makes sure to generate functions and documentation based on the dependencies you bring. For example, if you install libvips with tiff support, vix will generate tiff related bindings for you.
+By default Vix provides pre-built NIF and libvips and use that for operation. This makes deployment and release of your application a breeze. You don't have to install neither build tools nor libvips. But if you find that the pre-built NIF or libvips is missing some additional features or support for additional image format then you can bring your own libvips by installing it manually and ask vix to use that instead. Vix makes sure to generate functions and documentation based on the dependencies you bring. For example, if you install libvips with tiff support, vix will generate tiff related bindings for you.
 
 You can choose this using `VIX_COMPILATION_MODE` env variable. This variable must be set both during compilation and runtime. Possible values are:
 
-* `PRECOMPILED_NIF_AND_LIBVIPS` (Default): Uses vix provided NIF and libvips. No need to install any additional dependencies. Big thanks to [sharp](https://github.com/lovell/sharp) library maintainers, Pre compiled libvips is based on: https://github.com/lovell/sharp-libvips/.
+* `PRECOMPILED_NIF_AND_LIBVIPS` (Default): Uses vix provided NIF and libvips. No need to install any additional dependencies. Big thanks to [sharp](https://github.com/lovell/sharp) library maintainers, pre-compiled libvips is based on: https://github.com/lovell/sharp-libvips/.
 
 * `PLATFORM_PROVIDED_LIBVIPS`: Uses platform provided libvips and NIF will be compiled during compilation phase. You need to install required build tools to compile NIF. To build NIF you need these:
 
     - libvips with development headers
       * **macOS**: using brew `brew install libvips`
       * **Linux**: using deb `apt install libvips-dev`
-
       For more details see https://www.libvips.org/install.html
     - `pkg-config`
     - C compiler
