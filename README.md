@@ -26,9 +26,9 @@ Check [vips operation documentation](https://hexdocs.pm/vix/Vix.Vips.Operation.h
 
 ### Pre-compiled NIF and libvips
 
-Vix can use either pre-built binaries or platform provided binaries.
+Starting from v0.16.0 vix can use either pre-built binaries or platform provided binaries.
 
-By default Vix provides pre-built NIF and libvips and use that for operation. This makes deployment and release of your application a breeze. You don't have to install neither build tools nor libvips. But if you find that the pre-built NIF or libvips is missing some additional features or support for additional image format then you can bring your own libvips by installing it manually and ask vix to use that instead. Vix makes sure to generate functions and documentation based on the dependencies you bring. For example, if you install libvips with tiff support, vix will generate tiff related bindings for you.
+By default Vix provides pre-built NIF and libvips and use that for operation. This makes deployment and release of your application a breeze. With this you don't have to install any compiler tools or libvips to use Vix. But if you find that the pre-built NIF or libvips is missing some additional features or support for additional image format then you can bring your own libvips by installing it manually and ask vix to use that instead. Vix makes sure to generate relevant functions and documentation based on the dependencies you bring. For example, if you install libvips with tiff support, vix will generate tiff related bindings for you.
 
 You can choose this using `VIX_COMPILATION_MODE` env variable. This variable must be set both during compilation and runtime. Possible values are:
 
