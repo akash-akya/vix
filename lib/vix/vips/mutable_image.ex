@@ -58,6 +58,7 @@ defmodule Vix.Vips.MutableImage do
   @doc """
   Return the number of bands of a mutable image.
   """
+  @spec bands(t()) :: pos_integer()
   def bands(%MutableImage{pid: pid}) do
     GenServer.call(pid, :bands)
   end
@@ -65,6 +66,7 @@ defmodule Vix.Vips.MutableImage do
   @doc """
   Return the width of a mutable image.
   """
+  @spec width(t()) :: pos_integer()
   def width(%MutableImage{pid: pid}) do
     GenServer.call(pid, :width)
   end
@@ -72,6 +74,7 @@ defmodule Vix.Vips.MutableImage do
   @doc """
   Return the height of a mutable image.
   """
+  @spec height(t()) :: pos_integer()
   def height(%MutableImage{pid: pid}) do
     GenServer.call(pid, :height)
   end
@@ -80,6 +83,7 @@ defmodule Vix.Vips.MutableImage do
   Return a boolean indicating if a mutable image
   has an alpha band.
   """
+  @spec has_alpha?(t()) :: boolean
   def has_alpha?(%MutableImage{pid: pid}) do
     GenServer.call(pid, :has_alpha?)
   end
@@ -187,22 +191,22 @@ defmodule Vix.Vips.MutableImage do
 
   @impl true
   def handle_call(:width, _from, %{image: image} = state) do
-    {:reply, {:ok, Image.width(image)}, state}
+    {:reply, Image.width(image), state}
   end
 
   @impl true
   def handle_call(:height, _from, %{image: image} = state) do
-    {:reply, {:ok, Image.height(image)}, state}
+    {:reply, Image.height(image), state}
   end
 
   @impl true
   def handle_call(:bands, _from, %{image: image} = state) do
-    {:reply, {:ok, Image.bands(image)}, state}
+    {:reply, Image.bands(image), state}
   end
 
   @impl true
   def handle_call(:has_alpha?, _from, %{image: image} = state) do
-    {:reply, {:ok, Image.has_alpha?(image)}, state}
+    {:reply, Image.has_alpha?(image), state}
   end
 
   @impl true
@@ -211,7 +215,7 @@ defmodule Vix.Vips.MutableImage do
     height = Image.height(image)
     bands = Image.bands(image)
 
-    {:reply, {:ok, {width, height, bands}}, state}
+    {:reply, {width, height, bands}, state}
   end
 
   defp wrap_type({:ok, pid}), do: {:ok, %MutableImage{pid: pid}}

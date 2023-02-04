@@ -769,12 +769,16 @@ defmodule Vix.Vips.Image do
 
     try do
       case callback.(mut_image) do
-        :ok ->
-          MutableImage.to_image(mut_image)
-
         {:ok, result} ->
           {:ok, image} = MutableImage.to_image(mut_image)
           {:ok, {image, result}}
+          
+        :ok ->
+          MutableImage.to_image(mut_image)
+            
+        # For width, height, bands, has_alpha?
+        result ->
+          result
       end
     after
       MutableImage.stop(mut_image)
