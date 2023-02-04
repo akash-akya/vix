@@ -772,10 +772,10 @@ defmodule Vix.Vips.Image do
         {:ok, result} ->
           {:ok, image} = MutableImage.to_image(mut_image)
           {:ok, {image, result}}
-          
+
         :ok ->
           MutableImage.to_image(mut_image)
-            
+
         # For width, height, bands, has_alpha?
         result ->
           result
