@@ -610,7 +610,7 @@ defmodule Vix.Vips.Image do
   """
   @spec write_to_file(__MODULE__.t(), String.t()) :: :ok | {:error, term()}
   def write_to_file(%Image{ref: vips_image}, path) do
-    Nif.nif_image_write_to_file(vips_image, normalize_string(path))
+    Nif.nif_image_write_to_file(vips_image, normalize_string(Path.expand(path)))
   end
 
   @doc """
