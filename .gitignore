@@ -44,4 +44,4 @@ eips-*.tar
 /bench/out_*.png
 
 # Ignore pre-compiler checksum file
-checksum.exs
+# checksum.exs
