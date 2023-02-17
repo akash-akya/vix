@@ -1,7 +1,7 @@
 defmodule Vix.MixProject do
   use Mix.Project
 
-  @version "0.16.0"
+  @version "0.16.1-rc1"
   @scm_url "https://github.com/akash-akya/vix"
 
   def project do
@@ -31,7 +31,30 @@ defmodule Vix.MixProject do
       ],
       make_force_build: make_force_build(),
       cc_precompiler: [
-        cleanup: "clean_precompiled_libvips"
+        cleanup: "clean_precompiled_libvips",
+        compilers: %{
+          {:unix, :linux} => %{
+            "x86_64-linux-gnu" => "x86_64-linux-gnu-",
+            "aarch64-linux-gnu" => "aarch64-linux-gnu-",
+            "x86_64-linux-musl" => "x86_64-linux-musl-",
+            "aarch64-linux-musl" => "aarch64-linux-musl-"
+          },
+          {:unix, :darwin} => %{
+            "x86_64-apple-darwin" => {
+              "gcc",
+              "g++",
+              "<%= cc %> -arch x86_64",
+              "<%= cxx %> -arch x86_64"
+            },
+            "aarch64-apple-darwin" => {
+              "gcc",
+              "g++",
+              "<%= cc %> -arch arm64",
+              "<%= cxx %> -arch arm64"
+            }
+          },
+          {:win32, :nt} => %{}
+        }
       ],
 
       # Coverage

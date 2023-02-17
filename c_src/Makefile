@@ -81,7 +81,7 @@ $(PREFIX):
 	@mkdir -p $@
 
 $(PRECOMPILED_LIBVIPS_PREREQUISITE):
-	@MIX_EXS="../mix.exs" mix run --no-start --no-compile --no-deps-check ../compiler_scripts/precompiler.exs
+	@MIX_EXS="../mix.exs" mix run --no-start --no-compile --no-deps-check ../build_scripts/precompiler.exs
 
 clean:
 	$(RM) $(VIX) $(OBJ)

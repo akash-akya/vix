@@ -16,16 +16,27 @@ jobs:
         with:
           otp-version: 25.x
           elixir-version: 1.14.x
-      - name: Install system dependencies
+      - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential automake autoconf pkg-config bc m4 unzip zip \
+          # we don't need g++ compiler but we `cc_precompiler` looks for
+          # g++ executable to detect the target
+          sudo apt-get install -y gcc make curl tar \
             gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
-      - name: Mix Test
-        run: |
+
+          # install x86_64 musl cross-compiler
+          TARGET=x86_64-linux-musl-cross
+          curl -s https://more.musl.cc/11.2.1/x86_64-linux-musl/$TARGET.tgz | tar -xz
+          echo "$PWD/$TARGET/bin" >> $GITHUB_PATH
+
+          # install aarch64 musl cross-compiler
+          TARGET=aarch64-linux-musl-cross
+          curl -s https://more.musl.cc/11.2.1/x86_64-linux-musl/$TARGET.tgz | tar -xz
+          echo "$PWD/$TARGET/bin" >> $GITHUB_PATH
+      - run: |
           mix deps.get
           MIX_ENV=test mix test
-      - name: Create precompiled library
+      - name: Pre-compile NIF library
         run: |
           export ELIXIR_MAKE_CACHE_DIR=$(pwd)/cache
           mkdir -p "${ELIXIR_MAKE_CACHE_DIR}"
@@ -42,16 +53,15 @@ jobs:
       MIX_ENV: "prod"
     steps:
       - uses: actions/checkout@v3
-      - name: Install erlang and elixir
+      - name: Install Erlang & Elixir
         run: |
           brew install erlang elixir
           mix local.hex --force
           mix local.rebar --force
-      - name: Mix Test
-        run: |
+      - run: |
           mix deps.get
           MIX_ENV=test mix test
-      - name: Create precompiled library
+      - name: Pre-compile NIF library
         run: |
           export ELIXIR_MAKE_CACHE_DIR=$(pwd)/cache
           mkdir -p "${ELIXIR_MAKE_CACHE_DIR}"

@@ -23,32 +23,37 @@ defmodule Vix.LibvipsPrecompiled do
 
   @release_tag "8.14.1.rc3"
 
-  @filename "libvips-<%= version %>-<%= os %>-<%= arch %>.tar.gz"
+  @filename "libvips-<%= version %>-<%= suffix %>.tar.gz"
   @url "https://github.com/akash-akya/sharp-libvips/releases/download/v<%= tag %>/<%= filename %>"
 
   defp url(version, target) do
-    {:ok, arch} = cast_arch(target.arch)
-    os = cast_os(target.os)
+    {:ok, suffix} = cast_target(target)
 
-    filename = EEx.eval_string(@filename, version: version, arch: arch, os: os)
+    filename = EEx.eval_string(@filename, version: version, suffix: suffix)
     url = EEx.eval_string(@url, tag: @release_tag, filename: filename)
 
     {url, filename}
   end
 
-  defp cast_arch(arch) do
-    case arch do
-      "x86_64" -> {:ok, "x64"}
-      "aarch64" -> {:ok, "arm64v8"}
-      _ -> {:error, :unsupported}
-    end
-  end
+  defp cast_target(%{os: os, arch: arch, abi: abi}) do
+    case {arch, os, abi} do
+      {"x86_64", "linux", "musl"} ->
+        {:ok, "linuxmusl-x64"}
 
-  defp cast_os(os) do
-    case os do
-      "apple" -> "darwin"
-      "linux" -> "linux"
-      "windows" -> "win32"
+      {"aarch64", "linux", "musl"} ->
+        {:ok, "linuxmusl-arm64v8"}
+
+      {"x86_64", "linux", "gnu"} ->
+        {:ok, "linux-x64"}
+
+      {"aarch64", "linux", "gnu"} ->
+        {:ok, "linux-arm64v8"}
+
+      {"x86_64", "apple", "darwin"} ->
+        {:ok, "darwin-x64"}
+
+      {"aarch64", "apple", "darwin"} ->
+        {:ok, "darwin-arm64v8"}
     end
   end
 
