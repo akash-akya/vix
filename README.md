@@ -34,6 +34,12 @@ You can choose this using `VIX_COMPILATION_MODE` env variable. This variable mus
 
 * `PRECOMPILED_NIF_AND_LIBVIPS` (Default): Uses vix provided NIF and libvips. No need to install any additional dependencies. Big thanks to [sharp](https://github.com/lovell/sharp) library maintainers, pre-compiled libvips is based on: https://github.com/lovell/sharp-libvips/.
 
+  Run this command below to generate the required `checksum.exs` file.
+
+  ```sh
+  MIX_ENV=dev mix elixir_make.checksum --all --ignore-unavailable
+  ```
+
 * `PLATFORM_PROVIDED_LIBVIPS`: Uses platform provided libvips and NIF will be compiled during compilation phase. You need to install required build tools to compile NIF. To build NIF you need these:
 
     - libvips with development headers
