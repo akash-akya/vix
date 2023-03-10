@@ -104,7 +104,7 @@ defmodule Vix.MixProject do
       maintainers: ["Akash Hiremath"],
       licenses: ["MIT"],
       files:
-        ~w(lib checksum.exs mix.exs README.md LICENSE Makefile c_src/Makefile c_src/*.{h,c} c_src/g_object/*.{h,c}),
+        ~w(lib build_scripts checksum.exs mix.exs README.md LICENSE Makefile c_src/Makefile c_src/*.{h,c} c_src/g_object/*.{h,c}),
       links: %{
         GitHub: @scm_url,
         libvips: "https://libvips.github.io/libvips"
