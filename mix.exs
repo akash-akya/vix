@@ -32,10 +32,12 @@ defmodule Vix.MixProject do
       make_force_build: make_force_build(),
       cc_precompiler: [
         cleanup: "clean_precompiled_libvips",
+        allow_missing_compiler: true,
         compilers: %{
           {:unix, :linux} => %{
             "x86_64-linux-gnu" => "x86_64-linux-gnu-",
             "aarch64-linux-gnu" => "aarch64-linux-gnu-",
+            "armv7l-linux-gnueabihf" => "arm-linux-gnueabihf-",
             "x86_64-linux-musl" => "x86_64-linux-musl-",
             "aarch64-linux-musl" => "aarch64-linux-musl-"
           },
