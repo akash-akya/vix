@@ -19,10 +19,8 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          # we don't need g++ compiler but we `cc_precompiler` looks for
-          # g++ executable to detect the target
           sudo apt-get install -y gcc make curl tar \
-            gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+            gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf
 
           # install x86_64 musl cross-compiler
           TARGET=x86_64-linux-musl-cross
