@@ -1,9 +1,7 @@
 name: precompile
 
 on:
-  push:
-    tags:
-      - 'v*'
+  - push
 
 jobs:
   linux:
