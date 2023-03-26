@@ -119,7 +119,7 @@ defmodule Vix.MixProject do
       [
         {:elixir_make, "~> 0.8 or ~> 0.7.3", runtime: false},
         {:cc_precompiler, "~> 0.2 or ~> 0.1.4", runtime: false},
-        {:castore, "~> 0.1"},
+        {:castore, "~> 1.0 or ~> 0.1"},
 
         # development & test
         {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
