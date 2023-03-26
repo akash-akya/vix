@@ -7,7 +7,7 @@ on:
 
 jobs:
   linux:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     env:
       MIX_ENV: "prod"
     steps:
@@ -16,21 +16,29 @@ jobs:
         with:
           otp-version: 25.x
           elixir-version: 1.14.x
+      - name: Cache musl cross compilers
+        id: cache-musl
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-musl
+        with:
+          path: |
+            x86_64-linux-musl-cross
+            aarch64-linux-musl-cross
+          key: ${{ runner.os }}-build-${{ env.cache-name }}
+      - if: ${{ steps.cache-musl.outputs.cache-hit != 'true' }}
+        name: Setup musl compilers
+        continue-on-error: true
+        run: |
+          curl -s https://more.musl.cc/11.2.1/x86_64-linux-musl/x86_64-linux-musl-cross.tgz | tar -xz
+          curl -s https://more.musl.cc/11.2.1/x86_64-linux-musl/aarch64-linux-musl-cross.tgz | tar -xz
       - name: Install Dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc make curl tar \
             gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf
-
-          # install x86_64 musl cross-compiler
-          TARGET=x86_64-linux-musl-cross
-          curl -s https://more.musl.cc/11.2.1/x86_64-linux-musl/$TARGET.tgz | tar -xz
-          echo "$PWD/$TARGET/bin" >> $GITHUB_PATH
-
-          # install aarch64 musl cross-compiler
-          TARGET=aarch64-linux-musl-cross
-          curl -s https://more.musl.cc/11.2.1/x86_64-linux-musl/$TARGET.tgz | tar -xz
-          echo "$PWD/$TARGET/bin" >> $GITHUB_PATH
+          echo "$PWD/x86_64-linux-musl-cross/bin" >> $GITHUB_PATH
+          echo "$PWD/aarch64-linux-musl-cross/bin" >> $GITHUB_PATH
       - run: |
           mix deps.get
           MIX_ENV=test mix test
