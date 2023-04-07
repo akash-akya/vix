@@ -825,7 +825,7 @@ defmodule Vix.Vips.Image do
   ```
   """
   @spec header_value(__MODULE__.t(), String.t()) ::
-          {:ok, integer() | float() | String.t() | binary() | list()} | {:error, term()}
+          {:ok, integer() | float() | String.t() | binary() | list() | atom()} | {:error, term()}
   def header_value(%Image{ref: vips_image}, name) do
     value = Nif.nif_image_get_header(vips_image, normalize_string(name))
 
@@ -850,8 +850,25 @@ defmodule Vix.Vips.Image do
     Nif.nif_image_get_as_string(vips_image, normalize_string(name))
   end
 
-  for name <-
-        ~w/width height bands xres yres xoffset yoffset filename mode scale offset page-height n-pages orientation interpretation coding format/ do
+  for {name, spec} <- %{
+        "width" => :non_neg_integer,
+        "height" => :non_neg_integer,
+        "bands" => :non_neg_integer,
+        "xres" => :float,
+        "yres" => :float,
+        "xoffset" => :integer,
+        "yoffset" => :integer,
+        "filename" => quote(do: String.t()),
+        "mode" => quote(do: Stringt.t()),
+        "scale" => :float,
+        "offset" => :float,
+        "page-height" => :integer,
+        "n-pages" => :integer,
+        "orientation" => :integer,
+        "interpretation" => quote(do: Vix.Vips.Operation.vips_interpretation()),
+        "coding" => quote(do: Vix.Vips.Operation.vips_coding()),
+        "format" => quote(do: Vix.Vips.Operatoin.vips_band_format())
+      } do
     func_name = name |> String.replace("-", "_") |> String.to_atom()
 
     @doc """
@@ -862,7 +879,7 @@ defmodule Vix.Vips.Image do
     > See [libvips docs](https://libvips.github.io/libvips/API/current/libvips-header.html#vips-image-get-#{name}) for more details regarding `#{func_name}` function
 
     """
-    @spec unquote(func_name)(__MODULE__.t()) :: term() | no_return()
+    @spec unquote(func_name)(__MODULE__.t()) :: unquote(spec) | no_return()
     def unquote(func_name)(vips_image) do
       case header_value(vips_image, unquote(name)) do
         {:ok, value} -> value
