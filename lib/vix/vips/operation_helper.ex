@@ -77,6 +77,9 @@ defmodule Vix.Vips.OperationHelper do
       {[term], []} ->
         {:ok, term}
 
+      {required, []} ->
+        {:ok, List.to_tuple(required)}
+
       {required, optional} ->
         {:ok, List.to_tuple(required ++ [Map.new(optional)])}
     end
@@ -167,6 +170,12 @@ defmodule Vix.Vips.OperationHelper do
           {:ok, unquote(typespec(pspec))} | {:error, term()}
         end
 
+      {pspec_list, []} ->
+        quote do
+          {:ok, {unquote_splicing(required_args_typespec(pspec_list))}}
+          | {:error, term()}
+        end
+
       {pspec_list, optional} ->
         optional_out = optional_args_typespec(optional)
 
@@ -191,6 +200,12 @@ defmodule Vix.Vips.OperationHelper do
           unquote(typespec(pspec)) | no_return()
         end
 
+      {pspec_list, []} ->
+        quote do
+          {unquote_splicing(required_args_typespec(pspec_list))}
+          | no_return()
+        end
+
       {pspec_list, optional} ->
         optional_out = optional_args_typespec(optional)
 
@@ -205,8 +220,13 @@ defmodule Vix.Vips.OperationHelper do
   def func_typespec(func_name, required_in, optional_in, required_out, optional_out) do
     quote do
       unquote(func_name)(
-        unquote_splicing(required_args_typespec(required_in)),
-        unquote(optional_args_typespec(optional_in))
+        unquote_splicing(
+          if optional_in == [] do
+            required_args_typespec(required_in)
+          else
+            required_args_typespec(required_in) ++ [optional_args_typespec(optional_in)]
+          end
+        )
       ) ::
         unquote(output_typespec(required_out, optional_out))
     end
@@ -215,8 +235,13 @@ defmodule Vix.Vips.OperationHelper do
   def bang_func_typespec(func_name, required_in, optional_in, required_out, optional_out) do
     quote do
       unquote(func_name)(
-        unquote_splicing(required_args_typespec(required_in)),
-        unquote(optional_args_typespec(optional_in))
+        unquote_splicing(
+          if optional_in == [] do
+            required_args_typespec(required_in)
+          else
+            required_args_typespec(required_in) ++ [optional_args_typespec(optional_in)]
+          end
+        )
       ) ::
         unquote(bang_output_typespec(required_out, optional_out))
     end
@@ -344,19 +369,26 @@ defmodule Vix.Vips.OperationHelper do
         "* #{pspec.param_name} - #{pspec.desc}. (`#{Macro.to_string(typespec(pspec))}`)"
       end)
 
-    optional_out_values =
-      Enum.map_join(optional_out, "\n", fn pspec ->
-        "* #{pspec.param_name} - #{pspec.desc}. (`#{Macro.to_string(typespec(pspec))}`)"
-      end)
-
     """
     ## Returns
     Operation returns a tuple
 
     #{required_out_values}
 
-    Last value of the tuple is a map of additional output values as key-value pair.
+    #{optional_out_doc(optional_out)}
+    """
+  end
 
+  defp optional_out_doc([]), do: ""
+
+  defp optional_out_doc(optional_out) do
+    optional_out_values =
+      Enum.map_join(optional_out, "\n", fn pspec ->
+        "* #{pspec.param_name} - #{pspec.desc}. (`#{Macro.to_string(typespec(pspec))}`)"
+      end)
+
+    """
+    Last value of the tuple is a map of additional output values as key-value pair.
     #{optional_out_values}
     """
   end
