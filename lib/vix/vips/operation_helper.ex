@@ -78,7 +78,7 @@ defmodule Vix.Vips.OperationHelper do
         {:ok, term}
 
       {required, optional} ->
-        {:ok, List.to_tuple(required ++ [optional])}
+        {:ok, List.to_tuple(required ++ [Map.new(optional)])}
     end
   end
 
@@ -171,7 +171,9 @@ defmodule Vix.Vips.OperationHelper do
         optional_out = optional_args_typespec(optional)
 
         quote do
-          {:ok, {unquote_splicing(required_args_typespec(pspec_list)), unquote(optional_out)}}
+          {:ok,
+           {unquote_splicing(required_args_typespec(pspec_list)),
+            %{unquote_splicing(optional_out)}}}
           | {:error, term()}
         end
     end
@@ -193,7 +195,8 @@ defmodule Vix.Vips.OperationHelper do
         optional_out = optional_args_typespec(optional)
 
         quote do
-          {unquote_splicing(required_args_typespec(pspec_list)), unquote(optional_out)}
+          {unquote_splicing(required_args_typespec(pspec_list)),
+           %{unquote_splicing(optional_out)}}
           | no_return()
         end
     end
@@ -348,11 +351,12 @@ defmodule Vix.Vips.OperationHelper do
 
     """
     ## Returns
-    Ordered values in the returned tuple
+    Operation returns a tuple
+
     #{required_out_values}
 
-    ## Additional
-    Last value of the the output tuple is a keyword list of additional optional output values
+    Last value of the tuple is a map of additional output values as key-value pair.
+
     #{optional_out_values}
     """
   end
