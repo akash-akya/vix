@@ -61,13 +61,13 @@ defmodule Vix.Vips.OperationTest do
   test "additional return values", %{dir: _dir} do
     {:ok, im} = Image.new_from_file(img_path("black_on_white.jpg"))
 
-    assert {:ok, {0.0, [x: _, y: _, "out-array": [0.0], "x-array": [_ | _], "y-array": [_ | _]]}} =
+    assert {:ok, {0.0, %{x: _, y: _, "out-array": [0.0], "x-array": [_ | _], "y-array": [_ | _]}}} =
              Operation.min(im)
   end
 
   test "required output order", %{dir: _dir} do
     {:ok, im} = Image.new_from_file(img_path("black_on_white.jpg"))
-    assert Operation.find_trim(im) == {:ok, {41, 44, 45, 45, []}}
+    assert Operation.find_trim(im) == {:ok, {41, 44, 45, 45, %{}}}
   end
 
   test "when unsupported argument is passed", %{dir: _dir} do
