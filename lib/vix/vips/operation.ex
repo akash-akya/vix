@@ -58,8 +58,7 @@ defmodule Vix.Vips.Operation do
     bang_func_name = function_name(String.to_atom(name <> "!"))
 
     @doc """
-    Same as `#{func_name}/#{length(req_params) + 1}`, except it
-    returns only the value (not a tuple) and raises on error.
+    #{prepare_doc(desc, in_req_spec, in_opt_spec, out_req_spec, out_opt_spec)}
     """
     @spec unquote(
             bang_func_typespec(
