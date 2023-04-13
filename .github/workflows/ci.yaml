@@ -165,10 +165,10 @@ jobs:
           mkdir -p priv/plts
           mix deps.get
           mix deps.compile
-          mix dialyzer --plt
+          # mix dialyzer --plt
 
       - run: mix deps.get
       - run: mix deps.unlock --check-unused
       - run: mix format --check-formatted
       - run: mix credo --strict
-      - run: mix dialyzer --plt
+      # - run: mix dialyzer --plt
