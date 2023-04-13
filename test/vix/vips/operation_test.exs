@@ -67,7 +67,7 @@ defmodule Vix.Vips.OperationTest do
 
   test "required output order", %{dir: _dir} do
     {:ok, im} = Image.new_from_file(img_path("black_on_white.jpg"))
-    assert Operation.find_trim(im) == {:ok, {41, 44, 45, 45, %{}}}
+    assert Operation.find_trim(im) == {:ok, {41, 44, 45, 45}}
   end
 
   test "when unsupported argument is passed", %{dir: _dir} do
