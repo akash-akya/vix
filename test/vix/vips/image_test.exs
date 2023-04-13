@@ -91,6 +91,30 @@ defmodule Vix.Vips.ImageTest do
     assert {:ok, 518} = Image.header_value(im, "width")
   end
 
+  test "headers", %{dir: _dir} do
+    {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
+
+    assert %{
+             bands: 3,
+             coding: :VIPS_CODING_NONE,
+             filename: _filename,
+             format: :VIPS_FORMAT_UCHAR,
+             height: 389,
+             interpretation: :VIPS_INTERPRETATION_sRGB,
+             mode: nil,
+             "n-pages": nil,
+             offset: nil,
+             orientation: 1,
+             "page-height": nil,
+             scale: nil,
+             width: 518,
+             xoffset: 0,
+             xres: 2.834645669291339,
+             yoffset: 0,
+             yres: 2.834645669291339
+           } = Image.headers(im)
+  end
+
   test "get_header binary", %{dir: _dir} do
     {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
     assert {:ok, <<_::binary>>} = Image.header_value(im, "exif-data")

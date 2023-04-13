@@ -880,12 +880,66 @@ defmodule Vix.Vips.Image do
 
     """
     @spec unquote(func_name)(__MODULE__.t()) :: unquote(spec) | no_return()
-    def unquote(func_name)(vips_image) do
-      case header_value(vips_image, unquote(name)) do
+    def unquote(func_name)(image) do
+      case header_value(image, unquote(name)) do
         {:ok, value} -> value
         {:error, error} -> raise to_string(error)
       end
     end
+  end
+
+  @doc """
+  Get all image header data as map. Headers includes metadata such as image height, width, bands.
+
+  If a header does not exists then value for that header will be set to `nil`.
+
+  See https://libvips.github.io/libvips/API/current/libvips-header.html for more details.
+  """
+  @spec headers(__MODULE__.t()) :: %{
+          width: :non_neg_integer | nil,
+          height: :non_neg_integer | nil,
+          bands: :non_neg_integer | nil,
+          xres: :float | nil,
+          yres: :float | nil,
+          xoffset: :integer | nil,
+          yoffset: :integer | nil,
+          filename: String.t() | nil,
+          mode: Stringt.t() | nil,
+          scale: :float | nil,
+          offset: :float | nil,
+          "page-height": :integer | nil,
+          "n-pages": :integer | nil,
+          orientation: :integer | nil,
+          interpretation: Vix.Vips.Operation.vips_interpretation() | nil,
+          coding: Vix.Vips.Operation.vips_coding() | nil,
+          format: Vix.Vips.Operatoin.vips_band_format() | nil
+        }
+  def headers(image) do
+    [
+      :width,
+      :height,
+      :bands,
+      :xres,
+      :yres,
+      :xoffset,
+      :yoffset,
+      :filename,
+      :mode,
+      :scale,
+      :offset,
+      :"page-height",
+      :"n-pages",
+      :orientation,
+      :interpretation,
+      :coding,
+      :format
+    ]
+    |> Map.new(fn field ->
+      case header_value(image, to_string(field)) do
+        {:ok, value} -> {field, value}
+        {:error, _} -> {field, nil}
+      end
+    end)
   end
 
   defp normalize_string(str) when is_binary(str), do: str
