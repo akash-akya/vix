@@ -67,6 +67,21 @@ jobs:
           sudo make install
           sudo ldconfig -v
 
+      - name: Cache Dependencies
+        id: mix-cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            deps
+            _build
+          key: ${{ runner.os }}-${{ matrix.otp }}-${{ matrix.elixir }}-${{ hashFiles('mix.lock') }}
+
+      - name: Install Dependencies
+        if: steps.mix-cache.outputs.cache-hit != 'true'
+        run: |
+          mix deps.get
+          mix deps.compile
+
       - run: mix deps.get
       - run: mix compile --force --warnings-as-errors
       - run: mix test --trace
@@ -132,8 +147,28 @@ jobs:
         with:
           otp-version: ${{matrix.otp}}
           elixir-version: ${{matrix.elixir}}
+
       - uses: actions/checkout@v3
+
+      - name: Cache Dependencies
+        id: mix-cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            deps
+            _build
+          key: ${{ runner.os }}-${{ matrix.otp }}-${{ matrix.elixir }}-${{ hashFiles('mix.lock') }}
+
+      - name: Install Dependencies
+        if: steps.mix-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p priv/plts
+          mix deps.get
+          mix deps.compile
+          mix dialyzer --plt
+
       - run: mix deps.get
       - run: mix deps.unlock --check-unused
       - run: mix format --check-formatted
       - run: mix credo --strict
+      - run: mix dialyzer --plt
