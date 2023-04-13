@@ -123,6 +123,7 @@ defmodule Vix.MixProject do
 
         # development & test
         {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
+        {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
         {:ex_doc, ">= 0.0.0", only: :dev},
         {:excoveralls, "~> 0.15", only: :test},
         {:temp, "~> 0.4", only: :test, runtime: false}
