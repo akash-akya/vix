@@ -49,8 +49,67 @@ defmodule Vix.Vips.ImageTest do
   end
 
   test "new_matrix_from_array", %{dir: _dir} do
-    assert {:ok, _} =
-             Image.new_matrix_from_array(3, 3, [[-1, -1, -1], [-1, 16, -1], [-1, -1, -1]])
+    assert {:ok, img} =
+             Image.new_matrix_from_array(2, 2, [
+               [-1, -1],
+               [0, 16]
+             ])
+
+    assert %{width: 2, height: 2} = Image.headers(img)
+
+    assert {:ok,
+            <<
+              (<<-1::little-float, -1::little-float>>),
+              (<<0::little-float, 16::little-float>>)
+            >>} = Image.write_to_binary(img)
+  end
+
+  describe "new_from_list" do
+    test "when argument is range", %{dir: _dir} do
+      assert {:ok, img} = Image.new_from_list(0..2)
+
+      assert %{width: 3, height: 1} = Image.headers(img)
+
+      assert {:ok, <<0::little-float, 1::little-float, 2::little-float>>} =
+               Image.write_to_binary(img)
+    end
+
+    test "when argument is range within list", %{dir: _dir} do
+      assert {:ok, img} = Image.new_from_list([0..1, -1..0])
+
+      assert %{width: 2, height: 2} = Image.headers(img)
+
+      assert {:ok,
+              <<
+                (<<0::little-float, 1::little-float>>),
+                (<<-1::little-float, 0::little-float>>)
+              >>} = Image.write_to_binary(img)
+    end
+
+    test "when list is 1D", %{dir: _dir} do
+      assert {:ok, img} = Image.new_from_list([0, 1, 2])
+
+      assert %{width: 3, height: 1} = Image.headers(img)
+
+      assert {:ok, <<0::little-float, 1::little-float, 2::little-float>>} =
+               Image.write_to_binary(img)
+    end
+
+    test "when list is 2D", %{dir: _dir} do
+      assert {:ok, img} =
+               Image.new_from_list([
+                 [1, 2, 3],
+                 [-1, -2, -3]
+               ])
+
+      assert %{width: 3, height: 2} = Image.headers(img)
+
+      assert {:ok,
+              <<
+                (<<1::little-float, 2::little-float, 3::little-float>>),
+                (<<-1::little-float, -2::little-float, -3::little-float>>)
+              >>} = Image.write_to_binary(img)
+    end
   end
 
   test "mutate", %{dir: _dir} do

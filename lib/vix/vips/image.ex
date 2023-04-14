@@ -721,12 +721,12 @@ defmodule Vix.Vips.Image do
   end
 
   @doc """
-  Make a VipsImage from list.
+  Make a VipsImage from 2D list.
 
-  This convenience function makes an image which is a matrix: a one-band VIPS_FORMAT_DOUBLE image held in memory. Useful for vips operations such as `conv`.
+  This is a convenience function makes an image which is a matrix: a one-band VIPS_FORMAT_DOUBLE image held in memory. Useful for vips operations such as `conv`.
 
   ```elixir
-  mask = Image.new_matrix_from_array(3, 3, [[0, 1, 0], [1, 1, 1], [0, 1, 0]])
+  {:ok, mask} = Image.new_matrix_from_array(3, 3, [[0, 1, 0], [1, 1, 1], [0, 1, 0]])
   ```
 
   ## Optional
@@ -738,9 +738,45 @@ defmodule Vix.Vips.Image do
   def new_matrix_from_array(width, height, list, optional \\ []) do
     scale = to_double(optional[:scale], 1)
     offset = to_double(optional[:offset], 0)
+    list = flatten_to_double_list(list)
 
-    Nif.nif_image_new_matrix_from_array(width, height, flatten_list(list), scale, offset)
+    Nif.nif_image_new_matrix_from_array(width, height, list, scale, offset)
     |> wrap_type()
+  end
+
+  @doc """
+  Make a VipsImage from 1D or 2D list.
+
+  If list is a single dimension then an image of height 1 will be with list
+  content as values.
+
+  If list is 2D then 2D image will be created.
+
+  Output image will always be a one band image with `double` format.
+
+  ```elixir
+  # 1D list
+  {:ok, img2} = Image.new_from_list([0, 1, 0])
+
+  # 2D list
+  {:ok, img} = Image.new_from_list([[0, 1, 0], [1, 1, 1], [0, 1, 0]])
+  ```
+
+  ## Optional
+
+  * scale - Default: 1
+  * offset - Default: 0
+  """
+  @spec new_from_list(list([number]) | [number] | Range.t(), keyword()) ::
+          {:ok, __MODULE__.t()} | {:error, term()}
+  def new_from_list(list, optional \\ []) do
+    with {:ok, {width, height, list}} <- validate_matrix_list(list) do
+      scale = to_double(optional[:scale], 1)
+      offset = to_double(optional[:offset], 0)
+
+      Nif.nif_image_new_matrix_from_array(width, height, list, scale, offset)
+      |> wrap_type()
+    end
   end
 
   @doc """
@@ -946,11 +982,13 @@ defmodule Vix.Vips.Image do
 
   defp normalize_string(str) when is_list(str), do: to_string(str)
 
-  defp flatten_list(list) do
-    Enum.flat_map(list, fn p ->
-      Enum.map(p, &to_double/1)
-    end)
+  defp normalize_list(%Range{} = range), do: Enum.to_list(range)
+
+  defp normalize_list(list) when is_list(list) do
+    Enum.map(list, &normalize_list/1)
   end
+
+  defp normalize_list(term), do: term
 
   defp to_double(v) when is_integer(v), do: v * 1.0
   defp to_double(v) when is_float(v), do: v
@@ -972,6 +1010,66 @@ defmodule Vix.Vips.Image do
       true ->
         {:error, :invalid_list}
     end
+  end
+
+  @spec validate_matrix_list([[number]] | [number] | Range.t()) ::
+          {width :: non_neg_integer(), height :: non_neg_integer(), [number]}
+  defp validate_matrix_list(list) do
+    list = normalize_list(list)
+
+    result =
+      cond do
+        !is_list(list) ->
+          {:error, "argument is not a list"}
+
+        length(list) > 0 && is_list(hd(list)) ->
+          height = length(list)
+          width = length(hd(list))
+
+          cond do
+            !Enum.all?(list, &is_list/1) ->
+              {:error, "not a 2D list"}
+
+            !Enum.all?(list, &(length(&1) == width)) ->
+              {:error, "list is not rectangular"}
+
+            true ->
+              {:ok, {width, height, flatten_to_double_list(list)}}
+          end
+
+        true ->
+          {:ok, {length(list), 1, cast_to_double_list(list)}}
+      end
+
+    with {:ok, {width, height, list}} <- result,
+         :ok <- validate_list_dimension(width, height, list),
+         :ok <- validate_list_contents(list) do
+      {:ok, {width, height, list}}
+    end
+  end
+
+  defp validate_list_dimension(width, height, list) do
+    if length(list) == width * height do
+      :ok
+    else
+      {:error, "bad list dimensions"}
+    end
+  end
+
+  defp validate_list_contents(list) do
+    if Enum.all?(list, &is_number/1) do
+      :ok
+    else
+      {:error, "not all list elements are number"}
+    end
+  end
+
+  defp cast_to_double_list(list) do
+    Enum.map(list, &to_double/1)
+  end
+
+  defp flatten_to_double_list(list) do
+    Enum.flat_map(list, &cast_to_double_list(&1))
   end
 
   # Support for rendering images in Livebook
