@@ -1,0 +1,317 @@
+# Auto Correct Document Rotation
+
+```elixir
+Mix.install(
+  [
+    {:vix, "~> 0.17.0"},
+    {:kino, "~> 0.9.2"}
+  ],
+  # pre-built binaries does not support fourier transform operations
+  # since these operations depend on an additional library.
+  #
+  # Usually the platform/OS provided libvips comes with these additional library
+  # so we are telling vix to use the libvips provided by the platform
+  # and compile NIF for that. Follow platform specific libvips
+  # installation guide
+  system_env: [
+    {"VIX_COMPILATION_MODE", "PLATFORM_PROVIDED_LIBVIPS"}
+  ]
+)
+```
+
+## Introduction
+
+In this livebook we look into correcting the text image rotation using
+image processing techniques such as Fourier Transformation, complex
+planes, and arithmetic operations.
+
+This notebook is heavily based on libvips [blog post](https://libvips.blogspot.com/2015/11/fancy-transforms.html)
+and [stack overflow answer](https://stackoverflow.com/questions/33698068/align-text-for-ocr/33707537#33707537).
+
+We use the same image mentioned on the blog to test our implementation.
+So let's first fetch the test image.
+
+```elixir
+alias Vix.Vips.Image
+alias Vix.Vips.Operation
+
+# import convenience math operators `+`, `-`, `*` etc.
+use Vix.Operator
+
+# we use `:httpc` to download the image
+{:ok, _} = Application.ensure_all_started(:inets)
+{:ok, _} = Application.ensure_all_started(:ssl)
+
+# image link is from the stackoverflow question
+image_url = 'https://i.stack.imgur.com/2q4Qr.png'
+{:ok, {{_, 200, _}, _headers, bin}} = :httpc.request(:get, {image_url, []}, [timeout: 5000], [])
+
+{:ok, img} =
+  bin
+  |> IO.iodata_to_binary()
+  |> Image.new_from_buffer()
+
+# convert 4 channel PNG image to black & white
+img = Operation.colourspace!(img, :VIPS_INTERPRETATION_B_W)
+# skip alpha band
+img = img[0]
+```
+
+Notice that the image is not fully vertical, orienttion is slightly off
+
+## Fourier Transformation
+
+An image can be expressed as sum of sine and cosine waves of varying
+magnitudes, frequency and phase. Fourier Transform is an operation
+which decomposes an image into its sine and cosine components.
+
+There are lot of resources online on this topic,
+I found [this](https://web.archive.org/web/20130513181427id_/http://sharp.bu.edu/~slehar/fourier/fourier.html#filtering)
+and [this](https://dsp.stackexchange.com/questions/1637/what-does-frequency-domain-denote-in-case-of-images/1644#1644) useful get started.
+
+Libvips has [`fwfft`](https://www.libvips.org/API/current/libvips-freqfilt.html#vips-fwfft)
+function for Forward Fourier Transform operation and
+[`invfft`](https://www.libvips.org/API/current/libvips-freqfilt.html#vips-invfft)
+for Inverse Fourier Transform operation.
+
+### Fwfft
+
+`fwfft` returns an image with complex band format. Real part of the
+band will be the wave Amplitude, Imaginary part of the band will be the
+wave Phase. Position of the value is the frequency.
+
+Since the returned image is in Complex band format, it can not be displayed.
+To make it visible we need convert the complex band to 2 band float, warp the
+image to center, scale values so they are visible.
+
+```elixir
+white = Operation.black!(10, 200) + 255
+vert_line = Operation.embed!(white, 45, 0, 200, 200)
+
+# take fourier transform of the input image
+ft = Operation.fwfft!(vert_line)
+
+# display the images, notice the band format and band count
+Kino.Layout.grid(
+  [Kino.Text.new("Input"), Kino.Text.new("Fourier Transform"), vert_line, ft],
+  columns: 2
+)
+|> Kino.render()
+
+# convert complex number to 2 band double format
+ft = Operation.copy!(ft, format: :VIPS_FORMAT_DOUBLE, bands: 2)
+
+# do logarithm scaling for the image so that points visible
+# and move the origin of the image to center
+scaled_ft =
+  ft
+  |> Operation.scale!(log: true)
+  |> Operation.wrap!()
+
+# separate amplitude and phase channels
+amp = scaled_ft[0]
+phase = scaled_ft[1]
+
+Kino.Layout.grid(
+  [Kino.Text.new("Amplitude"), Kino.Text.new("Phase"), amp, phase],
+  columns: 2
+)
+```
+
+Since all these conversion is common, libvips provides
+`spectrum` function which does all this for you.
+Spectrum computes fourier transform, takes absolute value
+(amplitude), scales and wraps the origin. It meant for
+displaying the Fourier Transform.
+
+```elixir
+Operation.spectrum!(vert_line)
+```
+
+Let's display fourier transform for few sample images to see how the
+output changes. Change the number of lines and see how fourier transform changes.
+
+```elixir
+lines_count =
+  Kino.Input.number("Number of lines", default: 10)
+  |> Kino.render()
+  |> Kino.Input.read()
+
+# lets create images which black and white lines
+width = trunc(100 / lines_count)
+black_line = Operation.black!(width, 200)
+
+# 10 lines B&W lines
+lines =
+  [black_line, Operation.invert!(black_line)]
+  |> List.duplicate(lines_count)
+  |> List.flatten()
+
+vert_lines = Operation.arrayjoin!(lines, across: length(lines))
+horz_lines = Operation.rot!(vert_lines, :VIPS_ANGLE_D90)
+vert_horz_lines = vert_lines + horz_lines
+
+samples = [vert_lines, horz_lines, vert_horz_lines]
+
+samples
+|> Enum.flat_map(fn img ->
+  [img, Operation.spectrum!(img)]
+end)
+|> Kino.Layout.grid(columns: 2)
+```
+
+As we can see, the vertical lines in the input image produces a horizontal
+line in the fourier transform and horizontal lines in the
+input produces to vertical line in the FT. Changing the number of lines
+does not change the number lines on the output image.
+
+So if we take Fourier Transform of a perfect text image, it should have
+vertical lines and or horizontal lines exactly at 0, 90, 180, 270 degree angle,
+since the characters and lines are either parallel or perpedicular. If the
+document is off by some angle then the same should be visible in the Fourier
+Transform.
+
+```elixir
+Kino.Layout.grid([img, Operation.spectrum!(img)], columns: 2)
+```
+
+Indeed we can see a slightly off vertical line and horizontal
+lines. Now we just need to find the angle.
+
+## Finding the angle
+
+As said before ouput of image of Fourier Transform will be in complex band format.
+The real part of it is amplitude, which is what we are
+seeing as lines and there is imaginary part which is phase.
+
+There are two different way to plot complex numbers on a 2D plane.
+
+* Cartesian (Rectangle) coordinate system
+* Polar coordinate system
+
+Libvips provides functions to convert numbers from one plane to other plane.
+Intuitively when converting from Cartesian system to Polar system,
+all vertical lines becomes the circle and horizontal lines becomes the arch/segment.
+Which is what we used in the "Creating Rainbow" livebook for generating the arch.
+
+But there is also the inverse operation. We can convert an image from Polar
+plan to Cartesian plane. The circle becomes the vertical line and the
+segment becomes the horizontal line. **More importantly radius becomes the x-axis and
+angle becomes the y-axis.**
+
+Let's see few examples
+
+```elixir
+defmodule ComplexOps do
+  def to_cartesian(img, background \\ [0, 0, 0]) do
+    %{width: width, height: height} = Image.headers(img)
+    xy = Operation.xyz!(width, height)
+
+    # normalize the y-axis to be between 0 and 360
+    xy = xy * [1, 360 / height]
+
+    xy =
+      xy
+      # read values as complex numbers
+      |> Operation.copy!(format: :VIPS_FORMAT_COMPLEX, bands: 1)
+      # convert from polar to Cartesian plane
+      |> Operation.complex!(:VIPS_OPERATION_COMPLEX_RECT)
+      # and convert back to float
+      |> Operation.copy!(format: :VIPS_FORMAT_FLOAT, bands: 2)
+
+    scale = min(width, height) / width
+    xy = xy * (scale / 2)
+    xy = xy + [width / 2, height / 2]
+
+    # mapim takes an input and a `map` and generates an output image
+    # where input image pixels are moved based on map.
+    #
+    # [new_x, new_y] = map[x, y]
+    # out[x, y] = img[new_x, new_y]
+    #
+    # mapim is to rotate, displace, distort, any type of spatial operations.
+    # where the pixel value (color) remain same but the position is changed.
+    Operation.mapim!(img, xy, background: background)
+  end
+end
+
+samples
+|> Enum.flat_map(fn img ->
+  ft = Operation.spectrum!(img)
+  [img, ft, ComplexOps.to_cartesian(ft)]
+end)
+|> Kino.Layout.grid(columns: 3)
+```
+
+```elixir
+# for the input document
+img
+|> Operation.spectrum!()
+|> ComplexOps.to_cartesian()
+```
+
+Only thing left now is to find a row with maximum value.
+The row number corresponding to the maximum value is the angle.
+Libvips has `project` function which finds the row wise and column
+wise sum and returns them as image, we can then use `max` to
+find the maximum value and its position.
+
+```elixir
+defmodule Utils do
+  def find_angle(cartesian) do
+    # find the row wise and column wise sum
+    # returns 2 images with respective column/row sum
+    {_columns, rows} = Operation.project!(cartesian)
+
+    # find position of the row with maximum value
+    {_, %{y: y_pos}} = Operation.max!(rows)
+
+    # convert the y position back to angle.
+    y_pos / Image.height(rows) * 360
+  end
+end
+
+samples
+|> Enum.flat_map(fn img ->
+  ft = Operation.spectrum!(img)
+  cartesian = ComplexOps.to_cartesian(ft)
+
+  angle = Utils.find_angle(cartesian)
+  # print angle next to image
+  text = Kino.Text.new("\n\n\n#{to_string(angle)}")
+
+  [img, ft, cartesian, text]
+end)
+|> then(fn list ->
+  headers = ~w(Input Fourier-Transform Polar-Plane Angle) |> Enum.map(&Kino.Text.new/1)
+  headers ++ list
+end)
+|> Kino.Layout.grid(columns: 4)
+```
+
+If there are multiple rows with same maximum values we pick one randomly.
+
+For the input image
+
+```elixir
+ft = Operation.spectrum!(img)
+cartesian = ComplexOps.to_cartesian(ft)
+
+angle = Utils.find_angle(cartesian)
+
+# since we know that angle can only be parallel or perpendicular
+# can take mod of 90
+angle = angle - trunc(angle / 90) * 90
+```
+
+## Correcting the rotation
+
+Putting it all together now we can rotate the image using the
+difference as correction to fix the document
+
+```elixir
+diff = 90 - angle
+corrected = Operation.rotate!(img, diff)
+
+Kino.Layout.grid([Kino.Text.new("Input"), Kino.Text.new("Corrected"), img, corrected], columns: 2)
+```

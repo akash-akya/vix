@@ -83,7 +83,8 @@ defmodule Vix.MixProject do
           "LICENSE",
           "livebooks/introduction.livemd",
           "livebooks/picture-language.livemd",
-          "livebooks/rainbow.livemd"
+          "livebooks/rainbow.livemd",
+          "livebooks/auto_correct_rotation.livemd"
         ],
         groups_for_extras: [
           Livebooks: Path.wildcard("livebooks/*.livemd")

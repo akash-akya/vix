@@ -168,7 +168,7 @@ end)
 
 The [libvips reference manual](https://libvips.github.io/libvips/API/current/) has more detailed documentation about the operations.
 
-### Bonus
+### Livebooks
 
 * Livebook implementing picture language defined in [*Structural and Interpretation of Computer Programs*](https://mitpress.mit.edu/sites/default/files/sicp/index.html) section [2.2.4](https://mitpress.mit.edu/sites/default/files/sicp/full-text/book/book-Z-H-15.html#%_sec_2.2.4).
 
@@ -177,6 +177,10 @@ The [libvips reference manual](https://libvips.github.io/libvips/API/current/) h
 * Creating Rainbow. Quick introduction to complex number and operations, `mapim`, `buildlut`.
 
 [![Run in Livebook](https://livebook.dev/badge/v1/blue.svg)](https://livebook.dev/run?url=https%3A%2F%2Fgithub.com%2Fakash-akya%2Fvix%2Fblob%2Fmaster%2Flivebooks%2Frainbow.livemd)
+
+* Auto correct Document Rotation. Quick introduction to Fourier Transformation, Complex planes, and Arithmetic Operations.
+
+[![Run in Livebook](https://livebook.dev/badge/v1/blue.svg)](https://livebook.dev/run?url=https%3A%2F%2Fgithub.com%2Fakash-akya%2Fvix%2Fblob%2Fmaster%2Flivebooks%2Fauto_correct_rotation.livemd)
 
 ### NIF Error Logging
 
