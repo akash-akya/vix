@@ -887,9 +887,9 @@ defmodule Vix.Vips.Image do
   end
 
   for {name, spec} <- %{
-        "width" => quote(do: non_neg_integer()),
-        "height" => quote(do: non_neg_integer()),
-        "bands" => quote(do: non_neg_integer()),
+        "width" => quote(do: pos_integer()),
+        "height" => quote(do: pos_integer()),
+        "bands" => quote(do: pos_integer()),
         "xres" => quote(do: float()),
         "yres" => quote(do: float()),
         "xoffset" => quote(do: integer()),
@@ -932,9 +932,9 @@ defmodule Vix.Vips.Image do
   See https://libvips.github.io/libvips/API/current/libvips-header.html for more details.
   """
   @spec headers(__MODULE__.t()) :: %{
-          width: non_neg_integer() | nil,
-          height: non_neg_integer() | nil,
-          bands: non_neg_integer() | nil,
+          width: pos_integer() | nil,
+          height: pos_integer() | nil,
+          bands: pos_integer() | nil,
           xres: float() | nil,
           yres: float() | nil,
           xoffset: integer() | nil,
