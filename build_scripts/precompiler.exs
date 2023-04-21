@@ -21,7 +21,7 @@ defmodule Vix.LibvipsPrecompiled do
     :ok
   end
 
-  @release_tag "8.14.1.rc3"
+  @release_tag "8.14.2-rc1"
 
   @filename "libvips-<%= version %>-<%= suffix %>.tar.gz"
   @url "https://github.com/akash-akya/sharp-libvips/releases/download/v<%= tag %>/<%= filename %>"
