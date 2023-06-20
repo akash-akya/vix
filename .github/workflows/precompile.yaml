@@ -10,22 +10,27 @@ jobs:
     runs-on: ubuntu-latest
     env:
       MIX_ENV: "prod"
+    strategy:
+      matrix:
+        include:
+          - elixir: 1.14.x
+            otp: 25.x
+          - elixir: 1.14.x
+            otp: 26.x
     steps:
       - uses: actions/checkout@v3
       - uses: erlef/setup-beam@v1
         with:
-          otp-version: 25.x
-          elixir-version: 1.14.x
+          otp-version: ${{matrix.otp}}
+          elixir-version: ${{matrix.elixir}}
       - name: Cache musl cross compilers
         id: cache-musl
         uses: actions/cache@v3
-        env:
-          cache-name: cache-musl
         with:
           path: |
             x86_64-linux-musl-cross
             aarch64-linux-musl-cross
-          key: ${{ runner.os }}-build-${{ env.cache-name }}
+          key: musl-${{ runner.os }}-build
       - if: ${{ steps.cache-musl.outputs.cache-hit != 'true' }}
         name: Setup musl compilers
         continue-on-error: true
@@ -57,16 +62,55 @@ jobs:
     runs-on: macos-11
     env:
       MIX_ENV: "prod"
+    strategy:
+      matrix:
+        include:
+          - elixir: '1.14.5'
+            otp: '25.1'
+          - elixir: '1.14.5'
+            otp: '26.0'
     steps:
       - uses: actions/checkout@v3
-      - name: Install Erlang & Elixir
+      - name: Install asdf
+        uses: asdf-vm/actions/setup@v2
+
+      - name: Cache asdf
+        id: asdf-cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.asdf
+          key: asdf-${{ runner.os }}-build-${{ matrix.otp }}-${{ matrix.elixir }}
+
+      - if: ${{ steps.asdf-cache.outputs.cache-hit != 'true' }}
+        name: Install Erlang & Elixir
+        env:
+          ELIXIR_VERSION: ${{ matrix.elixir }}
+          OTP_VERSION: ${{ matrix.otp }}
         run: |
-          brew install erlang elixir
+          asdf plugin-add erlang
+          asdf install erlang ${OTP_VERSION}
+
+          ELIXIR_OTP_VERSION=$(echo $OTP_VERSION | cut -d. -f1)
+          asdf plugin-add elixir
+          asdf install elixir ${ELIXIR_VERSION}-otp-${ELIXIR_OTP_VERSION}
+
+      - name: Setup Erlang & Elixir
+        env:
+          ELIXIR_VERSION: ${{ matrix.elixir }}
+          OTP_VERSION: ${{ matrix.otp }}
+        run: |
+          asdf global erlang ${OTP_VERSION}
+          ELIXIR_OTP_VERSION=$(echo $OTP_VERSION | cut -d. -f1)
+          asdf global elixir ${ELIXIR_VERSION}-otp-${ELIXIR_OTP_VERSION}
+
+      - name: Install hex & rebar
+        run: |
           mix local.hex --force
           mix local.rebar --force
       - run: |
           mix deps.get
           MIX_ENV=test mix test
+
       - name: Pre-compile NIF library
         run: |
           export ELIXIR_MAKE_CACHE_DIR=$(pwd)/cache
