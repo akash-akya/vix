@@ -85,7 +85,7 @@ defmodule Vix.Vips.MutableImage do
   end
 
   @doc """
-  Return the shape of the umage as
+  Return the shape of the image as
   `{width, height, bands}`.
   """
   def shape(%MutableImage{pid: pid}) do
