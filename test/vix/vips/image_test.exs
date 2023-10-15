@@ -301,7 +301,7 @@ defmodule Vix.Vips.ImageTest do
     {:ok, im} = Image.new_from_file(img_path("black.jpg"))
     assert {:ok, %Vix.Tensor{} = tensor} = Image.write_to_tensor(im)
 
-    assert tensor.shape == {Image.width(im), Image.height(im), Image.bands(im)}
+    assert tensor.shape == {Image.height(im), Image.width(im), Image.bands(im)}
 
     expected_bin_size = Image.width(im) * Image.height(im) * Image.bands(im)
     assert tensor.data == :binary.copy(<<0>>, expected_bin_size)

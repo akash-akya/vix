@@ -29,7 +29,7 @@ defmodule Vix.Tensor do
   @typedoc """
   Struct to hold raw pixel data returned by the Libvips along with metadata about the binary.
 
-  `:names` will always be `[:width, :height, :bands]`
+  `:names` will always be `[:height, :width, :bands]`
   """
 
   @type t() :: %__MODULE__{
@@ -41,7 +41,7 @@ defmodule Vix.Tensor do
 
   defstruct data: nil,
             shape: {0, 0, 0},
-            names: [:width, :height, :bands],
+            names: [:height, :width, :bands],
             type: {}
 
   @doc """

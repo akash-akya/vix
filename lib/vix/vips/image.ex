@@ -679,8 +679,8 @@ defmodule Vix.Vips.Image do
     with {:ok, binary} <- write_to_binary(image) do
       tensor = %Vix.Tensor{
         data: binary,
-        shape: {width(image), height(image), bands(image)},
-        names: [:width, :height, :bands],
+        shape: {height(image), width(image), bands(image)},
+        names: [:height, :width, :bands],
         type: Vix.Tensor.type(image)
       }
 
