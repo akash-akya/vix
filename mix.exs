@@ -29,6 +29,9 @@ defmodule Vix.MixProject do
         "precompiled_libvips/lib/*.dll",
         "precompiled_libvips/lib/*.lib"
       ],
+      make_precompiler_nif_versions: [
+        versions: ["2.16", "2.17"]
+      ],
       make_force_build: make_force_build(),
       cc_precompiler: [
         cleanup: "clean_precompiled_libvips",
