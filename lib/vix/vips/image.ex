@@ -328,7 +328,7 @@ defmodule Vix.Vips.Image do
   fill out the header. Pixels will only be decompressed when they are
   needed.
   """
-  @spec new_from_file(String.t()) :: {:ok, __MODULE__.t()} | {:error, term()}
+  @spec new_from_file(String.t()) :: {:ok, t()} | {:error, term()}
   def new_from_file(path) do
     path = Path.expand(path)
 
@@ -343,7 +343,7 @@ defmodule Vix.Vips.Image do
   resolution and offset taken from the input image, but with each band
   set from `value`.
   """
-  @spec new_from_image(__MODULE__.t(), [float()]) :: {:ok, __MODULE__.t()} | {:error, term()}
+  @spec new_from_image(t(), [number()]) :: {:ok, t()} | {:error, term()}
   def new_from_image(%Image{ref: vips_image}, value) do
     float_value = Enum.map(value, &Vix.GObject.Double.normalize/1)
 
@@ -377,7 +377,7 @@ defmodule Vix.Vips.Image do
   Not all loaders support load from buffer, but at least JPEG, PNG and
   TIFF images will work.
   """
-  @spec new_from_buffer(binary(), keyword()) :: {:ok, __MODULE__.t()} | {:error, term()}
+  @spec new_from_buffer(binary(), keyword()) :: {:ok, t()} | {:error, term()}
   def new_from_buffer(bin, opts \\ []) do
     with {:ok, loader} <- Vix.Vips.Foreign.find_load_buffer(bin),
          {:ok, {ref, _optional}} <- Vix.Vips.OperationHelper.operation_call(loader, [bin], opts) do
@@ -426,7 +426,7 @@ defmodule Vix.Vips.Image do
           pos_integer(),
           pos_integer(),
           Vix.Vips.Operation.vips_band_format()
-        ) :: {:ok, __MODULE__.t()} | {:error, term()}
+        ) :: {:ok, t()} | {:error, term()}
   def new_from_binary(bin, width, height, bands, band_format)
       when width > 0 and height > 0 and bands > 0 do
     band_format = Vix.Vips.Enum.VipsBandFormat.to_nif_term(band_format, nil)
@@ -476,7 +476,7 @@ defmodule Vix.Vips.Image do
   ```
 
   """
-  @spec new_from_enum(Enumerable.t(), String.t()) :: {:ok, __MODULE__.t()} | {:error, term()}
+  @spec new_from_enum(Enumerable.t(), String.t()) :: {:ok, t()} | {:error, term()}
   def new_from_enum(enum, opts \\ "") do
     parent = self()
 
@@ -547,7 +547,7 @@ defmodule Vix.Vips.Image do
   ```
 
   """
-  @spec write_to_stream(__MODULE__.t(), String.t()) :: Enumerable.t()
+  @spec write_to_stream(t(), String.t()) :: Enumerable.t()
   def write_to_stream(%Image{ref: vips_image}, suffix) do
     Stream.resource(
       fn ->
@@ -580,7 +580,7 @@ defmodule Vix.Vips.Image do
   # it. Intended to be used with draw operations when they are
   # properly supported
   @doc false
-  @spec copy_memory(__MODULE__.t()) :: {:ok, __MODULE__.t()} | {:error, term()}
+  @spec copy_memory(t()) :: {:ok, t()} | {:error, term()}
   def copy_memory(%Image{ref: vips_image}) do
     Nif.nif_image_copy_memory(vips_image)
     |> wrap_type()
@@ -608,7 +608,7 @@ defmodule Vix.Vips.Image do
   `Vix.Vips.Operation.jpegsave/2`
 
   """
-  @spec write_to_file(__MODULE__.t(), String.t()) :: :ok | {:error, term()}
+  @spec write_to_file(t(), String.t()) :: :ok | {:error, term()}
   def write_to_file(%Image{ref: vips_image}, path) do
     Nif.nif_image_write_to_file(vips_image, normalize_string(Path.expand(path)))
   end
@@ -634,7 +634,7 @@ defmodule Vix.Vips.Image do
   $ vips jpegsave
   ```
   """
-  @spec write_to_buffer(__MODULE__.t(), String.t()) ::
+  @spec write_to_buffer(t(), String.t()) ::
           {:ok, binary()} | {:error, term()}
   def write_to_buffer(%Image{ref: vips_image}, suffix) do
     Nif.nif_image_write_to_buffer(vips_image, normalize_string(suffix))
@@ -674,7 +674,7 @@ defmodule Vix.Vips.Image do
   for more details.
 
   """
-  @spec write_to_tensor(__MODULE__.t()) :: {:ok, Vix.Tensor.t()} | {:error, term()}
+  @spec write_to_tensor(t()) :: {:ok, Vix.Tensor.t()} | {:error, term()}
   def write_to_tensor(%Image{} = image) do
     with {:ok, binary} <- write_to_binary(image) do
       tensor = %Vix.Tensor{
@@ -698,7 +698,7 @@ defmodule Vix.Vips.Image do
   only useful if you already know the details about the returned
   binary blob. Such as height, width and bands.
   """
-  @spec write_to_binary(__MODULE__.t()) :: {:ok, binary()} | {:error, term()}
+  @spec write_to_binary(t()) :: {:ok, binary()} | {:error, term()}
   def write_to_binary(%Image{ref: vips_image}) do
     Nif.nif_image_write_to_binary(vips_image)
   end
@@ -714,7 +714,7 @@ defmodule Vix.Vips.Image do
   vips_image = Image.new_temp_file("%s.v")
   ```
   """
-  @spec new_temp_file(String.t()) :: {:ok, __MODULE__.t()} | {:error, term()}
+  @spec new_temp_file(String.t()) :: {:ok, t()} | {:error, term()}
   def new_temp_file(format) do
     Nif.nif_image_new_temp_file(normalize_string(format))
     |> wrap_type()
@@ -734,7 +734,7 @@ defmodule Vix.Vips.Image do
   * offset - Default: 0
   """
   @spec new_matrix_from_array(integer, integer, list(list), keyword()) ::
-          {:ok, __MODULE__.t()} | {:error, term()}
+          {:ok, t()} | {:error, term()}
   def new_matrix_from_array(width, height, list, optional \\ []) do
     scale = to_double(optional[:scale], 1)
     offset = to_double(optional[:offset], 0)
@@ -768,7 +768,7 @@ defmodule Vix.Vips.Image do
   * offset - Default: 0
   """
   @spec new_from_list(list([number]) | [number] | Range.t(), keyword()) ::
-          {:ok, __MODULE__.t()} | {:error, term()}
+          {:ok, t()} | {:error, term()}
   def new_from_list(list, optional \\ []) do
     with {:ok, {width, height, list}} <- validate_matrix_list(list) do
       scale = to_double(optional[:scale], 1)
@@ -798,8 +798,8 @@ defmodule Vix.Vips.Image do
       end)
   ```
   """
-  @spec mutate(__MODULE__.t(), (Vix.Vips.MutableImage.t() -> any())) ::
-          {:ok, __MODULE__.t()} | {:ok, {__MODULE__.t(), any()}} | {:error, term()}
+  @spec mutate(t(), (Vix.Vips.MutableImage.t() -> any())) ::
+          {:ok, t()} | {:ok, {t(), any()}} | {:error, term()}
   def mutate(%Image{} = image, callback) do
     {:ok, mut_image} = MutableImage.new(image)
 
@@ -828,7 +828,7 @@ defmodule Vix.Vips.Image do
     has_alpha? = Image.has_alpha?(im)
   ```
   """
-  @spec has_alpha?(__MODULE__.t()) :: boolean | no_return()
+  @spec has_alpha?(t()) :: boolean | no_return()
   def has_alpha?(%Image{ref: vips_image}) do
     case Nif.nif_image_hasalpha(vips_image) do
       {:ok, value} ->
@@ -844,7 +844,7 @@ defmodule Vix.Vips.Image do
 
   See https://libvips.github.io/libvips/API/current/libvips-header.html#vips-image-get-fields for more details
   """
-  @spec header_field_names(__MODULE__.t()) :: {:ok, [String.t()]} | {:error, term()}
+  @spec header_field_names(t()) :: {:ok, [String.t()]} | {:error, term()}
   def header_field_names(%Image{ref: vips_image}) do
     Nif.nif_image_get_fields(vips_image)
   end
@@ -860,7 +860,7 @@ defmodule Vix.Vips.Image do
   {:ok, width} = Image.header_value(vips_image, "width")
   ```
   """
-  @spec header_value(__MODULE__.t(), String.t()) ::
+  @spec header_value(t(), String.t()) ::
           {:ok, integer() | float() | String.t() | binary() | list() | atom()} | {:error, term()}
   def header_value(%Image{ref: vips_image}, name) do
     value = Nif.nif_image_get_header(vips_image, normalize_string(name))
@@ -881,7 +881,7 @@ defmodule Vix.Vips.Image do
 
   See: https://libvips.github.io/libvips/API/current/libvips-header.html#vips-image-get-as-string
   """
-  @spec header_value_as_string(__MODULE__.t(), String.t()) :: {:ok, String.t()} | {:error, term()}
+  @spec header_value_as_string(t(), String.t()) :: {:ok, String.t()} | {:error, term()}
   def header_value_as_string(%Image{ref: vips_image}, name) do
     Nif.nif_image_get_as_string(vips_image, normalize_string(name))
   end
@@ -931,7 +931,7 @@ defmodule Vix.Vips.Image do
 
   See https://libvips.github.io/libvips/API/current/libvips-header.html for more details.
   """
-  @spec headers(__MODULE__.t()) :: %{
+  @spec headers(t()) :: %{
           width: pos_integer() | nil,
           height: pos_integer() | nil,
           bands: pos_integer() | nil,
