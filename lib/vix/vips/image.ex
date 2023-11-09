@@ -574,6 +574,42 @@ defmodule Vix.Vips.Image do
     )
   end
 
+  @doc """
+  Converts an Image to a nested list.
+
+  Returns a nested list of the shape `height x width x band`.
+  For example for an image with height 10, width 5, and 3 bands
+  returned value will be a list of length 10 (height), with each
+  element will be a list of length 5 (height), and each
+  element inside that will be a list of length 3 (bands).
+
+
+  > #### Caution {: .warning}
+  > This is meant to be used for very small images such as histograms, and
+  > matrix. Depending on the image size it can generate and return a large
+  > list leading to performance issues.
+
+
+  ```elixir
+  histogram =
+    Vix.Vips.Operation.black!(10, 50)
+    |> Vix.Vips.Operation.hist_find!()
+
+  list = Vix.Vips.Image.to_list(histogram)
+  ```
+  """
+  @spec to_list(t()) :: {:ok, list(list(list(number())))} | {:error, term}
+  def to_list(%Image{} = image) do
+    with {:ok, binary} <- write_to_binary(image) do
+      width = width(image)
+      bands = bands(image)
+
+      binary_to_list(binary, format(image))
+      |> Enum.chunk_every(bands)
+      |> Enum.chunk_every(width)
+    end
+  end
+
   # Copy an image to a memory area.
   # If image is already a memory buffer, just ref and return. If it's
   # a file on disc or a partial, allocate memory and copy the image to
@@ -1106,5 +1142,38 @@ defmodule Vix.Vips.Image do
         Kino.DataTable.new(data, name: "Image Metadata")
       end
     end
+  end
+
+  @spec binary_to_list(binary(), Vix.Vips.Enum.VipsBandFormat.t()) :: [number()]
+  defp binary_to_list(binary, :VIPS_FORMAT_UCHAR) do
+    for <<band::native-unsigned-integer-8 <- binary>>, do: band
+  end
+
+  defp binary_to_list(binary, :VIPS_FORMAT_CHAR) do
+    for <<band::native-signed-integer-8 <- binary>>, do: band
+  end
+
+  defp binary_to_list(binary, :VIPS_FORMAT_USHORT) do
+    for <<band::native-unsigned-integer-16 <- binary>>, do: band
+  end
+
+  defp binary_to_list(binary, :VIPS_FORMAT_SHORT) do
+    for <<band::native-signed-integer-16 <- binary>>, do: band
+  end
+
+  defp binary_to_list(binary, :VIPS_FORMAT_UINT) do
+    for <<band::native-unsigned-native-integer-32 <- binary>>, do: band
+  end
+
+  defp binary_to_list(binary, :VIPS_FORMAT_INT) do
+    for <<band::native-signed-integer-32 <- binary>>, do: band
+  end
+
+  defp binary_to_list(binary, :VIPS_FORMAT_FLOAT) do
+    for <<band::native-float-32 <- binary>>, do: band
+  end
+
+  defp binary_to_list(binary, :VIPS_FORMAT_DOUBLE) do
+    for <<band::native-float-64 <- binary>>, do: band
   end
 end

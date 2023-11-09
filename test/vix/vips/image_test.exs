@@ -307,6 +307,16 @@ defmodule Vix.Vips.ImageTest do
     assert tensor.data == :binary.copy(<<0>>, expected_bin_size)
   end
 
+  test "to_list" do
+    {:ok, im} = Image.new_from_file(img_path("black.jpg"))
+
+    list = Image.to_list(im)
+
+    assert length(list) == Image.height(im)
+    assert length(hd(list)) == Image.width(im)
+    assert length(hd(hd(list))) == Image.bands(im)
+  end
+
   test "new_from_binary and write_to_binary endianness handling", %{dir: dir} do
     {width, height} = {125, 125}
 
