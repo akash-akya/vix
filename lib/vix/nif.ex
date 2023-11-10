@@ -174,6 +174,9 @@ defmodule Vix.Nif do
   def nif_foreign_find_save(_filename),
     do: :erlang.nif_error(:nif_library_not_loaded)
 
+  def nif_foreign_get_suffixes,
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
   # OS Specific
   def nif_pipe_open(_mode),
     do: :erlang.nif_error(:nif_library_not_loaded)

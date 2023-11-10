@@ -17,4 +17,8 @@ defmodule Vix.Vips.Foreign do
   def find_save(filename) do
     Nif.nif_foreign_find_save(filename)
   end
+
+  def get_suffixes do
+    Nif.nif_foreign_get_suffixes()
+  end
 end

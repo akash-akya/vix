@@ -134,3 +134,43 @@ exit:
   notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
   return ret;
 }
+
+ERL_NIF_TERM nif_foreign_get_suffixes(ErlNifEnv *env, int argc,
+                                      const ERL_NIF_TERM argv[]) {
+  ASSERT_ARGC(argc, 0);
+
+  ErlNifTime start;
+  ERL_NIF_TERM ret;
+  gchar **suffixes;
+  ERL_NIF_TERM list;
+  ERL_NIF_TERM bin;
+  ssize_t length;
+  unsigned char *temp;
+
+  start = enif_monotonic_time(ERL_NIF_USEC);
+
+  suffixes = vips_foreign_get_suffixes();
+
+  if (!suffixes) {
+    error("Failed to fetch suffixes. error: %s", vips_error_buffer());
+    vips_error_clear();
+    ret = make_error(env, "Failed to fetch suffixes");
+    goto exit;
+  }
+
+  list = enif_make_list(env, 0);
+  for (int i = 0; suffixes[i] != NULL; i++) {
+    length = strlen(suffixes[i]);
+    temp = enif_make_new_binary(env, length, &bin);
+    memcpy(temp, suffixes[i], length);
+
+    list = enif_make_list_cell(env, bin, list);
+  }
+  g_strfreev(suffixes);
+
+  ret = make_ok(env, list);
+
+exit:
+  notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
+  return ret;
+}
