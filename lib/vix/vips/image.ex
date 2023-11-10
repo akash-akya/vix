@@ -610,6 +610,19 @@ defmodule Vix.Vips.Image do
     end
   end
 
+  @doc """
+  Returns list of supported extension for *saving* the image.
+
+  Supported suffix can be used to save image in a particular format.
+  See `write_to_file/2`.
+
+  Note that the image format supported for saving the image and the
+  format supported for loading image might be different. For example
+  SVG format can be loaded but can not be saved.
+  """
+  @spec supported_save_suffixes :: {:ok, [String.t()]} | {:error, term}
+  def supported_save_suffixes, do: Vix.Vips.Foreign.get_suffixes()
+
   # Copy an image to a memory area.
   # If image is already a memory buffer, just ref and return. If it's
   # a file on disc or a partial, allocate memory and copy the image to
@@ -625,19 +638,20 @@ defmodule Vix.Vips.Image do
   @doc """
   Write `vips_image` to a file.
 
+  A saver is selected based on image extension in `path`. You can
+  get list of supported extensions by `supported_save_suffixes/0`.
+
   Save options may be encoded in the filename. For example:
 
   ```elixir
   Image.write_to_file(vips_image, "fred.jpg[Q=90]")
   ```
 
-  A saver is selected based on image extension in `path`. The full set
-  of save options depend on the selected saver. Try something like:
+  The full set of save options depend on the selected saver.
+  You can check the supported options for a saver by checking
+  docs for the particular format save function in `Operation` module.
+  For example, for you jpeg, `Vix.Vips.Operation.jpegsave/2`.
 
-  ```shell
-  $ vips jpegsave
-  ```
-  at the command-line to see all the available options for JPEG save.
 
   If you want more control over the saver, Use specific format saver
   from `Vix.Vips.Operation`. For example for jpeg use
