@@ -604,9 +604,12 @@ defmodule Vix.Vips.Image do
       width = width(image)
       bands = bands(image)
 
-      binary_to_list(binary, format(image))
-      |> Enum.chunk_every(bands)
-      |> Enum.chunk_every(width)
+      list =
+        binary_to_list(binary, format(image))
+        |> Enum.chunk_every(bands)
+        |> Enum.chunk_every(width)
+
+      {:ok, list}
     end
   end
 
@@ -620,8 +623,8 @@ defmodule Vix.Vips.Image do
   format supported for loading image might be different. For example
   SVG format can be loaded but can not be saved.
   """
-  @spec supported_save_suffixes :: {:ok, [String.t()]} | {:error, term}
-  def supported_save_suffixes, do: Vix.Vips.Foreign.get_suffixes()
+  @spec supported_saver_suffixes :: {:ok, [String.t()]} | {:error, term}
+  def supported_saver_suffixes, do: Vix.Vips.Foreign.get_suffixes()
 
   # Copy an image to a memory area.
   # If image is already a memory buffer, just ref and return. If it's
@@ -639,7 +642,7 @@ defmodule Vix.Vips.Image do
   Write `vips_image` to a file.
 
   A saver is selected based on image extension in `path`. You can
-  get list of supported extensions by `supported_save_suffixes/0`.
+  get list of supported extensions by `supported_saver_suffixes/0`.
 
   Save options may be encoded in the filename. For example:
 

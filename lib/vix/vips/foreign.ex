@@ -19,6 +19,8 @@ defmodule Vix.Vips.Foreign do
   end
 
   def get_suffixes do
-    Nif.nif_foreign_get_suffixes()
+    with {:ok, suffixes} <- Nif.nif_foreign_get_suffixes() do
+      {:ok, Enum.uniq(suffixes)}
+    end
   end
 end
