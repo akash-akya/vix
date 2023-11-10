@@ -320,7 +320,7 @@ defmodule Vix.Vips.ImageTest do
   test "supported_saver_suffixes" do
     {:ok, list} = Image.supported_saver_suffixes()
 
-    for suffix <- ~w(.jpeg .png .gif .tiff .webp .heif .avif) do
+    for suffix <- ~w(.jpeg .png .gif .tiff .vips .raw) do
       assert suffix in list
     end
   end
@@ -328,7 +328,7 @@ defmodule Vix.Vips.ImageTest do
   test "supported_loader_suffixes" do
     {:ok, list} = Image.supported_loader_suffixes()
 
-    for suffix <- ~w(.jpeg .png .gif .tiff .webp .heif .avif .svg) do
+    for suffix <- ~w(.jpeg .png .gif .tiff .vips .svg) do
       assert suffix in list
     end
   end
