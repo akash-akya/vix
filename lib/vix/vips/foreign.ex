@@ -23,4 +23,10 @@ defmodule Vix.Vips.Foreign do
       {:ok, Enum.uniq(suffixes)}
     end
   end
+
+  def get_loader_suffixes do
+    with {:ok, suffixes} <- Nif.nif_foreign_get_loader_suffixes() do
+      {:ok, Enum.uniq(suffixes)}
+    end
+  end
 end
