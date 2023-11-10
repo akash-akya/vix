@@ -325,6 +325,14 @@ defmodule Vix.Vips.ImageTest do
     end
   end
 
+  test "supported_loader_suffixes" do
+    {:ok, list} = Image.supported_loader_suffixes()
+
+    for suffix <- ~w(.jpeg .png .gif .tiff .webp .heif .avif .svg) do
+      assert suffix in list
+    end
+  end
+
   test "new_from_binary and write_to_binary endianness handling", %{dir: dir} do
     {width, height} = {125, 125}
 

@@ -626,6 +626,13 @@ defmodule Vix.Vips.Image do
   @spec supported_saver_suffixes :: {:ok, [String.t()]} | {:error, term}
   def supported_saver_suffixes, do: Vix.Vips.Foreign.get_suffixes()
 
+  # This function should *NOT* be used to get list of formats vix can load.
+  # libvips reads the file header to decide the loader to use.
+  # see: https://github.com/libvips/ruby-vips/issues/186#issuecomment-466763897
+  @doc false
+  @spec supported_loader_suffixes :: {:ok, [String.t()]} | {:error, term}
+  def supported_loader_suffixes, do: Vix.Vips.Foreign.get_loader_suffixes()
+
   # Copy an image to a memory area.
   # If image is already a memory buffer, just ref and return. If it's
   # a file on disc or a partial, allocate memory and copy the image to

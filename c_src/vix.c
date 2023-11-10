@@ -139,6 +139,7 @@ static ErlNifFunc nif_funcs[] = {
     {"nif_foreign_find_load_buffer", 1, nif_foreign_find_load_buffer, 0},
     {"nif_foreign_find_save_buffer", 1, nif_foreign_find_save_buffer, 0},
     {"nif_foreign_get_suffixes", 0, nif_foreign_get_suffixes, 0},
+    {"nif_foreign_get_loader_suffixes", 0, nif_foreign_get_loader_suffixes, 0},
 
     /* Syscalls */
     {"nif_pipe_open", 1, nif_pipe_open, 0},
