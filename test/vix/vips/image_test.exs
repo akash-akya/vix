@@ -310,11 +310,19 @@ defmodule Vix.Vips.ImageTest do
   test "to_list" do
     {:ok, im} = Image.new_from_file(img_path("black.jpg"))
 
-    list = Image.to_list(im)
+    {:ok, list} = Image.to_list(im)
 
     assert length(list) == Image.height(im)
     assert length(hd(list)) == Image.width(im)
     assert length(hd(hd(list))) == Image.bands(im)
+  end
+
+  test "supported_saver_suffixes" do
+    {:ok, list} = Image.supported_saver_suffixes()
+
+    for suffix <- ~w(.jpeg .png .gif .tiff .webp .heif .avif) do
+      assert suffix in list
+    end
   end
 
   test "new_from_binary and write_to_binary endianness handling", %{dir: dir} do
