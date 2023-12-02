@@ -4,12 +4,14 @@
 
 * Bump version and push to master branch
 
-* Create new release at: https://github.com/akash-akya/vix/releases.
+* Create new release at: https://github.com/akash-akya/vix/releases
   Github Actions and TravisCI creates pre-compiled NIF artifacts and push to the release.
   Wait for all the release to be available. Ensure artifacts are created for all Beam
   NIF versions, like `2.16`, `2.17`
 
-* On local machine, remove existing pre-built NIF, cache and checksum `rm -rf cache/ priv/* checksum.exs`
+* Ensure all pre-built NIF packages are created
+
+* On local machine, remove existing pre-built NIF packages, cache and checksum `rm -rf cache/ priv/* checksum.exs`
 
 * Remove existing compiled files `rm -rf _build/*/lib/vix`
 
