@@ -39,6 +39,7 @@ defmodule Vix.Vips.Operation do
     } = spec = operation_args_spec(name)
 
     func_name = function_name(name)
+    in_req_spec = normalize_input_variable_names(in_req_spec)
 
     req_params =
       Enum.map(in_req_spec, fn param ->
