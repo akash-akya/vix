@@ -147,6 +147,16 @@ defmodule Vix.Vips.OperationHelper do
 
   def function_name(name), do: to_string(name) |> String.downcase() |> String.to_atom()
 
+  def normalize_input_variable_names(specs) do
+    Enum.map(specs, fn
+      %{param_name: "in"} = param ->
+        %{param | param_name: "input"}
+
+      param ->
+        param
+    end)
+  end
+
   def atom_typespec_ast(list) do
     Enum.reduce(list, &{:|, [], [&1, &2]})
   end
