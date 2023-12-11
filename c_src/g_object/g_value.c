@@ -89,7 +89,7 @@ static VixResult set_uint(ErlNifEnv *env, ERL_NIF_TERM term, GValue *gvalue) {
 }
 
 static VixResult set_int64(ErlNifEnv *env, ERL_NIF_TERM term, GValue *gvalue) {
-  long int64_value;
+  ErlNifSInt64 int64_value;
   VixResult res;
 
   if (!enif_get_int64(env, term, &int64_value)) {
@@ -118,7 +118,7 @@ static VixResult set_string(ErlNifEnv *env, ERL_NIF_TERM term, GValue *gvalue) {
 }
 
 static VixResult set_uint64(ErlNifEnv *env, ERL_NIF_TERM term, GValue *gvalue) {
-  unsigned long uint64_value;
+  ErlNifUInt64 uint64_value;
   VixResult res;
 
   if (!enif_get_uint64(env, term, &uint64_value)) {
@@ -297,7 +297,7 @@ static VixResult get_uint(ErlNifEnv *env, GValue *gvalue) {
 }
 
 static VixResult get_int64(ErlNifEnv *env, GValue *gvalue) {
-  long int64_value;
+  ErlNifSInt64 int64_value;
 
   int64_value = g_value_get_int64(gvalue);
   return vix_result(enif_make_int(env, int64_value));
@@ -326,7 +326,7 @@ static VixResult get_string_as_binary(ErlNifEnv *env, GValue *gvalue) {
 }
 
 static VixResult get_uint64(ErlNifEnv *env, GValue *gvalue) {
-  unsigned long uint64_value;
+  ErlNifUInt64 uint64_value;
 
   uint64_value = g_value_get_uint64(gvalue);
   return vix_result(enif_make_int(env, uint64_value));

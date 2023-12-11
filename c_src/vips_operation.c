@@ -540,7 +540,7 @@ ERL_NIF_TERM nif_vips_cache_set_max_mem(ErlNifEnv *env, int argc,
                                         const ERL_NIF_TERM argv[]) {
   ASSERT_ARGC(argc, 1);
 
-  unsigned long max_mem;
+  ErlNifUInt64 max_mem;
 
   if (!enif_get_uint64(env, argv[0], &max_mem)) {
     return raise_badarg(env, "Failed to integer value");
