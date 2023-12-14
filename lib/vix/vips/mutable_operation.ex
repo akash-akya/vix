@@ -3,11 +3,9 @@ defmodule Vix.Vips.MutableOperation do
   Module for Vix.Vips.MutableOperation.
   """
 
-  import Vix.Vips.OperationHelper
+  import Vix.Vips.Operation.Helper
 
-  defmodule Error do
-    defexception [:message]
-  end
+  alias Vix.Vips.Operation.Error
 
   # define typespec for enums
   Enum.map(vips_enum_list(), fn {name, enum} ->
