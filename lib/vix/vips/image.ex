@@ -380,7 +380,7 @@ defmodule Vix.Vips.Image do
   @spec new_from_buffer(binary(), keyword()) :: {:ok, t()} | {:error, term()}
   def new_from_buffer(bin, opts \\ []) do
     with {:ok, loader} <- Vix.Vips.Foreign.find_load_buffer(bin),
-         {:ok, {ref, _optional}} <- Vix.Vips.OperationHelper.operation_call(loader, [bin], opts) do
+         {:ok, {ref, _optional}} <- Vix.Vips.Operation.Helper.operation_call(loader, [bin], opts) do
       {:ok, wrap_type(ref)}
     end
   end

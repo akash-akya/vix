@@ -1,9 +1,10 @@
-defmodule Vix.Vips.OperationHelper do
+defmodule Vix.Vips.Operation.Helper do
   @moduledoc false
 
   alias Vix.GObject.GParamSpec
   alias Vix.Nif
   alias Vix.Type
+  alias Vix.Vips.Operation.Error
 
   def input_to_nif_terms(args, in_pspec) do
     args
@@ -60,7 +61,7 @@ defmodule Vix.Vips.OperationHelper do
             {required, [{String.to_atom(param), value} | optional]}
 
           true ->
-            raise Vix.Vips.Operation.Error, message: "Invalid operation output field: #{param}"
+            raise Error, message: "Invalid operation output field: #{param}"
         end
       end)
 
