@@ -491,7 +491,7 @@ defmodule Vix.Vips.Image do
               IO.iodata_to_binary(iodata)
             rescue
               ArgumentError ->
-                Logger.warn("argument must be stream of iodata")
+                log_warn("argument must be stream of iodata")
                 Vix.SourcePipe.stop(pipe)
                 exit(:normal)
             end
@@ -1199,5 +1199,11 @@ defmodule Vix.Vips.Image do
 
   defp binary_to_list(binary, :VIPS_FORMAT_DOUBLE) do
     for <<band::native-float-64 <- binary>>, do: band
+  end
+
+  if Kernel.macro_exported?(Logger, :warning, 1) do
+    def log_warn(msg), do: Logger.warning(msg)
+  else
+    def log_warn(msg), do: Logger.warn(msg)
   end
 end
