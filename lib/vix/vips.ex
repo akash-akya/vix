@@ -78,6 +78,14 @@ defmodule Vix.Vips do
   end
 
   @doc """
+  Turn on or off vips leak checking
+  """
+  @spec set_vips_leak_checking(boolean()) :: :ok
+  def set_vips_leak_checking(bool) when is_boolean(bool) do
+    Nif.nif_vips_leak_set(if bool, do: 1, else: 0)
+  end
+
+  @doc """
   Get installed vips version
   """
   @spec version() :: String.t()

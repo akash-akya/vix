@@ -556,6 +556,25 @@ ERL_NIF_TERM nif_vips_cache_get_max_mem(ErlNifEnv *env, int argc,
   return enif_make_uint64(env, vips_cache_get_max_mem());
 }
 
+ERL_NIF_TERM nif_vips_leak_set(ErlNifEnv *env, int argc,
+                               const ERL_NIF_TERM argv[]) {
+  ASSERT_ARGC(argc, 1);
+
+  ErlNifUInt64 value = 0;
+
+  if (!enif_get_uint64(env, argv[0], &value)) {
+    return raise_badarg(env, "Failed to integer value");
+  }
+
+  if (value != 0) {
+    vips_leak_set(TRUE);
+  } else {
+    vips_leak_set(FALSE);
+  }
+
+  return ATOM_OK;
+}
+
 ERL_NIF_TERM nif_vips_shutdown(ErlNifEnv *env, int argc,
                                const ERL_NIF_TERM argv[]) {
   ASSERT_ARGC(argc, 0);
