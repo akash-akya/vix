@@ -45,6 +45,12 @@ ERL_NIF_TERM nif_vips_cache_get_max_mem(ErlNifEnv *env, int argc,
 ERL_NIF_TERM nif_vips_leak_set(ErlNifEnv *env, int argc,
                                const ERL_NIF_TERM argv[]);
 
+ERL_NIF_TERM nif_vips_tracked_get_mem(ErlNifEnv *env, int argc,
+                                      const ERL_NIF_TERM argv[]);
+
+ERL_NIF_TERM nif_vips_tracked_get_mem_highwater(ErlNifEnv *env, int argc,
+                                                const ERL_NIF_TERM argv[]);
+
 ERL_NIF_TERM nif_vips_shutdown(ErlNifEnv *env, int argc,
                                const ERL_NIF_TERM argv[]);
 

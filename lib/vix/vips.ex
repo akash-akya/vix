@@ -86,6 +86,26 @@ defmodule Vix.Vips do
   end
 
   @doc """
+  Returns the number of bytes currently allocated by libvips.
+
+  Libvips uses this figure to decide when to start dropping cache.
+  """
+  @spec tracked_get_mem() :: integer()
+  def tracked_get_mem do
+    Nif.nif_vips_tracked_get_mem()
+  end
+
+  @doc """
+  Returns the largest number of bytes simultaneously allocated via libvips.
+
+  Handy for estimating max memory requirements for a program.
+  """
+  @spec tracked_get_mem_highwater() :: integer()
+  def tracked_get_mem_highwater do
+    Nif.nif_vips_tracked_get_mem_highwater()
+  end
+
+  @doc """
   Get installed vips version
   """
   @spec version() :: String.t()

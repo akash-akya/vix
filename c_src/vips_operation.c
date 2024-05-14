@@ -575,6 +575,18 @@ ERL_NIF_TERM nif_vips_leak_set(ErlNifEnv *env, int argc,
   return ATOM_OK;
 }
 
+ERL_NIF_TERM nif_vips_tracked_get_mem(ErlNifEnv *env, int argc,
+                                      const ERL_NIF_TERM argv[]) {
+  ASSERT_ARGC(argc, 0);
+  return enif_make_uint64(env, vips_tracked_get_mem());
+}
+
+ERL_NIF_TERM nif_vips_tracked_get_mem_highwater(ErlNifEnv *env, int argc,
+                                                const ERL_NIF_TERM argv[]) {
+  ASSERT_ARGC(argc, 0);
+  return enif_make_uint64(env, vips_tracked_get_mem_highwater());
+}
+
 ERL_NIF_TERM nif_vips_shutdown(ErlNifEnv *env, int argc,
                                const ERL_NIF_TERM argv[]) {
   ASSERT_ARGC(argc, 0);
