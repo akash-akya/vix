@@ -66,6 +66,7 @@ calling_from_make:
 	cd .. && mix compile
 
 all: install
+	@echo > /dev/null
 
 install: $(PREFIX) $(VIX)
 

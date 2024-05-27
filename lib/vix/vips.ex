@@ -78,6 +78,34 @@ defmodule Vix.Vips do
   end
 
   @doc """
+  Turn on or off vips leak checking
+  """
+  @spec set_vips_leak_checking(boolean()) :: :ok
+  def set_vips_leak_checking(bool) when is_boolean(bool) do
+    Nif.nif_vips_leak_set(if bool, do: 1, else: 0)
+  end
+
+  @doc """
+  Returns the number of bytes currently allocated by libvips.
+
+  Libvips uses this figure to decide when to start dropping cache.
+  """
+  @spec tracked_get_mem() :: integer()
+  def tracked_get_mem do
+    Nif.nif_vips_tracked_get_mem()
+  end
+
+  @doc """
+  Returns the largest number of bytes simultaneously allocated via libvips.
+
+  Handy for estimating max memory requirements for a program.
+  """
+  @spec tracked_get_mem_highwater() :: integer()
+  def tracked_get_mem_highwater do
+    Nif.nif_vips_tracked_get_mem_highwater()
+  end
+
+  @doc """
   Get installed vips version
   """
   @spec version() :: String.t()
