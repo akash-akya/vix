@@ -842,7 +842,11 @@ defmodule Vix.Vips.Image do
   @doc """
   Mutate an image in-place. You have to pass a function which takes MutableImage as argument. Inside the callback function, you can call functions which modify the image, such as setting or removing metadata. See `Vix.Vips.MutableImage`
 
-  Return value of the callback is ignored.
+  Return value of the callback must be one of:
+
+  * The mutated image passed to the callback or
+  * `:ok` or
+  * `{:ok, some_result}`
 
   Call returns updated image.
 
@@ -861,10 +865,13 @@ defmodule Vix.Vips.Image do
   @spec mutate(t(), (Vix.Vips.MutableImage.t() -> any())) ::
           {:ok, t()} | {:ok, {t(), any()}} | {:error, term()}
   def mutate(%Image{} = image, callback) do
-    {:ok, mut_image} = MutableImage.new(image)
+    {:ok, %{pid: pid} = mut_image} = MutableImage.new(image)
 
     try do
       case callback.(mut_image) do
+        %MutableImage{pid: ^pid} ->
+          MutableImage.to_image(mut_image)
+
         :ok ->
           MutableImage.to_image(mut_image)
 
