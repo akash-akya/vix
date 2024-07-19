@@ -66,6 +66,6 @@ defmodule Vix.Vips.MutableImageTest do
   test "that returning the mutated image is an acceptable callback return" do
     {:ok, i} = Vix.Vips.Image.new_from_file(img_path("puppies.jpg"))
 
-    assert {:ok, _} = Vix.Vips.Image.mutate(i, &(&1))
+    assert {:ok, _} = Vix.Vips.Image.mutate(i, & &1)
   end
 end
