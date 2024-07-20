@@ -61,8 +61,10 @@ defmodule Vix.Vips.OperationTest do
   test "additional return values", %{dir: _dir} do
     {:ok, im} = Image.new_from_file(img_path("black_on_white.jpg"))
 
-    assert {:ok, {0.0, %{x: _, y: _, "out-array": [0.0], "x-array": [_ | _], "y-array": [_ | _]}}} =
+    assert {:ok, {min, %{x: _, y: _, "out-array": [min], "x-array": [_ | _], "y-array": [_ | _]}}} =
              Operation.min(im)
+
+    assert min in [-0.0, +0.0]
   end
 
   test "required output order", %{dir: _dir} do
