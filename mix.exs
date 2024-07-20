@@ -136,7 +136,7 @@ defmodule Vix.MixProject do
   end
 
   defp maybe_kino do
-    if Version.compare(System.version(), "1.13.0") in [:gt, :eq] do
+    if Version.compare(System.version(), "1.14.0") in [:gt, :eq] do
       [{:kino, "~> 0.7", optional: true}]
     else
       []

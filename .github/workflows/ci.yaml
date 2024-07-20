@@ -118,14 +118,12 @@ jobs:
   macos-precompiled:
     runs-on: macos-11
     steps:
-      - uses: actions/checkout@v3
-      - name: Install erlang and elixir
-        run: |
-          brew install erlang elixir
-          mix local.hex --force
-          mix local.rebar --force
-      - run: mix deps.get
-      - run: mix test --trace
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+      - uses: DeterminateSystems/flake-checker-action@main
+      - run: nix develop --command mix deps.get
+      - run: nix develop --command mix test --trace
 
   lint:
     runs-on: ubuntu-22.04
@@ -157,9 +155,10 @@ jobs:
         run: |
           mkdir -p priv/plts
           mix deps.get
-          mix dialyzer --plt
+          # mix dialyzer --plt
 
       - run: mix deps.get
+      - run: mix clean && mix deep_clean
       - run: mix compile --force --warnings-as-errors
       - run: mix deps.unlock --check-unused
       - run: mix format --check-formatted
