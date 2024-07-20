@@ -359,4 +359,27 @@ defmodule Vix.Vips.ImageTest do
     # endianness file written to disk and memory must be same
     assert bin == vbin
   end
+
+  test "get_pixel" do
+    {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
+    assert {:ok, [r, g, b]} = Image.get_pixel(im, 10, 10)
+    assert [r, g, b] == [80, 101, 62]
+
+    {:ok, im} = Image.new_from_file(img_path("black.jpg"))
+    assert {:ok, [0]} = Image.get_pixel(im, 10, 10)
+
+    {:ok, im} = Image.new_from_file(img_path("alpha_band.png"))
+    assert {:ok, [r, g, b, a]} = Image.get_pixel(im, 50, 10)
+    assert [r, g, b, a] == [247, 247, 247, 255]
+  end
+
+  test "get_pixel!" do
+    {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
+    assert [x, y, z] = Image.get_pixel!(im, 10, 10)
+    assert [x, y, z] == [80, 101, 62]
+
+    assert_raise Image.Error, "Bad extract area. Ensure params are not out of bound", fn ->
+      Image.get_pixel!(im, 10, 1000)
+    end
+  end
 end

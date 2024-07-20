@@ -58,4 +58,7 @@ ERL_NIF_TERM nif_image_new_from_binary(ErlNifEnv *env, int argc,
 
 ERL_NIF_TERM nif_image_write_to_binary(ErlNifEnv *env, int argc,
                                        const ERL_NIF_TERM argv[]);
+
+ERL_NIF_TERM nif_image_write_area_to_binary(ErlNifEnv *env, int argc,
+                                            const ERL_NIF_TERM argv[]);
 #endif

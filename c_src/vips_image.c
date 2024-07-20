@@ -875,3 +875,123 @@ exit:
   notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
   return ret;
 }
+
+// Optimized version of fetching raw pixels for a region
+ERL_NIF_TERM nif_image_write_area_to_binary(ErlNifEnv *env, int argc,
+                                            const ERL_NIF_TERM argv[]) {
+  ASSERT_ARGC(argc, 2);
+
+  VipsImage *image;
+  ErlNifTime start;
+  ERL_NIF_TERM list, head, ret;
+  void *bin;
+  size_t size;
+  guint list_length;
+  int params[6] = {0, 0, 0, 0, 0, 0};
+  int left, top, width, height, band_start, band_count;
+  VipsImage **t;
+
+  start = enif_monotonic_time(ERL_NIF_USEC);
+
+  if (!erl_term_to_g_object(env, argv[0], (GObject **)&image)) {
+    ret = make_error(env, "Failed to get VipsImage");
+    goto exit;
+  }
+
+  list = argv[1];
+
+  if (!enif_get_list_length(env, list, &list_length)) {
+    error("Failed to get list length");
+    ret = enif_make_badarg(env);
+    goto exit;
+  }
+
+  if (list_length != 6) {
+    error("Must pass 6 integer params");
+    ret = enif_make_badarg(env);
+    goto exit;
+  }
+
+  for (guint i = 0; i < 6; i++) {
+    if (!enif_get_list_cell(env, list, &head, &list)) {
+      ret = make_error(env, "Failed to get list entry");
+      goto exit;
+    }
+
+    if (!enif_get_int(env, head, &params[i])) {
+      ret = make_error(env, "Failed to get int");
+      goto exit;
+    }
+  }
+
+  left = params[0];
+  top = params[1];
+  width = params[2];
+  height = params[3];
+  band_start = params[4];
+  band_count = params[5];
+
+  if (left == -1)
+    left = 0;
+
+  if (top == -1)
+    top = 0;
+
+  if (width == -1)
+    width = vips_image_get_width(image);
+
+  if (height == -1)
+    height = vips_image_get_height(image);
+
+  if (band_start == -1)
+    band_start = 0;
+
+  if (band_count == -1)
+    band_count = vips_image_get_bands(image);
+
+  // vips operations checks boundary, this is just to get better error reporting
+  if (left + width > vips_image_get_width(image) ||
+      top + height > vips_image_get_height(image) || left < 0 || top < 0 ||
+      width <= 0 || height <= 0 ||
+      band_start + band_count > vips_image_get_bands(image) || band_start < 0 ||
+      band_count <= 0) {
+    error("Bad extract area, left: %d, top: %d, width: %d, height: %d, "
+          "band_start: %d, band_count: %d",
+          left, top, width, height, band_start, band_count);
+    vips_error_clear();
+    ret =
+        make_error(env, "Bad extract area. Ensure params are not out of bound");
+    goto exit;
+  }
+
+  t = (VipsImage **)vips_object_local_array((VipsObject *)image, 2);
+
+  if (vips_crop(image, &t[0], left, top, width, height, NULL) ||
+      vips_extract_band(t[0], &t[1], band_start, "n", band_count, NULL)) {
+    error("Failed to extract region and bands. error: %s", vips_error_buffer());
+    vips_error_clear();
+    ret = make_error(env, "Failed to extract region and bands");
+    goto exit;
+  }
+
+  bin = vips_image_write_to_memory(t[1], &size);
+
+  if (!bin) {
+    error("Failed to write extracted region to memory. error: %s",
+          vips_error_buffer());
+    vips_error_clear();
+    ret = make_error(env, "Failed to write extracted region to memory");
+    goto exit;
+  }
+
+  ret = make_ok(
+      env, enif_make_tuple5(env, to_binary_term(env, bin, size),
+                            enif_make_int(env, vips_image_get_width(t[1])),
+                            enif_make_int(env, vips_image_get_height(t[1])),
+                            enif_make_int(env, vips_image_get_bands(t[1])),
+                            enif_make_int(env, vips_image_get_format(t[1]))));
+
+exit:
+  notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
+  return ret;
+}

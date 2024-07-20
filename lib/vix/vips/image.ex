@@ -759,8 +759,81 @@ defmodule Vix.Vips.Image do
   binary blob. Such as height, width and bands.
   """
   @spec write_to_binary(t()) :: {:ok, binary()} | {:error, term()}
-  def write_to_binary(%Image{ref: vips_image}) do
-    Nif.nif_image_write_to_binary(vips_image)
+  def write_to_binary(image) do
+    case write_area_to_binary(image) do
+      {:ok, %{binary: binary}} -> {:ok, binary}
+      error -> error
+    end
+  end
+
+  @doc """
+  Returns the pixel value for the passed position
+
+  Pixel value is a list of numbers. Size of the list depends on the
+  number of bands in the image and number type will depend on the
+  band format (see: `t:Vix.Vips.Operation.vips_band_format/0`).
+
+  For example for RGBA image with unsigned char band format the
+  return value will be a list of integer of size 4.
+
+  This function is similar to `Vix.Vips.Operation.getpoint/3`,
+  getpoint always returns the value as `float` but get_pixel returns
+  based on the image band format.
+
+  > #### Caution {: .warning}
+  > Loop through lot of pixels using `get_pixel` can be expensive.
+  > Use `extract_area` or Access syntax (slicing) instead
+
+  """
+  @spec get_pixel(t(), x :: non_neg_integer, y :: non_neg_integer) ::
+          {:ok, [term]} | {:error, term()}
+  def get_pixel(image, x, y) do
+    unless x >= 0 and y >= 0 do
+      raise ArgumentError, "Pixel position must be non-negative"
+    end
+
+    case write_area_to_binary(image, left: x, top: y, width: 1, height: 1) do
+      {:ok, %{binary: binary, width: 1, height: 1, band_format: format}} ->
+        {:ok, binary_to_list(binary, format)}
+
+      {:error, _} = error ->
+        error
+    end
+  end
+
+  @doc """
+  Same as `get_pixel/3`. Returns the pixel value on success or raise the error.
+  """
+  @spec get_pixel!(t(), x :: non_neg_integer, y :: non_neg_integer) :: [term] | no_return
+  def get_pixel!(image, x, y) do
+    case get_pixel(image, x, y) do
+      {:ok, list} -> list
+      {:error, reason} when is_binary(reason) -> raise Error, reason
+      {:error, reason} -> raise Error, inspect(reason)
+    end
+  end
+
+  @spec write_area_to_binary(t(), params :: keyword) :: {:ok, binary()} | {:error, term()}
+  defp write_area_to_binary(%Image{ref: vips_image}, params \\ []) do
+    params =
+      Enum.map(~w(left top width height band_start band_count)a, fn key ->
+        params[key] || -1
+      end)
+
+    case Nif.nif_image_write_area_to_binary(vips_image, params) do
+      {:ok, {binary, width, height, bands, band_format}} ->
+        {:ok,
+         %{
+           binary: binary,
+           width: width,
+           height: height,
+           bands: bands,
+           band_format: Vix.Vips.Enum.VipsBandFormat.to_erl_term(band_format)
+         }}
+
+      {:error, _} = error ->
+        error
+    end
   end
 
   @doc """
