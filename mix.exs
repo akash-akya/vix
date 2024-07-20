@@ -127,7 +127,7 @@ defmodule Vix.MixProject do
         {:castore, "~> 1.0 or ~> 0.1"},
 
         # development & test
-        {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
+        {:credo, "~> 1.6", only: [:dev], runtime: false},
         {:dialyxir, "~> 1.4", only: [:dev], runtime: false},
         {:ex_doc, ">= 0.0.0", only: :dev},
         {:excoveralls, "~> 0.15", only: :test},

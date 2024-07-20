@@ -150,19 +150,19 @@ defmodule Vix.Operator do
   # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
   defp add(a, b) do
     cond do
-      is_image(a) && is_image(b) ->
+      image?(a) && image?(b) ->
         Operation.add!(a, b)
 
-      is_image(a) && is_number(b) ->
+      image?(a) && is_number(b) ->
         add(a, [b])
 
-      is_number(a) && is_image(b) ->
+      is_number(a) && image?(b) ->
         add(b, [a])
 
-      is_list(a) && is_image(b) ->
+      is_list(a) && image?(b) ->
         add(b, a)
 
-      is_image(a) && is_list(b) ->
+      image?(a) && is_list(b) ->
         when_number_list b do
           Operation.linear!(a, [1], b)
         end
@@ -175,19 +175,19 @@ defmodule Vix.Operator do
   # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
   defp mul(a, b) do
     cond do
-      is_image(a) && is_image(b) ->
+      image?(a) && image?(b) ->
         Operation.multiply!(a, b)
 
-      is_image(a) && is_number(b) ->
+      image?(a) && is_number(b) ->
         mul(a, [b])
 
-      is_number(a) && is_image(b) ->
+      is_number(a) && image?(b) ->
         mul(b, [a])
 
-      is_list(a) && is_image(b) ->
+      is_list(a) && image?(b) ->
         mul(b, a)
 
-      is_image(a) && is_list(b) ->
+      image?(a) && is_list(b) ->
         when_number_list b do
           Operation.linear!(a, b, [0])
         end
@@ -200,22 +200,22 @@ defmodule Vix.Operator do
   # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
   defp sub(a, b) do
     cond do
-      is_image(a) && is_image(b) ->
+      image?(a) && image?(b) ->
         Operation.subtract!(a, b)
 
-      is_image(a) && is_number(b) ->
+      image?(a) && is_number(b) ->
         sub(a, [b])
 
-      is_number(a) && is_image(b) ->
+      is_number(a) && image?(b) ->
         sub([a], b)
 
-      is_list(a) && is_image(b) ->
+      is_list(a) && image?(b) ->
         when_number_list a do
           # a - b = (b * -1) + a
           Operation.linear!(b, [-1], a)
         end
 
-      is_image(a) && is_list(b) ->
+      image?(a) && is_list(b) ->
         when_number_list b do
           Operation.linear!(a, [1], Enum.map(b, &(-&1)))
         end
@@ -228,16 +228,16 @@ defmodule Vix.Operator do
   # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
   defp divide(a, b) do
     cond do
-      is_image(a) && is_image(b) ->
+      image?(a) && image?(b) ->
         Operation.divide!(a, b)
 
-      is_image(a) && is_number(b) ->
+      image?(a) && is_number(b) ->
         divide(a, [b])
 
-      is_number(a) && is_image(b) ->
+      is_number(a) && image?(b) ->
         divide([a], b)
 
-      is_list(a) && is_image(b) ->
+      is_list(a) && image?(b) ->
         when_number_list a do
           # a / b = (b^-1) * a = (1 / b) * a
           b
@@ -245,7 +245,7 @@ defmodule Vix.Operator do
           |> Operation.linear!(a, [0])
         end
 
-      is_image(a) && is_list(b) ->
+      image?(a) && is_list(b) ->
         when_number_list b do
           Operation.linear!(a, Enum.map(b, &(1 / &1)), [0])
         end
@@ -255,6 +255,6 @@ defmodule Vix.Operator do
     end
   end
 
-  defp is_image(%Image{}), do: true
-  defp is_image(_), do: false
+  defp image?(%Image{}), do: true
+  defp image?(_), do: false
 end
