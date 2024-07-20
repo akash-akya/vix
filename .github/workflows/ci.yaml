@@ -76,12 +76,7 @@ jobs:
 
       - name: Install Dependencies
         if: steps.mix-cache.outputs.cache-hit != 'true'
-        run: |
-          mix deps.get
-          mix deps.compile
-
-      - run: mix deps.get
-      - run: mix compile --force --warnings-as-errors
+        run: mix deps.get
       - run: mix test --trace
 
   linux-precompiled-libvips:
@@ -162,10 +157,10 @@ jobs:
         run: |
           mkdir -p priv/plts
           mix deps.get
-          mix deps.compile
           # mix dialyzer --plt
 
       - run: mix deps.get
+      - run: mix compile --force --warnings-as-errors
       - run: mix deps.unlock --check-unused
       - run: mix format --check-formatted
       - run: mix credo --strict
