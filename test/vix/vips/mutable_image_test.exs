@@ -62,4 +62,10 @@ defmodule Vix.Vips.MutableImageTest do
     assert {:ok, {_, false}} =
              Vix.Vips.Image.mutate(i, fn m -> Vix.Vips.MutableImage.has_alpha?(m) end)
   end
+
+  test "that returning the mutated image is an acceptable callback return" do
+    {:ok, i} = Vix.Vips.Image.new_from_file(img_path("puppies.jpg"))
+
+    assert {:ok, _} = Vix.Vips.Image.mutate(i, & &1)
+  end
 end
