@@ -199,21 +199,21 @@ defmodule Vix.Vips.Image do
   end
 
   # Extract a range of bands
-  def fetch_range(image, %Range{first: first, last: last}) when first >= 0 and last >= first do
+  defp fetch_range(image, %Range{first: first, last: last}) when first >= 0 and last >= first do
     case Vix.Vips.Operation.extract_band(image, first, n: last - first + 1) do
       {:ok, band} -> {:ok, band}
       {:error, _reason} -> raise "Invalid band range #{inspect(first..last)}"
     end
   end
 
-  def fetch_range(image, %Range{first: first, last: last}) when first >= 0 and last < 0 do
+  defp fetch_range(image, %Range{first: first, last: last}) when first >= 0 and last < 0 do
     case bands(image) + last do
       last when last >= 0 -> fetch(image, first..last)
       _other -> raise ArgumentError, "Resolved invalid band range #{first..last}}"
     end
   end
 
-  def fetch_range(image, %Range{first: first, last: last}) when last < 0 and first < last do
+  defp fetch_range(image, %Range{first: first, last: last}) when last < 0 and first < last do
     bands = bands(image)
     last = bands + last
 
@@ -224,7 +224,7 @@ defmodule Vix.Vips.Image do
     end
   end
 
-  def fetch_range(_image, %Range{} = range) do
+  defp fetch_range(_image, %Range{} = range) do
     raise ArgumentError, "Invalid range #{inspect(range)}"
   end
 
@@ -438,9 +438,6 @@ defmodule Vix.Vips.Image do
   @doc """
   Create a new image from Enumerable.
 
-  > #### Caution {: .warning}
-  > This function is experimental and might cause crashes, use with caution
-
   Returns an image which will lazily pull data from passed
   Enumerable. `enum` should be stream of bytes of an encoded image
   such as JPEG. This functions recognizes the image format and
@@ -511,9 +508,6 @@ defmodule Vix.Vips.Image do
 
   @doc """
   Creates a Stream from Image.
-
-  > #### Caution {: .warning}
-  > This function is experimental and might cause crashes, use with caution
 
   Returns a Stream which will lazily pull data from passed image.
 
@@ -1282,8 +1276,8 @@ defmodule Vix.Vips.Image do
   end
 
   if Kernel.macro_exported?(Logger, :warning, 1) do
-    def log_warn(msg), do: Logger.warning(msg)
+    defp log_warn(msg), do: Logger.warning(msg)
   else
-    def log_warn(msg), do: Logger.warn(msg)
+    defp log_warn(msg), do: Logger.warn(msg)
   end
 end
