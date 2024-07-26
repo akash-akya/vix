@@ -71,6 +71,9 @@ defmodule Vix.Nif do
   def nif_image_write_to_binary(_vips_image),
     do: :erlang.nif_error(:nif_library_not_loaded)
 
+  def nif_image_write_area_to_binary(_vips_image, _params_list),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
   # VipsImage *UNSAFE*
   def nif_image_update_metadata(_vips_image, _name, _value),
     do: :erlang.nif_error(:nif_library_not_loaded)

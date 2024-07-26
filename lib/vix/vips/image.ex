@@ -1,8 +1,4 @@
 defmodule Vix.Vips.Image do
-  defstruct [:ref]
-
-  alias __MODULE__
-
   @moduledoc """
   Functions for reading and writing images as well as
   accessing and updating image metadata.
@@ -99,6 +95,9 @@ defmodule Vix.Vips.Image do
       %Vix.Vips.Image{ref: #Reference<0.2448791511.2685009949.153742>}
   """
 
+  defstruct [:ref]
+
+  alias __MODULE__
   alias Vix.Nif
   alias Vix.Type
   alias Vix.Vips.MutableImage
@@ -152,7 +151,7 @@ defmodule Vix.Vips.Image do
 
   # Extract band when the band number is positive or zero
   def fetch(image, band) when is_integer(band) and band >= 0 do
-    case Vix.Vips.Operation.extract_band(image, band) do
+    case Operation.extract_band(image, band) do
       {:ok, band} -> {:ok, band}
       {:error, _reason} -> raise ArgumentError, "Invalid band requested. Found #{inspect(band)}"
     end
@@ -179,9 +178,13 @@ defmodule Vix.Vips.Image do
     with {:ok, args} <- normalize_access_args(args),
          {:ok, left, width} <- validate_dimension(args[:width], width(image)),
          {:ok, top, height} <- validate_dimension(args[:height], height(image)),
-         {:ok, first_band, bands} <- validate_dimension(args[:band], bands(image)),
-         {:ok, area} <- extract_area(image, left, top, width, height) do
-      extract_band(area, first_band, n: bands)
+         {:ok, first_band, bands} <- validate_dimension(args[:band], bands(image)) do
+      extracted_image =
+        image
+        |> extract_area!(left, top, width, height)
+        |> extract_band!(first_band, n: bands)
+
+      {:ok, extracted_image}
     else
       {:error, _} ->
         raise ArgumentError, "Argument must be list of integers or ranges or keyword list"
@@ -190,30 +193,30 @@ defmodule Vix.Vips.Image do
 
   @impl Access
   def get_and_update(_image, _key, _fun) do
-    raise "get_and_update/3 for Vix.Vips.Image is not supported."
+    raise ArgumentError, "get_and_update/3 for Vix.Vips.Image is not supported."
   end
 
   @impl Access
   def pop(_image, _band, _default \\ nil) do
-    raise "pop/3 for Vix.Vips.Image is not supported."
+    raise ArgumentError, "pop/3 for Vix.Vips.Image is not supported."
   end
 
   # Extract a range of bands
-  def fetch_range(image, %Range{first: first, last: last}) when first >= 0 and last >= first do
-    case Vix.Vips.Operation.extract_band(image, first, n: last - first + 1) do
+  defp fetch_range(image, %Range{first: first, last: last}) when first >= 0 and last >= first do
+    case Operation.extract_band(image, first, n: last - first + 1) do
       {:ok, band} -> {:ok, band}
-      {:error, _reason} -> raise "Invalid band range #{inspect(first..last)}"
+      {:error, _reason} -> raise Error, "Invalid band range #{inspect(first..last)}"
     end
   end
 
-  def fetch_range(image, %Range{first: first, last: last}) when first >= 0 and last < 0 do
+  defp fetch_range(image, %Range{first: first, last: last}) when first >= 0 and last < 0 do
     case bands(image) + last do
       last when last >= 0 -> fetch(image, first..last)
       _other -> raise ArgumentError, "Resolved invalid band range #{first..last}}"
     end
   end
 
-  def fetch_range(image, %Range{first: first, last: last}) when last < 0 and first < last do
+  defp fetch_range(image, %Range{first: first, last: last}) when last < 0 and first < last do
     bands = bands(image)
     last = bands + last
 
@@ -224,7 +227,7 @@ defmodule Vix.Vips.Image do
     end
   end
 
-  def fetch_range(_image, %Range{} = range) do
+  defp fetch_range(_image, %Range{} = range) do
     raise ArgumentError, "Invalid range #{inspect(range)}"
   end
 
@@ -281,17 +284,25 @@ defmodule Vix.Vips.Image do
     Map.get(range, :step) == 1 || !Map.has_key?(range, :step)
   end
 
-  defp extract_area(image, left, top, width, height) do
+  @spec extract_area!(
+          Image.t(),
+          non_neg_integer,
+          non_neg_integer,
+          non_neg_integer,
+          non_neg_integer
+        ) :: Image.t() | no_return
+  defp extract_area!(image, left, top, width, height) do
     case Operation.extract_area(image, left, top, width, height) do
-      {:ok, image} -> {:ok, image}
-      _other -> raise "Requested area could not be extracted"
+      {:ok, image} -> image
+      {:error, _} = _error -> raise Error, "Requested area could not be extracted"
     end
   end
 
-  defp extract_band(area, first_band, options) do
+  @spec extract_band!(Image.t(), non_neg_integer, keyword) :: Image.t() | no_return
+  defp extract_band!(area, first_band, options) do
     case Operation.extract_band(area, first_band, options) do
-      {:ok, image} -> {:ok, image}
-      _other -> raise "Requested band(s) could not be extracted"
+      {:ok, image} -> image
+      {:error, _} = _error -> raise Error, "Requested band(s) could not be extracted"
     end
   end
 
@@ -380,7 +391,7 @@ defmodule Vix.Vips.Image do
   @spec new_from_buffer(binary(), keyword()) :: {:ok, t()} | {:error, term()}
   def new_from_buffer(bin, opts \\ []) do
     with {:ok, loader} <- Vix.Vips.Foreign.find_load_buffer(bin),
-         {:ok, {ref, _optional}} <- Vix.Vips.Operation.Helper.operation_call(loader, [bin], opts) do
+         {:ok, {ref, _optional}} <- Operation.Helper.operation_call(loader, [bin], opts) do
       {:ok, wrap_type(ref)}
     end
   end
@@ -437,9 +448,6 @@ defmodule Vix.Vips.Image do
 
   @doc """
   Create a new image from Enumerable.
-
-  > #### Caution {: .warning}
-  > This function is experimental and might cause crashes, use with caution
 
   Returns an image which will lazily pull data from passed
   Enumerable. `enum` should be stream of bytes of an encoded image
@@ -511,9 +519,6 @@ defmodule Vix.Vips.Image do
 
   @doc """
   Creates a Stream from Image.
-
-  > #### Caution {: .warning}
-  > This function is experimental and might cause crashes, use with caution
 
   Returns a Stream which will lazily pull data from passed image.
 
@@ -759,8 +764,81 @@ defmodule Vix.Vips.Image do
   binary blob. Such as height, width and bands.
   """
   @spec write_to_binary(t()) :: {:ok, binary()} | {:error, term()}
-  def write_to_binary(%Image{ref: vips_image}) do
-    Nif.nif_image_write_to_binary(vips_image)
+  def write_to_binary(image) do
+    case write_area_to_binary(image) do
+      {:ok, %{binary: binary}} -> {:ok, binary}
+      error -> error
+    end
+  end
+
+  @doc """
+  Returns the pixel value for the passed position
+
+  Pixel value is a list of numbers. Size of the list depends on the
+  number of bands in the image and number type will depend on the
+  band format (see: `t:Vix.Vips.Operation.vips_band_format/0`).
+
+  For example for RGBA image with unsigned char band format the
+  return value will be a list of integer of size 4.
+
+  This function is similar to `Vix.Vips.Operation.getpoint/3`,
+  getpoint always returns the value as `float` but get_pixel returns
+  based on the image band format.
+
+  > #### Caution {: .warning}
+  > Loop through lot of pixels using `get_pixel` can be expensive.
+  > Use `extract_area` or Access syntax (slicing) instead
+
+  """
+  @spec get_pixel(t(), x :: non_neg_integer, y :: non_neg_integer) ::
+          {:ok, [term]} | {:error, term()}
+  def get_pixel(image, x, y) do
+    unless x >= 0 and y >= 0 do
+      raise ArgumentError, "Pixel position must be non-negative"
+    end
+
+    case write_area_to_binary(image, left: x, top: y, width: 1, height: 1) do
+      {:ok, %{binary: binary, width: 1, height: 1, band_format: format}} ->
+        {:ok, binary_to_list(binary, format)}
+
+      {:error, _} = error ->
+        error
+    end
+  end
+
+  @doc """
+  Same as `get_pixel/3`. Returns the pixel value on success or raise the error.
+  """
+  @spec get_pixel!(t(), x :: non_neg_integer, y :: non_neg_integer) :: [term] | no_return
+  def get_pixel!(image, x, y) do
+    case get_pixel(image, x, y) do
+      {:ok, list} -> list
+      {:error, reason} when is_binary(reason) -> raise Error, reason
+      {:error, reason} -> raise Error, inspect(reason)
+    end
+  end
+
+  @spec write_area_to_binary(t(), params :: keyword) :: {:ok, binary()} | {:error, term()}
+  defp write_area_to_binary(%Image{ref: vips_image}, params \\ []) do
+    params =
+      Enum.map(~w(left top width height band_start band_count)a, fn key ->
+        params[key] || -1
+      end)
+
+    case Nif.nif_image_write_area_to_binary(vips_image, params) do
+      {:ok, {binary, width, height, bands, band_format}} ->
+        {:ok,
+         %{
+           binary: binary,
+           width: width,
+           height: height,
+           bands: bands,
+           band_format: Vix.Vips.Enum.VipsBandFormat.to_erl_term(band_format)
+         }}
+
+      {:error, _} = error ->
+        error
+    end
   end
 
   @doc """
@@ -1209,8 +1287,8 @@ defmodule Vix.Vips.Image do
   end
 
   if Kernel.macro_exported?(Logger, :warning, 1) do
-    def log_warn(msg), do: Logger.warning(msg)
+    defp log_warn(msg), do: Logger.warning(msg)
   else
-    def log_warn(msg), do: Logger.warn(msg)
+    defp log_warn(msg), do: Logger.warn(msg)
   end
 end

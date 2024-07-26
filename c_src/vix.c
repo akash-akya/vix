@@ -88,6 +88,8 @@ static ErlNifFunc nif_funcs[] = {
      ERL_NIF_DIRTY_JOB_IO_BOUND},
     {"nif_image_write_to_binary", 1, nif_image_write_to_binary,
      ERL_NIF_DIRTY_JOB_CPU_BOUND},
+    {"nif_image_write_area_to_binary", 2, nif_image_write_area_to_binary,
+     ERL_NIF_DIRTY_JOB_CPU_BOUND},
 
     /* VipsImage UNSAFE */
     {"nif_image_update_metadata", 3, nif_image_update_metadata, 0},
