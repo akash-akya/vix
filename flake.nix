@@ -3,22 +3,31 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
+    flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, ... }:
-    let
-      supportedSystems = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
-      forAllSystems = f: nixpkgs.lib.genAttrs supportedSystems (system: f {
+  outputs = { self, nixpkgs, flake-utils }:
+    flake-utils.lib.eachDefaultSystem (system:
+      let
+        inherit (nixpkgs.lib) optional;
         pkgs = import nixpkgs { inherit system; };
+
+        sdk = with pkgs;
+          lib.optionals stdenv.isDarwin
+            (with darwin.apple_sdk.frameworks; [
+              # needed for compilation
+              pkgs.libiconv
+              AppKit
+              Foundation
+              CoreFoundation
+              CoreServices
+            ]);
+
+      in {
+        devShell = pkgs.mkShell {
+          buildInputs =
+            [ pkgs.elixir sdk ];
+        };
       });
-    in
-      {
-        devShells = forAllSystems ({ pkgs }: {
-          default = pkgs.mkShell {
-            packages = with pkgs; [
-              elixir
-            ];
-          };
-        });
-      };
+
 }
