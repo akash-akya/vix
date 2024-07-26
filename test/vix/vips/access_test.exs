@@ -24,7 +24,7 @@ defmodule Vix.Vips.AccessTest do
   test "Access behaviour for Vix.Vips.Image with invalid range band" do
     {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
 
-    assert_raise RuntimeError, "Invalid band range 1..5", fn ->
+    assert_raise Image.Error, "Invalid band range 1..5", fn ->
       im[1..5]
     end
 
