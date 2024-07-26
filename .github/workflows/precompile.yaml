@@ -59,7 +59,7 @@ jobs:
             cache/*.tar.gz
 
   macos:
-    runs-on: macos-11
+    runs-on: macos-14
     env:
       MIX_ENV: "prod"
     strategy:
