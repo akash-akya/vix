@@ -180,7 +180,7 @@ lines. Now we just need to find the angle.
 
 ## Finding the angle
 
-As said before ouput of image of Fourier Transform will be in complex band format.
+As said before output of image of Fourier Transform will be in complex band format.
 The real part of it is amplitude, which is what we are
 seeing as lines and there is imaginary part which is phase.
 
