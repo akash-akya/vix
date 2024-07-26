@@ -12,14 +12,13 @@ if Code.ensure_loaded?(Kino.Render) do
       assert {:ok, %Image{ref: _ref} = image} = Image.new_from_file(img_path("puppies.jpg"))
 
       assert %{
-               type: :tabs,
-               labels: ["Image", "Attributes"],
+               type: :grid,
+               boxed: false,
+               columns: 1,
+               gap: 8,
                outputs: [
                  %{content: _, mime_type: "image/png", type: :image},
-                 %{
-                   export: true,
-                   type: :js
-                 }
+                 %{export: false, type: :js}
                ]
              } = Kino.Render.to_livebook(image)
     end
