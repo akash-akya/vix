@@ -69,7 +69,7 @@ defmodule Vix.Vips.AccessTest do
   test "Access behaviour with invalid dimensions" do
     {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
 
-    # Negative indicies can't include 0 since thats a wrap-around
+    # Negative indices can't include 0 since that's a wrap-around
     assert_raise ArgumentError, "Invalid range -3..0", fn ->
       im[[-3..0]]
     end

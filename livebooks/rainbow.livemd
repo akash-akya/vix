@@ -201,7 +201,7 @@ width = height = 255
 # pixel right-bottom will be `{255, 255}` (white)
 xy = Operation.xyz!(width, height)
 
-# Display how axis values are chaning
+# Display how axis values are chaining
 Kino.Layout.grid([Kino.Text.new("X-Axis"), Kino.Text.new("Y-Axis"), xy[0], xy[1]], columns: 2)
 |> Kino.render()
 
@@ -274,7 +274,7 @@ defmodule ComplexOps do
     # [new_x, new_y] = map[x, y]
     # out[x, y] = img[new_x, new_y]
     #
-    # mapim is to roate, displace, distort, any type of spatial operations.
+    # mapim is to rotate, displace, distort, any type of spatial operations.
     # where the pixel value (color) remain same but the position is changed.
     Operation.mapim!(img, xy, background: background)
   end
