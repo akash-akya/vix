@@ -278,7 +278,7 @@ defmodule Vix.Vips.Image do
   end
 
   # We can do this as a guard in later Elixir versions but
-  # Vix is intendede to run on a wide range of Elixir versions.
+  # Vix is intended to run on a wide range of Elixir versions.
 
   defp single_step_range?(%Range{} = range) do
     Map.get(range, :step) == 1 || !Map.has_key?(range, :step)
