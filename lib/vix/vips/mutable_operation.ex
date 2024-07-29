@@ -97,6 +97,7 @@ defmodule Vix.Vips.MutableOperation do
             )
           )
     if in_opt_spec == [] do
+      @dialyzer {:no_match, [{bang_func_name, length(req_params)}]}
       # operations without optional arguments
       def unquote(bang_func_name)(unquote_splicing(req_params)) do
         case __MODULE__.unquote(func_name)(unquote_splicing(req_params)) do
@@ -107,6 +108,7 @@ defmodule Vix.Vips.MutableOperation do
         end
       end
     else
+      @dialyzer {:no_match, [{bang_func_name, length(req_params) + 1}]}
       # operations with optional arguments
       def unquote(bang_func_name)(unquote_splicing(req_params), optional \\ []) do
         case __MODULE__.unquote(func_name)(unquote_splicing(req_params), optional) do

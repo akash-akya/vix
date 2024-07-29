@@ -164,7 +164,7 @@ defmodule Vix.Operator do
 
       image?(a) && is_list(b) ->
         when_number_list b do
-          Operation.linear!(a, [1], b)
+          Operation.linear!(a, [1.0], b)
         end
 
       true ->
@@ -189,7 +189,7 @@ defmodule Vix.Operator do
 
       image?(a) && is_list(b) ->
         when_number_list b do
-          Operation.linear!(a, b, [0])
+          Operation.linear!(a, b, [+0.0])
         end
 
       true ->
@@ -212,12 +212,12 @@ defmodule Vix.Operator do
       is_list(a) && image?(b) ->
         when_number_list a do
           # a - b = (b * -1) + a
-          Operation.linear!(b, [-1], a)
+          Operation.linear!(b, [-1.0], a)
         end
 
       image?(a) && is_list(b) ->
         when_number_list b do
-          Operation.linear!(a, [1], Enum.map(b, &(-&1)))
+          Operation.linear!(a, [1.0], Enum.map(b, &(-&1)))
         end
 
       true ->
@@ -241,13 +241,13 @@ defmodule Vix.Operator do
         when_number_list a do
           # a / b = (b^-1) * a = (1 / b) * a
           b
-          |> Operation.math2_const!(:VIPS_OPERATION_MATH2_POW, [-1])
-          |> Operation.linear!(a, [0])
+          |> Operation.math2_const!(:VIPS_OPERATION_MATH2_POW, [-1.0])
+          |> Operation.linear!(a, [+0.0])
         end
 
       image?(a) && is_list(b) ->
         when_number_list b do
-          Operation.linear!(a, Enum.map(b, &(1 / &1)), [0])
+          Operation.linear!(a, Enum.map(b, &(1 / &1)), [+0.0])
         end
 
       true ->

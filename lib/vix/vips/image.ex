@@ -197,7 +197,7 @@ defmodule Vix.Vips.Image do
   end
 
   @impl Access
-  def pop(_image, _band, _default \\ nil) do
+  def pop(_image, _band) do
     raise ArgumentError, "pop/3 for Vix.Vips.Image is not supported."
   end
 
@@ -818,7 +818,7 @@ defmodule Vix.Vips.Image do
     end
   end
 
-  @spec write_area_to_binary(t(), params :: keyword) :: {:ok, binary()} | {:error, term()}
+  @spec write_area_to_binary(t(), params :: keyword) :: {:ok, map} | {:error, term()}
   defp write_area_to_binary(%Image{ref: vips_image}, params \\ []) do
     params =
       Enum.map(~w(left top width height band_start band_count)a, fn key ->
@@ -1040,7 +1040,7 @@ defmodule Vix.Vips.Image do
         "xoffset" => quote(do: integer()),
         "yoffset" => quote(do: integer()),
         "filename" => quote(do: String.t()),
-        "mode" => quote(do: Stringt.t()),
+        "mode" => quote(do: String.t()),
         "scale" => quote(do: float()),
         "offset" => quote(do: float()),
         "page-height" => quote(do: integer()),
@@ -1048,7 +1048,7 @@ defmodule Vix.Vips.Image do
         "orientation" => quote(do: integer()),
         "interpretation" => quote(do: Vix.Vips.Operation.vips_interpretation()),
         "coding" => quote(do: Vix.Vips.Operation.vips_coding()),
-        "format" => quote(do: Vix.Vips.Operatoin.vips_band_format())
+        "format" => quote(do: Vix.Vips.Operation.vips_band_format())
       } do
     func_name = name |> String.replace("-", "_") |> String.to_atom()
 
@@ -1085,7 +1085,7 @@ defmodule Vix.Vips.Image do
           xoffset: integer() | nil,
           yoffset: integer() | nil,
           filename: String.t() | nil,
-          mode: Stringt.t() | nil,
+          mode: String.t() | nil,
           scale: float() | nil,
           offset: float() | nil,
           "page-height": integer() | nil,
@@ -1093,7 +1093,7 @@ defmodule Vix.Vips.Image do
           orientation: integer() | nil,
           interpretation: Vix.Vips.Operation.vips_interpretation() | nil,
           coding: Vix.Vips.Operation.vips_coding() | nil,
-          format: Vix.Vips.Operatoin.vips_band_format() | nil
+          format: Vix.Vips.Operation.vips_band_format() | nil
         }
   def headers(image) do
     [
@@ -1158,7 +1158,8 @@ defmodule Vix.Vips.Image do
   end
 
   @spec validate_matrix_list([[number]] | [number] | Range.t()) ::
-          {width :: non_neg_integer(), height :: non_neg_integer(), [number]}
+          {:ok, {width :: non_neg_integer(), height :: non_neg_integer(), [number]}}
+          | {:error, term}
   defp validate_matrix_list(list) do
     list = normalize_list(list)
 
