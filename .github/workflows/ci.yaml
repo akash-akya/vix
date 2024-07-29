@@ -150,6 +150,7 @@ jobs:
           path: |
             deps
             _build
+            priv/plts
           key: ${{ runner.os }}-${{ matrix.otp }}-${{ matrix.elixir }}-${{ hashFiles('mix.lock') }}
 
       - name: Install Dependencies
@@ -157,7 +158,7 @@ jobs:
         run: |
           mkdir -p priv/plts
           mix deps.get
-          # mix dialyzer --plt
+          mix dialyzer --plt
 
       - run: mix deps.get
       - run: mix clean && mix deep_clean
@@ -165,4 +166,4 @@ jobs:
       - run: mix deps.unlock --check-unused
       - run: mix format --check-formatted
       - run: mix credo --strict
-      # - run: mix dialyzer --plt
+      - run: mix dialyzer --format github
