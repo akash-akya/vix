@@ -1225,31 +1225,70 @@ defmodule Vix.Vips.Image do
       alias Vix.Vips.Image
 
       def to_livebook(image) do
-        attributes = attributes_from_image(image)
-        {:ok, encoded} = Image.write_to_buffer(image, ".png")
-        image = Kino.Image.new(encoded, :png)
-        tabs = Kino.Layout.tabs(Image: image, Attributes: attributes)
-        Kino.Render.to_livebook(tabs)
+        {:ok, buf} = Image.write_to_buffer(image, ".png")
+
+        Kino.Layout.grid([Kino.Image.new(buf, "image/png"), image_info(image)])
+        |> Kino.Render.to_livebook()
       end
 
-      defp attributes_from_image(image) do
-        data =
-          for field <- ~w(width height bands interpretation format filename) do
-            case Image.header_value(image, field) do
-              {:ok, value} ->
-                {String.capitalize(field), value}
+      defp image_info(image) do
+        height = Image.height(image)
+        width = Image.width(image)
 
-              {:error, _error} ->
-                nil
-            end
+        filename =
+          case Image.header_value(image, "filename") do
+            {:ok, filename} -> Path.basename(filename)
+            {:error, _} -> ""
           end
-          |> Enum.filter(& &1)
 
-        data =
-          (data ++ [{"Has alpha band?", Image.has_alpha?(image)}])
-          |> Enum.map(fn {k, v} -> [{"Attribute", k}, {"Value", v}] end)
+        """
+        <span style="color: #61758a; background-color: #e1e8f0; border-radius: .5rem; padding: .1rem;">
+          <code style="padding: .5rem; vertical-align: middle; line-height: 1.25rem;">
+            #{filename},  #{width}x#{height} #{format(image)},  #{Image.bands(image)} bands,  #{interpretation(image)}
+          </code>
+        </span>
+        """
+        |> Kino.HTML.new()
+      end
 
-        Kino.DataTable.new(data, name: "Image Metadata")
+      # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
+      defp format(image) do
+        case Image.format(image) do
+          :VIPS_FORMAT_UCHAR -> "8-bit unsigned integer"
+          :VIPS_FORMAT_CHAR -> "8-bit signed integer"
+          :VIPS_FORMAT_USHORT -> "16-bit unsigned integer"
+          :VIPS_FORMAT_SHORT -> "16-bit signed integer"
+          :VIPS_FORMAT_UINT -> "32-bit unsigned integer"
+          :VIPS_FORMAT_INT -> "32-bit signed integer"
+          :VIPS_FORMAT_FLOAT -> "32-bit float"
+          :VIPS_FORMAT_COMPLEX -> "64-bit complex"
+          :VIPS_FORMAT_DOUBLE -> "64-bit float"
+          :VIPS_FORMAT_DPCOMPLEX -> "128-bit complex"
+        end
+      end
+
+      # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
+      defp interpretation(image) do
+        case Image.interpretation(image) do
+          :VIPS_INTERPRETATION_MULTIBAND -> "multiband"
+          :VIPS_INTERPRETATION_B_W -> "mono"
+          :VIPS_INTERPRETATION_HISTOGRAM -> "histogram"
+          :VIPS_INTERPRETATION_XYZ -> "XYZ"
+          :VIPS_INTERPRETATION_LAB -> "Lab"
+          :VIPS_INTERPRETATION_CMYK -> "CMYK"
+          :VIPS_INTERPRETATION_LABQ -> "LabQ"
+          :VIPS_INTERPRETATION_RGB -> "RGB"
+          :VIPS_INTERPRETATION_UCS -> "UCS"
+          :VIPS_INTERPRETATION_LCH -> "LCh"
+          :VIPS_INTERPRETATION_LABS -> "LabS"
+          :VIPS_INTERPRETATION_sRGB -> "sRGB"
+          :VIPS_INTERPRETATION_YXY -> "Yxy"
+          :VIPS_INTERPRETATION_FOURIER -> "Fourier"
+          :VIPS_INTERPRETATION_RGB16 -> "RGB16"
+          :VIPS_INTERPRETATION_GREY16 -> "GREY16"
+          :VIPS_INTERPRETATION_ARRAY -> "Array"
+          :VIPS_INTERPRETATION_scRGB -> "scRGB"
+        end
       end
     end
   end
