@@ -8,7 +8,7 @@ defmodule Vix.LibvipsPrecompiled do
     fetch_libvips()
   end
 
-  @vips_version "8.15.0"
+  @vips_version "8.15.3"
 
   def fetch_libvips do
     version = System.get_env("LIBVIPS_VERSION") || @vips_version
@@ -21,7 +21,7 @@ defmodule Vix.LibvipsPrecompiled do
     :ok
   end
 
-  @release_tag "8.15.0"
+  @release_tag "8.15.3-rc3"
 
   @filename "libvips-<%= version %>-<%= suffix %>.tar.gz"
   @url "https://github.com/akash-akya/sharp-libvips/releases/download/v<%= tag %>/<%= filename %>"
