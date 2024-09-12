@@ -14,7 +14,7 @@ IO.puts("Version: " <> Vix.Vips.version())
 
 ## Vips Image
 
-All image IO operations, such as reading and writing files, are available in the `Vix.Vips.Image` module. The `Image` module also contains functions to get image attributes. Most Vips operations take a `%Vix.Vips.Image{}` instance.
+All image IO operations, such as reading and writing files, are available in the `Vix.Vips.Image` module. The `Image` module also contains functions to get image attributes. Most Vips operations take a `%Vix.Vips.Image{}` struct.
 
 ```elixir
 alias Vix.Vips.Image
