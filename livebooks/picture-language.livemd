@@ -65,7 +65,7 @@ defmodule Pict do
 end
 ```
 
-Implementation of [Fig. 2.14](https://mitpress.mit.edu/sites/default/files/sicp/full-text/book/book-Z-H-15.html#%_fig_2.14)
+Implementation of [Fig. 2.9](https://web.mit.edu/6.001/6.037/sicp.pdf#page=201)
 
 ```elixir
 defmodule PictUtils do
