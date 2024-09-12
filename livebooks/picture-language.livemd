@@ -40,7 +40,7 @@ end
 
 ## Picture Language
 
-Implementing picture language defined in [**Structural and Interpretation of Computer Programs**](https://mitpress.mit.edu/sites/default/files/sicp/index.html) section [2.2.4](https://web.mit.edu/6.001/6.037/sicp.pdf#subsection.2.2.4) in Elixir using vix
+Implementing picture language defined in [**Structural and Interpretation of Computer Programs**](https://web.mit.edu/6.001/6.037/sicp.pdf) section [2.2.4](https://web.mit.edu/6.001/6.037/sicp.pdf#subsection.2.2.4) in Elixir using vix
 
 
 ```elixir
