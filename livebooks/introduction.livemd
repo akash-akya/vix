@@ -14,26 +14,26 @@ IO.puts("Version: " <> Vix.Vips.version())
 
 ## Vips Image
 
-All image IO operations such as reading and writing files are available in `Vix.Vips.Image` module. Image module also contains functions get image attributes. Most Vips operations takes `%Vix.Vips.Image{}` instance
+All image IO operations, such as reading and writing files, are available in the `Vix.Vips.Image` module. The `Image` module also contains functions to get image attributes. Most Vips operations take a `%Vix.Vips.Image{}` struct.
 
 ```elixir
 alias Vix.Vips.Image
 ```
 
-Reading image from a file. Note that image is not actually loaded to the memory at this point. img is `%Image{}` struct.
+Reading an image from a file. Note that an image is not actually loaded into memory at this point. `img` is an `%Image{}` struct.
 
 ```elixir
 {:ok, %Image{} = img} = Image.new_from_file("~/Downloads/kitty.png")
 ```
 
-You can also load image from binary. This let us to work images without touching file system. It tires to guess image format from the binary and uses correct loader.
+You can also load an image from a binary. This allows us to work with images without touching the file system. It tries to guess the image format from the binary and uses the correct loader.
 
 ```elixir
 bin = File.read!("~/Downloads/kitty.png")
 {:ok, %Image{} = img} = Image.new_from_buffer(bin)
 ```
 
-If you know image format beforehand then you can use appropriate function from `Vix.Vips.Operation`. For example to load png you can use `Vix.Vips.Operation.pngload_buffer/2`.
+If you know the image format beforehand, you can use the appropriate function from `Vix.Vips.Operation`. For example, you would use `Vix.Vips.Operation.pngload_buffer/2` to load a PNG.
 
 ```elixir
 bin = File.read!("~/Downloads/kitty.png")
@@ -52,7 +52,7 @@ IO.puts("Width: #{Image.width(img)}")
 IO.puts("Height: #{Image.height(img)}")
 ```
 
-Kino supports showing image inline. We can use this to display image in the livebook.
+Kino supports showing images inline. We can use this to display image in the livebook.
 This opens gate for exploratory image processing
 
 ```elixir
@@ -84,7 +84,8 @@ end
 ```elixir
 import VixExt
 
-# Lets see show in action
+# Let's see show in action
+
 show(img)
 ```
 
@@ -120,8 +121,8 @@ show(thumb)
 
 ### Resize
 
-Resize image to 400x600. `resize` function accepts scaling factor.
-Skip `vscale` if you want to preserve aspect ratio
+Resize the image to 400x600. The `resize` function accepts scaling factor.
+Skip `vscale` if you want to preserve the aspect ratio.
 
 ```elixir
 hscale = 400 / Image.width(img)
@@ -150,7 +151,7 @@ show(flipped_img)
 
 ### Text
 
-Text operation takes multiple optional parameters. See [libvips doc](https://libvips.github.io/libvips/API/current/libvips-create.html#vips-text ) for more details
+The `text` operation takes multiple optional parameters. See [libvips documentation](https://libvips.github.io/libvips/API/current/libvips-create.html#vips-text ) for more details.
 
 ```elixir
 text_input = Kino.Input.text("Text: ")
@@ -166,7 +167,7 @@ str = String.trim(Kino.Input.read(text_input))
 show(inserted_text_img)
 ```
 
-### Creating GIF
+### Creating a GIF
 
 ```elixir
 black = Operation.black!(500, 500, bands: 3)
@@ -187,7 +188,7 @@ end)
 :ok = Operation.gifsave(joined_img, Path.expand("~/Downloads/bw.gif"), "page-height": 500)
 ```
 
-### Few more operations
+### A few more operations
 
 ```elixir
 # Gaussian blur
@@ -207,7 +208,7 @@ show(bw_img)
 
 show(extended_img)
 
-# rotate image 90 degree clockwise
+# rotate image 90 degrees clockwise
 {:ok, rotated_img} = Operation.rot(img, :VIPS_ANGLE_D90)
 show(rotated_img)
 
