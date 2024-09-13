@@ -9,30 +9,30 @@ Mix.install([
 
 ## Introduction
 
-Libvips provides over 300 image processing operations, but getting the
-intuition behind what is possible and how to combine the primitive
-image processing operations can be a challenging.
+Libvips provides over 300 image processing operations so getting an
+intuition for what is possible, and how to combine the primitive
+image processing operations, can be challenging.
 
-With this notebook we look into some and of the core operations while
-trying to achieve a simple goal, which is to generate a rainbow
-🌈. Rainbow should have the half-circular arch, there should be a
-smooth blend between the colors.
+In this notebook we look into some libvips core operations by
+working towards a simple goal — generate a rainbow 🌈. 
+The rainbow should have a half-circular arch and a smooth blend 
+between the colors.
 
 ## Generating the colors
 
-First let's look into just generating the rainbow colors. We need to
+First, let's look into generating the rainbow colors. We need to
 generate the whole spectrum with the smooth blend between them.
 
-libvips provides `buildlut` function which generate a pointwise
+libvips provides the `buildlut` function, which generates pointwise
 intermediate values between the provided points. `lut` here means
-**L**ook **U**p **T**able. buildlut takes a 1D matrix where each value
-represent different points of the format `[position, bands]` and
-buildlut will build a single band, one pixel height image with a
-smooth poitwise transition between the points. If you pass `[0, 0]`
+**L**ook **U**p **T**able. `buildlut` takes a 1D matrix where each value
+represents different points in the format `[position, bands]`.
+`buildlut` will build a single-band, one-pixel-height image with a
+smooth pointwise transition between the points. If you pass `[0, 0]`
 (at position zero pixel value is zero) `[255, 255]` (at position 255
 value is 255), the buildlut will return an image with pixels `0` at
 position 0, `1` at position 1, `2` at position 2 etc, ending with
-`255` at position 255. We can think of it as range `0..255`.
+`255` at position 255. We can think of it as a range from 0 to 255, or `0..255//1`.
 
 ```elixir
 alias Vix.Vips.Image
@@ -40,7 +40,7 @@ alias Vix.Vips.Operation
 
 # buildlut needs matrix image.
 # we can create matrix-image using `Image.new_matrix_from_array` which takes
-# list and return an vips-image which can be passed to buildlut
+# list and return a vips-image which can be passed to `buildlut`
 {:ok, mat} = Image.new_matrix_from_array(2, 2, [[0, 0], [255, 255]])
 
 gradient = Operation.buildlut!(mat)
@@ -54,9 +54,7 @@ We can see the gradient clearly if we increase the image height
 Operation.resize!(gradient, 3, vscale: 50)
 ```
 
-`buildlut` accepts multiple bands as well. So we can generate gradient
-for colors too, not just between black and white
-
+`buildlut` accepts multiple bands as well. So we can generate gradients in grayscale or color.
 ```elixir
 defmodule Vix.KinoUtils do
   # Utility to read color and parse hex string into list of
@@ -139,20 +137,27 @@ Operation.resize!(rainbow_colors, 3, vscale: 50)
 
 ## Generating the Arch
 
-How to generate the half circular arch? there are several way to
+How do we generate the half circular arch? There are several way to
 approach this but we are going to use complex band format and polar
 coordinates.
 
 ### Complex Numbers
 
-A pixel on the image has a position represented its x coordinate and y
-coordinate. value `x` represent point position along the width and `y`
-axis along the height, ie. we need 2 values to form a point. In
-complex number system a pixel is a single complex number value. A
-value in complex number system represents a point on a 2D plane
-instead of a value on an axis. You can just think of it as just a
-fancy way to represent position on 2D plane. Internally a complex
-number is just a pair of **Real** part and **Imaginary** part.
+In a traditional coordinate system, a pixel’s position is represented 
+by two values: its x- and y-coordinates. The x-coordinate indicates the 
+horizontal position along the width of the plane, while the y-coordinate 
+indicates the vertical position along the height. The two values taken 
+together describe a point's location on a two-dimensional (2D) plane.
+
+Now consider an operator, like the Fourier transformation. It takes a 
+coordinate pair and may output a complex number. How would we handle that? 
+
+It turns out that even though a complex number is a single value, it still 
+consists of two components: a **Real** number and an **Imaginary** number. 
+Like the x-coordinate above, the **Real** number component of a complex number
+indicates the horizontal position along the width of the plane. An **Imaginary** 
+number technically represents how many units, i, a point is located off a 2D plane, 
+but for our purposes, we treat it the way we would a y-coordinate.
 
 <!-- livebook:{"break_markdown":true} -->
 
@@ -187,8 +192,8 @@ Because it makes certain operations simple. Operations which operate
 on plane rather than axis. For example, to draw a circle on a polar
 plane we only need to vary angle keeping the distance constant.
 
-Lets take an example and see libvips operations on complex
-planes. First let's create a image at with its origin at the center of
+Let's do an example to see how libvips operations work on the complex
+number plane. First, let's create an image that has an origin in the center of
 the image. It makes it easy to understand what is happening.
 
 ```elixir
@@ -226,13 +231,13 @@ Now that we have an image, we can see how it looks in polar plane
 # y axis becomes the Imaginary part of the complex number
 complex_xy = Operation.copy!(xy, format: :VIPS_FORMAT_COMPLEX, bands: 1)
 
-# change complex number plane to polar plane.
-# vips reads complex number and converts that to polar value for all pixels.
+# change the complex number plane to the polar plane.
+# vips reads a complex number and converts it to a value on the polar plane for all pixels.
 # real part will be distance from the origin
 # imaginary part will be the angle in degree
 polar_xy = Operation.complex!(complex_xy, :VIPS_OPERATION_COMPLEX_POLAR)
 
-# convert the complex number back to 2 band float image.
+# convert the complex number back to 2-band float image.
 # x axis is the real part of the complex number
 # y asix is the imaginary part of the complex number
 xy = Operation.copy!(polar_xy, format: :VIPS_FORMAT_FLOAT, bands: 2)
@@ -243,11 +248,10 @@ xy = xy * [1, height / 360]
 Kino.Layout.grid([Kino.Text.new("X-Axis"), Kino.Text.new("Y-Axis"), xy[0], xy[1]], columns: 2)
 ```
 
-As you can see x axis is the real part of the complex number, which is
-distance from the origin and Y axis is the imaginary part of the
-complex number which is the angle.
+As you can see the x-axis is the real part of the complex number, which is
+distance from the origin, and the y-axis is the imaginary part, which is the angle.
 
-This is much easier to understand if we draw few line on the input
+This is much easier to understand if we draw a few lines on the input
 image. and see how it changes in the polar plane
 
 ```elixir
@@ -300,8 +304,8 @@ Kino.Layout.grid([Kino.Text.new("Input"), Kino.Text.new("Output"), img, out], co
 A line on the x axis becomes a circle on the polar plane and a line on
 the y axis becomes a line from the origin.
 
-So to draw a rainbow circle we just need to draw a rainbow line on the
-x axis and convert that to polar plane!
+So to draw a rainbow circle, we just draw a rainbow line on the
+x-axis and convert that to the polar plane!
 
 ```elixir
 rainbow_colors
@@ -316,7 +320,7 @@ rainbow_colors
 :ok
 ```
 
-All that is left now is to make few final adjustments to make it pretty
+All that is left now is to make a few final adjustments to make it pretty
 
 ```elixir
 # create colors from violet to red instead of red to red
