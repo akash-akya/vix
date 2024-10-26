@@ -184,7 +184,11 @@ The [libvips reference manual](https://libvips.github.io/libvips/API/current/) h
 
 ### NIF Error Logging
 
-Vix NIF code writes logs to stderr on certain errors. This is disabled by default. To enable logging set `VIX_LOG_ERROR` environment variable to `true`.
+Vix NIF code writes logs to stderr on certain errors. This is disabled by default. To enable logging set `nif_logger_level` to `:error`. Defaults to `:none`
+
+```elixir
+config :vix, nif_logger_level: :error
+```
 
 
 ## Installation

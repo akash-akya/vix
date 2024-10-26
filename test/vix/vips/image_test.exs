@@ -229,6 +229,7 @@ defmodule Vix.Vips.ImageTest do
     assert stat.size > 0 and stat.type == :regular
   end
 
+  @tag capture_log: true
   test "new_from_enum invalid data write" do
     {:error, "Failed to create image from VipsSource"} = Image.new_from_enum(1..100)
   end

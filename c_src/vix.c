@@ -21,13 +21,27 @@ static int on_load(ErlNifEnv *env, void **priv, ERL_NIF_TERM load_info) {
     return 1;
   }
 
+  ERL_NIF_TERM logger_level;
+  ERL_NIF_TERM logger_level_key = enif_make_atom(env, "nif_logger_level");
+
+  if (!enif_get_map_value(env, load_info, logger_level_key, &logger_level)) {
+    error("Failed to fetch logger level config from map");
+    return 1;
+  }
+
+  char log_level[20] = {0};
+  if (enif_get_atom(env, logger_level, log_level, 19, ERL_NIF_LATIN1) < 1) {
+    error("Failed to fetch logger level atom value");
+    return 1;
+  }
+
 #ifdef DEBUG
   vips_leak_set(true);
   // when checking for leaks disable cache
   vips_cache_set_max(0);
 #endif
 
-  if (utils_init(env))
+  if (utils_init(env, log_level))
     return 1;
 
   if (nif_g_object_init(env))

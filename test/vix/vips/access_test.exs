@@ -95,9 +95,13 @@ defmodule Vix.Vips.AccessTest do
   if range_has_step() do
     test "Access behaviour for Vix.Vips.Image with slicing and mixed positive/negative ranges" do
       {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
-      assert shape(im[[Map.put(0..-1, :step, 1)]]) == {518, 389, 3}
+      assert shape(im[[Map.put(0..-1//-1, :step, 1)]]) == {518, 389, 3}
 
-      im = im[[Map.put(0..-1, :step, 1), Map.put(1..-1, :step, 1), Map.put(-2..-1, :step, 1)]]
+      im =
+        im[
+          [Map.put(0..-1//-1, :step, 1), Map.put(1..-1//-1, :step, 1), Map.put(-2..-1, :step, 1)]
+        ]
+
       assert shape(im) == {518, 388, 2}
     end
 
@@ -106,7 +110,7 @@ defmodule Vix.Vips.AccessTest do
 
       # Step != 1
       assert_raise ArgumentError, "Range arguments must have a step of 1. Found 0..-3//2", fn ->
-        im[[Map.put(0..-3, :step, 2)]]
+        im[[Map.put(0..-3//-1, :step, 2)]]
       end
     end
 
@@ -115,7 +119,7 @@ defmodule Vix.Vips.AccessTest do
 
       # Index not increasing
       assert_raise ArgumentError, "Range arguments must have a step of 1. Found 0..-3//-1", fn ->
-        im[[0..-3]]
+        im[[0..-3//-1]]
       end
     end
   end

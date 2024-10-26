@@ -2,6 +2,7 @@
 #define VIX_UTILS_H
 
 #include "erl_nif.h"
+#include <glib-object.h>
 #include <stdbool.h>
 
 /* #define DEBUG */
@@ -24,14 +25,13 @@
 #define elapsed_microseconds() 0
 #endif
 
+extern const guint VIX_LOG_LEVEL_ERROR;
+extern guint VIX_LOG_LEVEL;
+
 #define error(...)                                                             \
   do {                                                                         \
-    char value[10] = {0};                                                      \
-    size_t value_size = 10;                                                    \
-    if (enif_getenv("VIX_LOG_ERROR", value, &value_size) == 0) {               \
-      if (strcmp(value, "true") == 0) {                                        \
-        vix_log(__VA_ARGS__);                                                  \
-      }                                                                        \
+    if (VIX_LOG_LEVEL == VIX_LOG_LEVEL_ERROR) {                                \
+      vix_log(__VA_ARGS__);                                                    \
     }                                                                          \
   } while (0)
 
@@ -115,7 +115,7 @@ bool get_binary(ErlNifEnv *env, ERL_NIF_TERM bin_term, char *str, size_t size);
 
 VixResult vix_result(ERL_NIF_TERM term);
 
-int utils_init(ErlNifEnv *env);
+int utils_init(ErlNifEnv *env, const char *log_level);
 
 int close_fd(int *fd);
 
