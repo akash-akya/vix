@@ -13,9 +13,30 @@ defmodule Vix.Vips.ImageTest do
   end
 
   test "new_from_file" do
-    assert {:error, "Failed to read image"} == Image.new_from_file("invalid.jpg")
+    assert {:error, :invalid_path} == Image.new_from_file("invalid.jpg")
+    assert {:error, "Failed to find load"} == Image.new_from_file(__ENV__.file)
 
     assert {:ok, %Image{ref: ref}} = Image.new_from_file(img_path("puppies.jpg"))
+    assert is_reference(ref)
+  end
+
+  test "new_from_file supports optional arguments" do
+    assert {:ok, %Image{ref: ref} = img1} = Image.new_from_file(img_path("puppies.jpg"))
+    assert is_reference(ref)
+
+    assert {:ok, %Image{ref: ref} = img2} =
+             Image.new_from_file(img_path("puppies.jpg"), shrink: 2)
+
+    assert is_reference(ref)
+
+    assert Image.width(img1) == 2 * Image.width(img2)
+  end
+
+  test "new_from_file ignores invalid options" do
+    # png does not support `shrink` option
+    assert {:ok, %Image{ref: ref}} =
+             Image.new_from_file(img_path("gradient.png"), shrink: 2)
+
     assert is_reference(ref)
   end
 
