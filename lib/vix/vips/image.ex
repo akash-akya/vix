@@ -313,38 +313,36 @@ defmodule Vix.Vips.Image do
   JPEG, FITS, Matlab, OpenEXR, CSV, WebP, Radiance, RAW, PPM and
   others.
 
-  Load options may be appended to filename as "[name=value,...]". For
-  example:
+  Optional param `opts` is passed to the image loader. Available
+  options depends on the file format. You can find all options
+  available for a format under operation function in
+  [Operation](./search.html?q=load+-buffer+-filename+-profile) module.
+
+  For example, you can find all of the options supported by
+  JPEG under `Vix.Vips.Operation.jpegload/2` function documentation.
 
   ```elixir
-  Image.new_from_file("fred.jpg[shrink=2]")
-  ```
-  Will open "fred.jpg", downsampling by a factor of two.
-
-  The full set of options available depend upon the load operation
-  that will be executed. Try something like:
-
-  ```shell
-  $ vips jpegload
+  Image.new_from_file("fred.jpg", shrink: 2)
   ```
 
-  at the command-line to see a summary of the available options for
-  the JPEG loader.
+  Opens "fred.jpg", downsampling by a factor of two.
 
-  If you want more control over the loader, Use specific format loader
+  > #### Loading is fast {: .info}
+  > Only enough of the image is loaded to the memory to be able to
+  > fill out the header. Pixels will only be decompressed when they are
+  > needed.
+
+  If you want more control over the loader, Use the specific format loader
   from `Vix.Vips.Operation`. For example for jpeg use
   `Vix.Vips.Operation.jpegload/2`
-
-  Loading is fast: only enough of the image is loaded to be able to
-  fill out the header. Pixels will only be decompressed when they are
-  needed.
   """
-  @spec new_from_file(String.t()) :: {:ok, t()} | {:error, term()}
-  def new_from_file(path) do
-    path = Path.expand(path)
-
-    Nif.nif_image_new_from_file(normalize_string(path))
-    |> wrap_type()
+  @spec new_from_file(String.t(), keyword) :: {:ok, t()} | {:error, term()}
+  def new_from_file(path, opts \\ []) do
+    with {:ok, path} <- normalize_path(path),
+         {:ok, loader} <- Vix.Vips.Foreign.find_load(path),
+         {:ok, {ref, _optional}} <- Operation.Helper.operation_call(loader, [path], opts) do
+      {:ok, wrap_type(ref)}
+    end
   end
 
   @doc """
@@ -1330,5 +1328,19 @@ defmodule Vix.Vips.Image do
     defp log_warn(msg), do: Logger.warning(msg)
   else
     defp log_warn(msg), do: Logger.warn(msg)
+  end
+
+  @spec normalize_path(String.t()) :: {:ok, String.t()} | {:error, :invalid_path}
+  defp normalize_path(path) do
+    path =
+      path
+      |> Path.expand()
+      |> normalize_string()
+
+    if File.exists?(path) do
+      {:ok, path}
+    else
+      {:error, :invalid_path}
+    end
   end
 end
