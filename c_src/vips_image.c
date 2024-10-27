@@ -889,7 +889,7 @@ ERL_NIF_TERM nif_image_write_area_to_binary(ErlNifEnv *env, int argc,
   guint list_length;
   int params[6] = {0, 0, 0, 0, 0, 0};
   int left, top, width, height, band_start, band_count;
-  VipsImage **t;
+  VipsImage **t = NULL;
 
   start = enif_monotonic_time(ERL_NIF_USEC);
 
@@ -964,14 +964,20 @@ ERL_NIF_TERM nif_image_write_area_to_binary(ErlNifEnv *env, int argc,
     goto exit;
   }
 
-  t = (VipsImage **)vips_object_local_array((VipsObject *)image, 2);
+  t = VIPS_ARRAY(NULL, 2, VipsImage *);
 
-  if (vips_crop(image, &t[0], left, top, width, height, NULL) ||
-      vips_extract_band(t[0], &t[1], band_start, "n", band_count, NULL)) {
-    error("Failed to extract region and bands. error: %s", vips_error_buffer());
+  if (vips_crop(image, &t[0], left, top, width, height, NULL)) {
+    error("Failed to extract region. error: %s", vips_error_buffer());
     vips_error_clear();
-    ret = make_error(env, "Failed to extract region and bands");
-    goto exit;
+    ret = make_error(env, "Failed to extract region");
+    goto exit_free_temp_arr;
+  }
+
+  if (vips_extract_band(t[0], &t[1], band_start, "n", band_count, NULL)) {
+    error("Failed to extract bands. error: %s", vips_error_buffer());
+    vips_error_clear();
+    ret = make_error(env, "Failed to extract bands");
+    goto exit_free_temp_first;
   }
 
   bin = vips_image_write_to_memory(t[1], &size);
@@ -981,7 +987,7 @@ ERL_NIF_TERM nif_image_write_area_to_binary(ErlNifEnv *env, int argc,
           vips_error_buffer());
     vips_error_clear();
     ret = make_error(env, "Failed to write extracted region to memory");
-    goto exit;
+    goto exit_free_temp_both;
   }
 
   ret = make_ok(
@@ -990,6 +996,15 @@ ERL_NIF_TERM nif_image_write_area_to_binary(ErlNifEnv *env, int argc,
                             enif_make_int(env, vips_image_get_height(t[1])),
                             enif_make_int(env, vips_image_get_bands(t[1])),
                             enif_make_int(env, vips_image_get_format(t[1]))));
+
+exit_free_temp_both:
+  g_object_unref(t[1]);
+
+exit_free_temp_first:
+  g_object_unref(t[0]);
+
+exit_free_temp_arr:
+  g_free(t);
 
 exit:
   notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
