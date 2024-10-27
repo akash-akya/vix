@@ -4,7 +4,7 @@ defmodule Vix.Nif do
 
   def load_nifs do
     nif_path = :filename.join(:code.priv_dir(:vix), "vix")
-    :erlang.load_nif(nif_path, 0)
+    :erlang.load_nif(nif_path, load_config())
   end
 
   # GObject
@@ -207,4 +207,20 @@ defmodule Vix.Nif do
 
   def nif_target_new,
     do: :erlang.nif_error(:nif_library_not_loaded)
+
+  @spec load_config :: map
+  defp load_config do
+    %{nif_logger_level: nif_logger_level()}
+  end
+
+  @spec nif_logger_level :: :error | :warning | :none
+  defp nif_logger_level do
+    case Application.get_env(:vix, :nif_logger_level) do
+      level when level in [:error, :warning] ->
+        level
+
+      _ ->
+        :none
+    end
+  end
 end

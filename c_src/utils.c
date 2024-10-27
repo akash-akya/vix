@@ -19,6 +19,24 @@ ERL_NIF_TERM ATOM_NULL_VALUE;
 ERL_NIF_TERM ATOM_UNDEFINED;
 ERL_NIF_TERM ATOM_EAGAIN;
 
+const guint VIX_LOG_LEVEL_NONE = 0;
+const guint VIX_LOG_LEVEL_WARNING = 1;
+const guint VIX_LOG_LEVEL_ERROR = 2;
+
+guint VIX_LOG_LEVEL = VIX_LOG_LEVEL_NONE;
+
+static void libvips_log_callback(char const *log_domain,
+                                 GLogLevelFlags log_level, char const *message,
+                                 void *enable) {
+  enif_fprintf(stderr, "[libvips]: %s\n", message);
+}
+
+static void libvips_log_null_callback(char const *log_domain,
+                                      GLogLevelFlags log_level,
+                                      char const *message, void *enable) {
+  // void
+}
+
 ERL_NIF_TERM make_ok(ErlNifEnv *env, ERL_NIF_TERM term) {
   return enif_make_tuple2(env, ATOM_OK, term);
 }
@@ -90,7 +108,7 @@ static void vix_binary_dtor(ErlNifEnv *env, void *ptr) {
   debug("vix_binary_resource dtor");
 }
 
-int utils_init(ErlNifEnv *env) {
+int utils_init(ErlNifEnv *env, const char *log_level) {
   ATOM_OK = make_atom(env, "ok");
   ATOM_ERROR = make_atom(env, "error");
   ATOM_NIL = make_atom(env, "nil");
@@ -103,6 +121,22 @@ int utils_init(ErlNifEnv *env) {
   VIX_BINARY_RT = enif_open_resource_type(
       env, NULL, "vix_binary_resource", (ErlNifResourceDtor *)vix_binary_dtor,
       ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER, NULL);
+
+  if (strcmp(log_level, "warning") == 0) {
+    VIX_LOG_LEVEL = VIX_LOG_LEVEL_WARNING;
+  } else if (strcmp(log_level, "error") == 0) {
+    VIX_LOG_LEVEL = VIX_LOG_LEVEL_ERROR;
+  } else {
+    VIX_LOG_LEVEL = VIX_LOG_LEVEL_NONE;
+  }
+
+  if (VIX_LOG_LEVEL == VIX_LOG_LEVEL_WARNING ||
+      VIX_LOG_LEVEL == VIX_LOG_LEVEL_ERROR) {
+    g_log_set_handler("VIPS", G_LOG_LEVEL_WARNING, libvips_log_callback, NULL);
+  } else {
+    g_log_set_handler("VIPS", G_LOG_LEVEL_WARNING, libvips_log_null_callback,
+                      NULL);
+  }
 
   if (!VIX_BINARY_RT) {
     error("Failed to open vix_binary_resource");
