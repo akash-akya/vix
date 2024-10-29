@@ -306,6 +306,18 @@ defmodule Vix.Vips.Image do
     end
   end
 
+  @spec new_from_file(String.t(), keyword) :: {:ok, t()} | {:error, term()}
+
+  def new_from_file(path) do
+    path =
+      path
+      |> Path.expand()
+      |> normalize_string()
+
+    Nif.nif_image_new_from_file(path)
+    |> wrap_type()
+  end
+
   @doc """
   Opens `path` for reading, returns an instance of `t:Vix.Vips.Image.t/0`
 
@@ -336,8 +348,8 @@ defmodule Vix.Vips.Image do
   from `Vix.Vips.Operation`. For example for jpeg use
   `Vix.Vips.Operation.jpegload/2`
   """
-  @spec new_from_file(String.t(), keyword) :: {:ok, t()} | {:error, term()}
-  def new_from_file(path, opts \\ []) do
+  @doc since: "0.31.0"
+  def new_from_file(path, opts) do
     with {:ok, path} <- normalize_path(path),
          {:ok, loader} <- Vix.Vips.Foreign.find_load(path),
          {:ok, {ref, _optional}} <- Operation.Helper.operation_call(loader, [path], opts) do
