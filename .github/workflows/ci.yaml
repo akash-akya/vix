@@ -4,15 +4,13 @@ on:
   - pull_request
 jobs:
   linux:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     name: Test Compiled - Elixir ${{matrix.elixir}} / OTP ${{matrix.otp}}
     env:
       VIX_COMPILATION_MODE: PLATFORM_PROVIDED_LIBVIPS
     strategy:
       matrix:
         include:
-          - elixir: 1.12.x
-            otp: 23.x
           - elixir: 1.13.x
             otp: 24.x
           - elixir: 1.14.x
@@ -32,11 +30,23 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install libvips build dependencies
-        run: sudo apt-get install build-essential libxml2-dev libfftw3-dev libmagickwand-dev libopenexr-dev liborc-0.4-0 gobject-introspection libgsf-1-dev libglib2.0-dev liborc-0.4-dev curl
+        run: |
+          sudo apt-get update
+          sudo apt-get install \
+            meson pkg-config \
+            libarchive-dev libcfitsio-dev libcgif-dev \
+            libexif-dev libexpat1-dev libffi-dev \
+            libfftw3-dev libheif-dev libheif-plugin-aomenc \
+            libheif-plugin-x265 libhwy-dev libimagequant-dev \
+            libjpeg-dev libjxl-dev liblcms2-dev \
+            libmatio-dev libnifti-dev libopenexr-dev \
+            libopenjp2-7-dev libopenslide-dev libpango1.0-dev \
+            libpng-dev libpoppler-glib-dev librsvg2-dev \
+            libtiff5-dev libwebp-dev
 
       - name: Get latest version of libvips
         run: |
-          VIPS_LATEST_RELEASE="https://github.com/libvips/libvips/releases/download/v8.13.0/vips-8.13.0.tar.gz"
+          VIPS_LATEST_RELEASE=$(curl -L -s https://api.github.com/repos/libvips/libvips/releases/latest | grep -o -E "https://(.*)/vips-(.*).tar.xz" | head -1)
           echo "VIPS_LATEST_RELEASE=${VIPS_LATEST_RELEASE}" >> $GITHUB_ENV
 
       - name: Cache libvips artifacts
@@ -50,15 +60,16 @@ jobs:
         if: steps.vips-cache.outputs.cache-hit != 'true'
         run: |
           mkdir vips
-          curl -s -L "${VIPS_LATEST_RELEASE}" | tar xz -C ./vips --strip-components=1
+          curl -s -L "${VIPS_LATEST_RELEASE}" | tar xJ -C ./vips --strip-components=1
           cd vips
-          ./configure
-          make
+          meson setup build -Ddeprecated=false -Dmagick=disabled \
+            || (cat build/meson-logs/meson-log.txt && exit 1)
+          meson compile -C build
 
       - name: Install libvips
         run: |
           cd vips
-          sudo make install
+          sudo meson install -C build
           sudo ldconfig -v
 
       - name: Cache Dependencies
@@ -76,7 +87,7 @@ jobs:
       - run: mix test --trace
 
   linux-precompiled-libvips:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     name: Test Pre-compiled libvips - Elixir ${{matrix.elixir}} / OTP ${{matrix.otp}}
     env:
       VIX_COMPILATION_MODE: PRECOMPILED_LIBVIPS
@@ -95,7 +106,7 @@ jobs:
       - run: mix test --trace
 
   linux-precompiled:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     name: Test Pre-compiled - Elixir ${{matrix.elixir}} / OTP ${{matrix.otp}}
     strategy:
       matrix:
@@ -122,7 +133,7 @@ jobs:
       - run: nix develop --command mix test --trace
 
   lint:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     name: Lint
     strategy:
       matrix:
