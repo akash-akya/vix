@@ -1288,6 +1288,7 @@ defmodule Vix.Vips.Image do
           :VIPS_INTERPRETATION_CMYK -> "CMYK"
           :VIPS_INTERPRETATION_LABQ -> "LabQ"
           :VIPS_INTERPRETATION_RGB -> "RGB"
+          :VIPS_INTERPRETATION_CMC -> "CMC"
           :VIPS_INTERPRETATION_UCS -> "UCS"
           :VIPS_INTERPRETATION_LCH -> "LCh"
           :VIPS_INTERPRETATION_LABS -> "LabS"
@@ -1296,8 +1297,11 @@ defmodule Vix.Vips.Image do
           :VIPS_INTERPRETATION_FOURIER -> "Fourier"
           :VIPS_INTERPRETATION_RGB16 -> "RGB16"
           :VIPS_INTERPRETATION_GREY16 -> "GREY16"
+          :VIPS_INTERPRETATION_MATRIX -> "Matrix"
+          :VIPS_INTERPRETATION_HSV -> "HSV"
           :VIPS_INTERPRETATION_ARRAY -> "Array"
           :VIPS_INTERPRETATION_scRGB -> "scRGB"
+          interpretation -> String.trim_leading(to_string(interpretation), "VIPS_INTERPRETATION_")
         end
       end
     end
