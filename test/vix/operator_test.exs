@@ -1,11 +1,13 @@
 defmodule Vix.OperatorTest do
   use ExUnit.Case, async: true
-
   use Vix.Operator
 
   import Vix.Support.Images
 
+  alias Vix.Vips.Image
   alias Vix.Vips.Operation
+
+  doctest Vix.Operator
 
   describe "+/2" do
     test "when both arguments are image" do
@@ -158,6 +160,227 @@ defmodule Vix.OperatorTest do
 
     test "when both arguments are numbers" do
       assert 4 / 2 == 2
+    end
+  end
+
+  describe "**/2" do
+    test "when both arguments are image" do
+      black = Operation.black!(10, 10, bands: 3)
+      img = Operation.linear!(black, [1], [4])
+
+      out = img ** img
+
+      expected_pow = 4 ** 4
+      expected = Operation.linear!(black, [1], [expected_pow])
+      assert_images_equal(out, expected)
+    end
+
+    test "when first argument is image and second argument is list" do
+      black = Operation.black!(10, 10, bands: 3)
+      img = Operation.linear!(black, [1], [3])
+
+      out = img ** [1, 2, 1]
+
+      # [3, 3, 3] ** [1, 2, 1] = [3, 9, 3]
+      expected = Operation.linear!(black, [1], [3, 9, 3])
+      assert_images_equal(out, expected)
+    end
+
+    test "when first argument is a list and second argument is image" do
+      black = Operation.black!(10, 10, bands: 3)
+      img = Operation.linear!(black, [1], [3])
+
+      out = [1, 2, 1] ** img
+
+      # [1, 2, 1] ** [3, 3, 3] = [1, 8, 1]
+      expected = Operation.linear!(black, [1], [1, 8, 1])
+      assert_images_equal(out, expected)
+    end
+
+    test "when both arguments are numbers" do
+      assert 3 ** 2 == 9
+    end
+  end
+
+  describe "</2" do
+    test "when both arguments are image" do
+      img = Image.build_image!(10, 10, [4])
+      refute img < img
+
+      img2 = Image.build_image!(10, 10, [5])
+
+      assert result = img < img2
+      assert is_boolean(result)
+
+      assert img < Image.build_image!(10, 10, [9.0])
+    end
+
+    test "when first argument is image and second argument is list" do
+      img = Image.build_image!(10, 10, [4])
+      assert img < [5]
+      refute img < [0]
+    end
+
+    test "when first argument is a list and second argument is image" do
+      img = Image.build_image!(10, 10, [4])
+      assert [0] < img
+      refute [5] < img
+    end
+
+    test "when both arguments are numbers" do
+      assert 2 < 3
+    end
+  end
+
+  describe "<=/2" do
+    test "when both arguments are image" do
+      img = Image.build_image!(10, 10, [4])
+      assert img <= img
+
+      img2 = Image.build_image!(10, 10, [5])
+
+      assert result = img <= img2
+      assert is_boolean(result)
+
+      assert img <= Image.build_image!(10, 10, [9.0])
+    end
+
+    test "when first argument is image and second argument is list" do
+      img = Image.build_image!(10, 10, [4])
+      assert img <= [5]
+      refute img <= [0]
+    end
+
+    test "when first argument is a list and second argument is image" do
+      img = Image.build_image!(10, 10, [4])
+      assert [0] <= img
+      refute [5] <= img
+    end
+
+    test "when both arguments are numbers" do
+      assert 2 <= 3
+    end
+  end
+
+  describe ">/2" do
+    test "when both arguments are image" do
+      img = Image.build_image!(10, 10, [4])
+      refute img > img
+
+      img2 = Image.build_image!(10, 10, [3])
+
+      assert result = img > img2
+      assert is_boolean(result)
+
+      assert img > Image.build_image!(10, 10, [2.0])
+    end
+
+    test "when first argument is image and second argument is list" do
+      img = Image.build_image!(10, 10, [4])
+      assert img > [0]
+      refute img > [5]
+    end
+
+    test "when first argument is a list and second argument is image" do
+      img = Image.build_image!(10, 10, [4])
+      assert [5] > img
+      refute [0] > img
+    end
+
+    test "when both arguments are numbers" do
+      assert 3 > 2
+    end
+  end
+
+  describe ">=/2" do
+    test "when both arguments are image" do
+      img = Image.build_image!(10, 10, [4])
+      assert img >= img
+
+      img2 = Image.build_image!(10, 10, [3])
+
+      assert result = img >= img2
+      assert is_boolean(result)
+
+      assert img >= Image.build_image!(10, 10, [2.0])
+    end
+
+    test "when first argument is image and second argument is list" do
+      img = Image.build_image!(10, 10, [4])
+      assert img >= [0]
+      refute img >= [5]
+    end
+
+    test "when first argument is a list and second argument is image" do
+      img = Image.build_image!(10, 10, [4])
+      assert [5] >= img
+      refute [0] >= img
+    end
+
+    test "when both arguments are numbers" do
+      assert 3 >= 2
+    end
+  end
+
+  describe "==/2" do
+    test "when both arguments are image" do
+      img = Image.build_image!(10, 10, [4])
+      assert img == img
+
+      img2 = Image.build_image!(10, 10, [5])
+
+      refute result = img == img2
+      assert is_boolean(result)
+
+      assert img == Image.build_image!(10, 10, [4.0])
+    end
+
+    test "when first argument is image and second argument is list" do
+      img = Image.build_image!(10, 10, [4])
+      assert img == [4]
+      refute img == [0]
+    end
+
+    test "when first argument is a list and second argument is image" do
+      img = Image.build_image!(10, 10, [4])
+      refute [0] == img
+      assert [4] == img
+    end
+
+    test "when both arguments are numbers" do
+      assert 3 == 3
+      refute 2 == 3
+    end
+  end
+
+  describe "!=/2" do
+    test "when both arguments are image" do
+      img = Image.build_image!(10, 10, [4])
+      refute img != img
+
+      img2 = Image.build_image!(10, 10, [5])
+
+      assert result = img != img2
+      assert is_boolean(result)
+
+      refute img != Image.build_image!(10, 10, [4.0])
+    end
+
+    test "when first argument is image and second argument is list" do
+      img = Image.build_image!(10, 10, [4])
+      refute img != [4]
+      assert img != [0]
+    end
+
+    test "when first argument is a list and second argument is image" do
+      img = Image.build_image!(10, 10, [4])
+      assert [0] != img
+      refute [4] != img
+    end
+
+    test "when both arguments are numbers" do
+      refute 3 != 3
+      assert 2 != 3
     end
   end
 end
