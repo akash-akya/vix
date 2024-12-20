@@ -17,7 +17,8 @@ static ERL_NIF_TERM vips_image_header_read_error(ErlNifEnv *env,
   return make_error(env, "Failed to read image metadata");
 }
 
-static void free_erl_env(VipsBlob *source, ErlNifEnv *env) {
+static void free_erl_env(VipsImage *image, ErlNifEnv *env) {
+  (void)image;
   debug("Free ErlNifEnv");
   enif_free_env(env);
   return;
