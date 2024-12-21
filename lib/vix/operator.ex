@@ -23,238 +23,570 @@ defmodule Vix.Operator do
   alias Vix.Vips.Image
   alias Vix.Vips.Operation
 
-  import Kernel, except: [+: 2, -: 2, *: 2, /: 2]
+  # we are doing this instead of defining a separate type because it
+  # makes documentation more readable without redirection
+  @arg_typespec [
+                  quote(do: [number]),
+                  quote(do: number),
+                  quote(do: Image.t())
+                ]
+                |> Enum.reduce(&{:|, [], [&1, &2]})
+
+  import Kernel, except: [+: 2, -: 2, *: 2, /: 2, **: 2, <: 2, >: 2, >=: 2, <=: 2, ==: 2, !=: 2]
 
   @doc false
   defmacro __using__(_opts) do
     quote do
-      import Kernel, except: [+: 2, -: 2, *: 2, /: 2]
+      import Kernel,
+        except: [+: 2, -: 2, *: 2, /: 2, **: 2, <: 2, >: 2, >=: 2, <=: 2, ==: 2, !=: 2]
+
       import Vix.Operator
     end
   end
 
-  @doc """
-  Perform addition operation of an image and a number, an array or
-  an another image.
+  ### Arithmetic Operators
 
-  * if argument is a number or a list of only one number, then the same number is used
-    for all image bands for the operation. Example `img + 255`, `img + [255]`
-  * if array size matches image bands, then each array
-    element is added to respective band. Example `red = Operation.black!(100, 100, bands: 3) + [125, 0, 0]`
-  * if array size is more than image bands and image only contains one band
-    then the output will be a multi band image with each array element mapping
-    to one band
-  * if argument is an image, then `Vix.Vips.Operation.add!/2` operation will
-    be performed
+  @basic_arithmetic_format_doc """
+  ### Output Image Band Format
 
-  When none of the argument is an image then delegates to `Kernel.+/2`
+  * If both arguments are Images then they are cast up to the smallest common format. In other words, the output type is just large enough to hold the whole range of possible values.
+
+  * If any of the argument is a number then output type is float for integer input, double for double input, complex for complex input and double complex for double complex input.
   """
-  @spec Image.t() + Image.t() :: Image.t()
-  @spec Image.t() + number() :: Image.t()
-  @spec number() + Image.t() :: Image.t()
-  @spec Image.t() + [number()] :: Image.t()
-  @spec [number()] + Image.t() :: Image.t()
-  @spec number() + number() :: number()
-  def a + b do
-    add(a, b)
-  end
 
-  @doc """
-  Perform multiplication operation of an image and a number, an array or
-  an another image.
+  @pow_format_doc """
+  It detects division by zero, setting those pixels to zero in the output, without any error or warning.
 
-  * if argument is a number or a list of only one number, then the same number is used
-    for all image bands for the operation. Example `img * 2`, `img + [2]`
-  * if array size matches image bands, then each array
-    element is added to respective band
-  * if array size is more than image bands and image only contains one band
-    then the output will be a multi band image with each array element mapping
-    to one band
-  * if argument is an image, then `Vix.Vips.Operation.multiply!/2` operation will
-    be performed
+  ### Output Image Band Format
 
-  When none of the argument is an image then delegates to `Kernel.*/2`
+  * If both arguments are Images then they are cast up to the smallest common format. In other words, the output type is just large enough to hold the whole range of possible values.
+
+  * If any of the argument is a number then output type is float except when input image is double, in which case out is also double.
   """
-  @spec Image.t() * Image.t() :: Image.t()
-  @spec Image.t() * number() :: Image.t()
-  @spec number() * Image.t() :: Image.t()
-  @spec Image.t() * [number()] :: Image.t()
-  @spec [number()] * Image.t() :: Image.t()
-  @spec number() * number() :: number()
-  def a * b do
-    mul(a, b)
-  end
 
-  @doc """
-  Perform subtraction operation of an image and a number, an array or
-  an another image.
+  [
+    %{name: :addition, operator: :+, desc: @basic_arithmetic_format_doc},
+    %{name: :subtraction, operator: :-, desc: @basic_arithmetic_format_doc},
+    %{name: :multiplication, operator: :*, desc: @basic_arithmetic_format_doc},
+    %{name: :division, operator: :/, desc: @basic_arithmetic_format_doc},
+    %{name: :power, operator: :**, desc: @pow_format_doc}
+  ]
+  |> Enum.each(fn %{name: name, operator: op, desc: desc} ->
+    @doc """
+    Perform #{name} operation between Images, numbers and list of numbers (pixel).
 
-  * if argument is a number or a list of only one number, then the same number is used
-    for all image bands for the operation. Example `img - 125`, `img - [125]`
-  * if array size matches image bands, then each array
-    element is added to respective band
-  * if array size is more than image bands and image only contains one band
-    then the output will be a multi band image with each array element mapping
-    to one band
-  * if argument is an image, then `Vix.Vips.Operation.subtract!/2` operation will
-    be performed
+    * if argument is a number or a list of only one number, then the same number is used
+      for all of the image bands.
+    * if array size matches image bands, then each array element is matched to
+      with the respective band.
+    * if array size is more than image bands and image only contains one band
+      then the output will be a multi band with as many bands as there are elements in
+      the array
+    * if both arguments are Images, then operation will be performed by matching each
+      pixels
 
-  When none of the argument is an image then delegates to `Kernel.-/2`
-  """
-  @spec Image.t() - Image.t() :: Image.t()
-  @spec Image.t() - number() :: Image.t()
-  @spec number() - Image.t() :: Image.t()
-  @spec Image.t() - [number()] :: Image.t()
-  @spec [number()] - Image.t() :: Image.t()
-  @spec number() - number() :: number()
-  def a - b do
-    sub(a, b)
-  end
+    #{desc}
 
-  @doc """
-  Perform division operation of an image and a number, an array or
-  an another image.
-
-  * if argument is a number or a list of only one number, then the same number is used
-    for all image bands for the operation. Example `img / 2`, `img / [2]`
-  * if array size matches image bands, then each array
-    element is added to respective band
-  * if array size is more than image bands and image only contains one band
-    then the output will be a multi band image with each array element mapping
-    to one band
-  * if argument is an image, then `Vix.Vips.Operation.divide!/2` operation will
-    be performed
-
-  When none of the argument is an image then delegates to `Kernel.//2`
-  """
-  @spec Image.t() / Image.t() :: Image.t()
-  @spec Image.t() / number() :: Image.t()
-  @spec number() / Image.t() :: Image.t()
-  @spec Image.t() / [number()] :: Image.t()
-  @spec [number()] / Image.t() :: Image.t()
-  @spec number() / number() :: number()
-  def a / b do
-    divide(a, b)
-  end
-
-  defmacrop when_number_list(arg, do: block) do
-    quote do
-      if Enum.all?(unquote(arg), &is_number/1) do
-        unquote(block)
+    When none of the argument is an image then delegates to `Kernel.#{op}/2`
+    """
+    @spec unquote(op)(unquote(@arg_typespec), unquote(@arg_typespec)) :: Image.t()
+    @spec unquote(op)(number, number) :: number()
+    def unquote(op)(a, b) do
+      if image?(a) || image?(b) do
+        unquote(name)(a, b)
       else
-        raise ArgumentError, "list elements must be a number, got: #{inspect(unquote(arg))}"
+        Kernel.unquote(op)(a, b)
       end
     end
+  end)
+
+  @spec addition(unquote(@arg_typespec), unquote(@arg_typespec)) :: Image.t()
+  defp addition(a, b) do
+    operation(
+      a,
+      b,
+      &Operation.add!(&1, &2),
+      &Operation.linear!(&1, [1.0], &2),
+      &Operation.linear!(&2, [1.0], &1)
+    )
   end
 
-  # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
-  defp add(a, b) do
-    cond do
-      image?(a) && image?(b) ->
-        Operation.add!(a, b)
+  @spec multiplication(unquote(@arg_typespec), unquote(@arg_typespec)) :: Image.t()
+  defp multiplication(a, b) do
+    operation(
+      a,
+      b,
+      &Operation.multiply!(&1, &2),
+      &Operation.linear!(&1, &2, [+0.0]),
+      &Operation.linear!(&2, &1, [+0.0])
+    )
+  end
 
+  @spec subtraction(unquote(@arg_typespec), unquote(@arg_typespec)) :: Image.t()
+  defp subtraction(a, b) do
+    operation(
+      a,
+      b,
+      &Operation.subtract!(&1, &2),
+      fn img, list ->
+        neg_list = Enum.map(list, &(-&1))
+        Operation.linear!(img, [1.0], neg_list)
+      end,
+      # a - b = (b * -1) + a
+      &Operation.linear!(&2, [-1.0], &1)
+    )
+  end
+
+  @spec division(unquote(@arg_typespec), unquote(@arg_typespec)) :: Image.t()
+  defp division(a, b) do
+    operation(
+      a,
+      b,
+      &Operation.divide!(&1, &2),
+      fn img, list ->
+        inv_list = Enum.map(list, &(1 / &1))
+        Operation.linear!(img, inv_list, [+0.0])
+      end,
+      fn list, img ->
+        # a / b = (b^-1) * a = (1 / b) * a
+        img
+        |> Operation.math2_const!(:VIPS_OPERATION_MATH2_POW, [-1.0])
+        |> Operation.linear!(list, [+0.0])
+      end
+    )
+  end
+
+  @spec power(unquote(@arg_typespec), unquote(@arg_typespec)) :: Image.t()
+  defp power(a, b) do
+    operation(
+      a,
+      b,
+      &Operation.math2!(&1, &2, :VIPS_OPERATION_MATH2_POW),
+      &Operation.math2_const!(&1, :VIPS_OPERATION_MATH2_POW, &2),
+      &Operation.math2_const!(&2, :VIPS_OPERATION_MATH2_WOP, &1)
+    )
+  end
+
+  ### Relational Operators
+
+  [
+    %{
+      name: :less_than,
+      operator: :<,
+      sym: :VIPS_OPERATION_RELATIONAL_LESS,
+      inv_sym: :VIPS_OPERATION_RELATIONAL_MOREEQ,
+      examples: """
+      Comparing two images
+
+      ```elixir
+      iex> Image.build_image!(10, 10, [4, 5, 6]) < Image.build_image!(10, 10, [5, 6, 7])
+      true
+      iex> Image.build_image!(10, 10, [4, 5, 6]) < Image.build_image!(10, 10, [4, 5, 6])
+      false
+      iex> Image.build_image!(10, 10, [1, 2, 3]) < Image.build_image!(10, 10, [6])
+      true
+      iex> Image.build_image!(10, 10, [7]) < Image.build_image!(10, 10, [6])
+      false
+      ```
+
+      Comparing an Image with a number
+
+      ```elixir
+      # when we compare with a number we compare all values
+      iex> Image.build_image!(10, 10, [4, 4, 4]) < 5
+      true
+      iex> Image.build_image!(10, 10, [4]) < 2
+      false
+      # comparing different types
+      iex> Image.build_image!(10, 10, [4]) < 5.0
+      true
+      # when we compare with a list we compare respective bands
+      iex> Image.build_image!(10, 10, [4, 5, 6]) < [5, 6, 7]
+      true
+      ```
+
+      Comparison works other way as well
+
+      ```elixir
+      iex> 4.0 < Image.build_image!(10, 10, [5])
+      true
+      iex> [4, 5, 6] < Image.build_image!(10, 10, [5, 6,7 ])
+      true
+      ```
+
+      Fallback to `Kernel/2`
+
+      ```elixir
+      iex> 4 < 5
+      true
+      ```
+      """
+    },
+    %{
+      name: :less_than_equal,
+      operator: :<=,
+      sym: :VIPS_OPERATION_RELATIONAL_LESSEQ,
+      inv_sym: :VIPS_OPERATION_RELATIONAL_MORE,
+      examples: """
+      Comparing two images
+
+      ```elixir
+      iex> Image.build_image!(10, 10, [4, 5, 6]) <= Image.build_image!(10, 10, [5, 6, 7])
+      true
+      iex> Image.build_image!(10, 10, [4, 5, 6]) <= Image.build_image!(10, 10, [4, 5, 6])
+      true
+      iex> Image.build_image!(10, 10, [1, 2, 3]) <= Image.build_image!(10, 10, [6])
+      true
+      iex> Image.build_image!(10, 10, [7]) <= Image.build_image!(10, 10, [6])
+      false
+      ```
+
+      Comparing an Image with a number
+
+      ```elixir
+      # when we compare with a number we compare all values
+      iex> Image.build_image!(10, 10, [4, 4, 4]) <= 5
+      true
+      iex> Image.build_image!(10, 10, [4]) <= 2
+      false
+      # comparing different types
+      iex> Image.build_image!(10, 10, [4]) <= 5.0
+      true
+      # when we compare with a list we compare respective bands
+      iex> Image.build_image!(10, 10, [4, 5, 6]) <= [5, 6, 7]
+      true
+      ```
+
+      Comparison works other way as well
+
+      ```elixir
+      iex> 4.0 <= Image.build_image!(10, 10, [5])
+      true
+      iex> [4, 5, 6] <= Image.build_image!(10, 10, [5, 6,7 ])
+      true
+      ```
+
+      Fallback to `Kernel/2`
+
+      ```elixir
+      iex> 4 <= 5
+      true
+      ```
+      """
+    },
+    %{
+      name: :greater_than,
+      operator: :>,
+      sym: :VIPS_OPERATION_RELATIONAL_MORE,
+      inv_sym: :VIPS_OPERATION_RELATIONAL_LESSEQ,
+      examples: """
+      Comparing two images
+
+      ```elixir
+      iex> Image.build_image!(10, 10, [5, 6, 7]) > Image.build_image!(10, 10, [4, 5, 6])
+      true
+      iex> Image.build_image!(10, 10, [4, 5, 6]) > Image.build_image!(10, 10, [4, 5, 6])
+      false
+      iex> Image.build_image!(10, 10, [2, 3, 4]) > Image.build_image!(10, 10, [1])
+      true
+      iex> Image.build_image!(10, 10, [6]) > Image.build_image!(10, 10, [7])
+      false
+      ```
+
+      Comparing an Image with a number
+
+      ```elixir
+      # when we compare with a number we compare all values
+      iex> Image.build_image!(10, 10, [5, 5, 5]) > 4
+      true
+      iex> Image.build_image!(10, 10, [1]) > 2
+      false
+      # comparing different types
+      iex> Image.build_image!(10, 10, [5]) > 4.0
+      true
+      # when we compare with a list we compare respective bands
+      iex> Image.build_image!(10, 10, [5, 6, 7]) > [4, 5, 6]
+      true
+      ```
+
+      Comparison works other way as well
+
+      ```elixir
+      iex> 5.0 > Image.build_image!(10, 10, [4])
+      true
+      iex> [5, 6, 7] > Image.build_image!(10, 10, [4, 5, 6])
+      true
+      ```
+
+      Fallback to `Kernel/2`
+
+      ```elixir
+      iex> 5 > 4
+      true
+      ```
+      """
+    },
+    %{
+      name: :greater_than_equal,
+      operator: :>=,
+      sym: :VIPS_OPERATION_RELATIONAL_MOREEQ,
+      inv_sym: :VIPS_OPERATION_RELATIONAL_LESS,
+      examples: """
+      Comparing two images
+
+      ```elixir
+      iex> Image.build_image!(10, 10, [5, 6, 7]) >= Image.build_image!(10, 10, [4, 5, 6])
+      true
+      iex> Image.build_image!(10, 10, [4, 5, 6]) >= Image.build_image!(10, 10, [4, 5, 6])
+      true
+      iex> Image.build_image!(10, 10, [2, 3, 4]) >= Image.build_image!(10, 10, [1])
+      true
+      iex> Image.build_image!(10, 10, [6]) >= Image.build_image!(10, 10, [7])
+      false
+      ```
+
+      Comparing an Image with a number
+
+      ```elixir
+      # when we compare with a number we compare all values
+      iex> Image.build_image!(10, 10, [5, 5, 5]) >= 4
+      true
+      iex> Image.build_image!(10, 10, [1]) >= 2
+      false
+      # comparing different types
+      iex> Image.build_image!(10, 10, [5]) >= 4.0
+      true
+      # when we compare with a list we compare respective bands
+      iex> Image.build_image!(10, 10, [5, 6, 7]) >= [4, 5, 6]
+      true
+      ```
+
+      Comparison works other way as well
+
+      ```elixir
+      iex> 5.0 >= Image.build_image!(10, 10, [4])
+      true
+      iex> [5, 6, 7] >= Image.build_image!(10, 10, [4, 5, 6])
+      true
+      ```
+
+      Fallback to `Kernel/2`
+
+      ```elixir
+      iex> 5 >= 4
+      true
+      ```
+      """
+    },
+    %{
+      name: :equal,
+      operator: :==,
+      sym: :VIPS_OPERATION_RELATIONAL_EQUAL,
+      inv_sym: :VIPS_OPERATION_RELATIONAL_EQUAL,
+      examples: """
+      Comparing two images
+
+      ```elixir
+      iex> Image.build_image!(10, 10, [4, 5, 6]) == Image.build_image!(10, 10, [4, 5, 6])
+      true
+      iex> Image.build_image!(10, 10, [5]) == Image.build_image!(10, 10, [6])
+      false
+      ```
+
+      Comparing an Image with a number
+
+      ```elixir
+      # when we compare with a number we compare all values
+      iex> Image.build_image!(10, 10, [4, 4, 4]) == 4
+      true
+      iex> Image.build_image!(10, 10, [4]) == 5
+      false
+      # comparing different types
+      iex> Image.build_image!(10, 10, [4]) == 4.0
+      true
+      # when we compare with a list we compare respective bands
+      iex> Image.build_image!(10, 10, [4, 5, 6]) == [4, 5, 6]
+      true
+      ```
+
+      Comparison works other way as well
+
+      ```elixir
+      iex> 4 == Image.build_image!(10, 10, [4])
+      true
+      iex> [4, 5, 6] == Image.build_image!(10, 10, [4, 5, 6])
+      true
+      ```
+
+      Fallback to `Kernel/2`
+
+      ```elixir
+      iex> 4 == 4
+      true
+      ```
+      """
+    },
+    %{
+      name: :not_equal,
+      operator: :!=,
+      sym: :VIPS_OPERATION_RELATIONAL_NOTEQ,
+      inv_sym: :VIPS_OPERATION_RELATIONAL_NOTEQ,
+      examples: """
+      Comparing two images
+
+      ```elixir
+      iex> Image.build_image!(10, 10, [4, 5, 6]) != Image.build_image!(10, 10, [4, 5, 6])
+      false
+      iex> Image.build_image!(10, 10, [5]) != Image.build_image!(10, 10, [6])
+      true
+      ```
+
+      Comparing an Image with a number
+
+      ```elixir
+      # when we compare with a number we compare all values
+      iex> Image.build_image!(10, 10, [4, 4, 4]) != 4
+      false
+      iex> Image.build_image!(10, 10, [4]) != 5
+      true
+      # comparing different types
+      iex> Image.build_image!(10, 10, [4]) != 4.0
+      false
+      iex> Image.build_image!(10, 10, [4]) != 1.0
+      true
+      # when we compare with a list we compare respective bands
+      iex> Image.build_image!(10, 10, [4, 5, 6]) != [4, 5, 6]
+      false
+      ```
+
+      Comparison works other way as well
+
+      ```elixir
+      iex> 4 != Image.build_image!(10, 10, [4])
+      false
+      iex> 5 != Image.build_image!(10, 10, [4])
+      true
+      iex> [4, 5, 6] != Image.build_image!(10, 10, [4, 5, 6])
+      false
+      ```
+
+      Fallback to `Kernel/2`
+
+      ```elixir
+      iex> 4 != 5
+      true
+      ```
+      """
+    }
+  ]
+  |> Enum.each(fn %{name: name, operator: op, sym: sym, inv_sym: inv_sym, examples: examples} ->
+    header = "#{String.replace(to_string(name), "_", "-")} (`#{op}`)"
+
+    @doc """
+    Perform #{header} comparison between Images and numbers.
+
+    * if argument is a number or a list of only one number, then the same number is used
+      for all image bands for the operation.
+    * if array size matches image bands, then the respective number is used for the
+      respective band
+    * if array size is more than image bands and image only contains one band
+      then the output will be a multi band image with each array element mapping
+      to one band
+    * if argument is an image, then `Operation.relational!(a, b, #{inspect(sym)})`
+      operation will be performed to compare images.
+
+    The two input images are cast up to the smallest common format before performing the comparison.
+
+    Always returns a boolean. If you want bandwise comparison with output as Image, then
+    check `Operation.relational!(a, b, #{inspect(sym)})`
+
+    When none of the argument is an image then delegates to `Kernel.#{op}/2`
+
+    ### Examples
+
+    #{examples}
+    """
+    @spec unquote(op)(unquote(@arg_typespec), unquote(@arg_typespec)) :: boolean
+    @spec unquote(op)(term, term) :: boolean()
+    def unquote(op)(a, b) do
+      unquote(name)(a, b)
+    end
+
+    defp unquote(name)(a, b) do
+      if image?(a) || image?(b) do
+        relational_operation(a, b, unquote(sym), unquote(inv_sym))
+      else
+        Kernel.unquote(op)(a, b)
+      end
+    end
+  end)
+
+  @spec relational_operation(unquote(@arg_typespec), unquote(@arg_typespec), atom, atom) ::
+          term | no_return()
+  defp relational_operation(a, b, op, inv_op) do
+    operation(
+      a,
+      b,
+      fn %Image{} = a, %Image{} = b ->
+        Operation.relational!(a, b, op)
+      end,
+      fn %Image{} = a, b when is_list(b) ->
+        Operation.relational_const!(a, op, b)
+      end,
+      fn a, %Image{} = b when is_list(a) ->
+        Operation.relational_const!(b, inv_op, a)
+      end
+    )
+    |> true?()
+  end
+
+  @spec operation(
+          unquote(@arg_typespec),
+          unquote(@arg_typespec),
+          (Image.t(), Image.t() -> Image.t()),
+          (Image.t(), [number] -> Image.t()),
+          ([number], Image.t() -> Image.t())
+        ) :: term | no_return()
+  # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
+  defp operation(a, b, img_img_cb, img_list_cb, list_img_cb) do
+    cond do
       image?(a) && is_number(b) ->
-        add(a, [b])
+        operation(a, [b], img_img_cb, img_list_cb, list_img_cb)
 
       is_number(a) && image?(b) ->
-        add(b, [a])
+        operation([a], b, img_img_cb, img_list_cb, list_img_cb)
 
-      is_list(a) && image?(b) ->
-        add(b, a)
+      image?(a) && image?(b) ->
+        img_img_cb.(a, b)
 
       image?(a) && is_list(b) ->
-        when_number_list b do
-          Operation.linear!(a, [1.0], b)
-        end
+        validate_number_list!(b)
+        img_list_cb.(a, b)
+
+      is_list(a) && image?(b) ->
+        validate_number_list!(a)
+        list_img_cb.(a, b)
 
       true ->
-        Kernel.+(a, b)
+        raise ArgumentError
     end
   end
 
-  # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
-  defp mul(a, b) do
-    cond do
-      image?(a) && image?(b) ->
-        Operation.multiply!(a, b)
-
-      image?(a) && is_number(b) ->
-        mul(a, [b])
-
-      is_number(a) && image?(b) ->
-        mul(b, [a])
-
-      is_list(a) && image?(b) ->
-        mul(b, a)
-
-      image?(a) && is_list(b) ->
-        when_number_list b do
-          Operation.linear!(a, b, [+0.0])
-        end
-
-      true ->
-        Kernel.*(a, b)
+  @spec validate_number_list!([number]) :: :ok | no_return
+  defp validate_number_list!(arg) do
+    if not Enum.all?(arg, &is_number/1) do
+      raise ArgumentError, "list elements must be a number, got: #{inspect(arg)}"
     end
-  end
 
-  # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
-  defp sub(a, b) do
-    cond do
-      image?(a) && image?(b) ->
-        Operation.subtract!(a, b)
-
-      image?(a) && is_number(b) ->
-        sub(a, [b])
-
-      is_number(a) && image?(b) ->
-        sub([a], b)
-
-      is_list(a) && image?(b) ->
-        when_number_list a do
-          # a - b = (b * -1) + a
-          Operation.linear!(b, [-1.0], a)
-        end
-
-      image?(a) && is_list(b) ->
-        when_number_list b do
-          Operation.linear!(a, [1.0], Enum.map(b, &(-&1)))
-        end
-
-      true ->
-        Kernel.-(a, b)
-    end
-  end
-
-  # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
-  defp divide(a, b) do
-    cond do
-      image?(a) && image?(b) ->
-        Operation.divide!(a, b)
-
-      image?(a) && is_number(b) ->
-        divide(a, [b])
-
-      is_number(a) && image?(b) ->
-        divide([a], b)
-
-      is_list(a) && image?(b) ->
-        when_number_list a do
-          # a / b = (b^-1) * a = (1 / b) * a
-          b
-          |> Operation.math2_const!(:VIPS_OPERATION_MATH2_POW, [-1.0])
-          |> Operation.linear!(a, [+0.0])
-        end
-
-      image?(a) && is_list(b) ->
-        when_number_list b do
-          Operation.linear!(a, Enum.map(b, &(1 / &1)), [+0.0])
-        end
-
-      true ->
-        Kernel./(a, b)
-    end
+    :ok
   end
 
   defp image?(%Image{}), do: true
   defp image?(_), do: false
+
+  @spec true?(Image.t()) :: boolean
+  defp true?(%Image{} = image) do
+    {min, _additional_output} = Operation.min!(image, size: 1)
+    min == 255.0
+  end
 end
