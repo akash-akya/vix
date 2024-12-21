@@ -382,9 +382,8 @@ defmodule Vix.Vips.Image do
     with {:ok, blank_pixel} <- Operation.black(1, 1, bands: length(background)),
          {:ok, pixel} <- Operation.linear(blank_pixel, [1.0], background),
          {:ok, pixel} <- Operation.cast(pixel, opts[:format]),
-         {:ok, img} <- Operation.embed(pixel, 0, 0, width, height, extend: :VIPS_EXTEND_COPY),
-         {:ok, img} <- Operation.copy(img, interpretation: opts[:interpretation]) do
-      {:ok, img}
+         {:ok, img} <- Operation.embed(pixel, 0, 0, width, height, extend: :VIPS_EXTEND_COPY) do
+      Operation.copy(img, interpretation: opts[:interpretation])
     end
   end
 
@@ -1523,6 +1522,7 @@ defmodule Vix.Vips.Image do
   end
 
   @spec guess_format([number]) :: Vix.Vips.Operation.vips_band_format()
+  # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
   defp guess_format(background) do
     types = Enum.map(background, &guess_num_type/1)
 
@@ -1568,6 +1568,7 @@ defmodule Vix.Vips.Image do
   end
 
   @spec type_to_vips_band_format(allowed_types) :: Vix.Vips.Operation.vips_band_format()
+  # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
   defp type_to_vips_band_format(type) do
     case type do
       {:u, 8} ->
