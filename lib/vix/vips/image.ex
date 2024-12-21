@@ -306,6 +306,113 @@ defmodule Vix.Vips.Image do
     end
   end
 
+  @doc """
+  Builds an Image
+
+  ## Options
+
+  * `interpretation` : must be a valid vips_interpretation or `:auto`. When value is
+    `:auto` it will be set based on the number of bands in the `background`. Defaults to `:auto`
+
+  * `format` : must be a valid vips_format or `:auto`. When value is `:auto` it will
+     be set to a format just large enough to hold all the values. Ex, if any of the
+     value is a float then format will be `:VIPS_FORMAT_DOUBLE`
+
+  ## Examples
+
+  ```elixir
+  iex> {:ok, %Image{ref: _} = img} = Image.build_image(1, 2, [10])
+  iex> Image.to_list(img)
+  {:ok, [[[10]], [[10]]]}
+  iex> Image.shape(img)
+  {1, 2, 1}
+  ```
+
+  Correctly sets interpretation
+  ```elixir
+  iex> {:ok, img} = Image.build_image(1, 2, [10])
+  iex> Image.interpretation(img)
+  :VIPS_INTERPRETATION_B_W
+  iex> {:ok, img} = Image.build_image(10, 10, [10, 10, 10])
+  iex> Image.interpretation(img)
+  :VIPS_INTERPRETATION_RGB
+  iex> {:ok, img} = Image.build_image(10, 10, [10, 10, 10, 10])
+  iex> Image.interpretation(img)
+  :VIPS_INTERPRETATION_sRGB
+  iex> {:ok, img} = Image.build_image(10, 10, [10, 10, 10, 10], interpretation: :VIPS_INTERPRETATION_MULTIBAND)
+  iex> Image.interpretation(img)
+  :VIPS_INTERPRETATION_MULTIBAND
+  ```
+
+  Correctly sets format
+  ```elixir
+  iex> {:ok, img} = Image.build_image(1, 2, [10, 9, 220])
+  iex> Image.format(img)
+  :VIPS_FORMAT_UCHAR
+  iex> {:ok, img} = Image.build_image(10, 10, [10, -120, 200])
+  iex> Image.format(img)
+  :VIPS_FORMAT_SHORT
+  iex> {:ok, img} = Image.build_image(10, 10, [10, -120, 1.0])
+  iex> Image.format(img)
+  :VIPS_FORMAT_DOUBLE
+  iex> {:ok, img} = Image.build_image(10, 10, [10, -40000, 39])
+  iex> Image.format(img)
+  :VIPS_FORMAT_INT
+  iex> {:ok, img} = Image.build_image(10, 10, [10, -80, 10], format: :VIPS_FORMAT_CHAR)
+  iex> Image.format(img)
+  :VIPS_FORMAT_CHAR
+  ```
+
+
+  """
+  @spec build_image(
+          pos_integer,
+          pos_integer,
+          [number],
+          opts :: [
+            interpretation: Vix.Vips.Operation.vips_interpretation() | :auto,
+            format: Vix.Vips.Operation.vips_band_format() | :auto
+          ]
+        ) :: {:ok, t()} | {:error, term()}
+  def build_image(width, height, background \\ [0, 0, 0], opts \\ []) do
+    opts = handle_build_image_opts(opts, background, interpretation: :auto, format: :auto)
+    # cast values to float, `linear` accept only floats
+    background = Enum.map(background, &(&1 * 1.0))
+
+    with {:ok, blank_pixel} <- Operation.black(1, 1, bands: length(background)),
+         {:ok, pixel} <- Operation.linear(blank_pixel, [1.0], background),
+         {:ok, pixel} <- Operation.cast(pixel, opts[:format]),
+         {:ok, img} <- Operation.embed(pixel, 0, 0, width, height, extend: :VIPS_EXTEND_COPY),
+         {:ok, img} <- Operation.copy(img, interpretation: opts[:interpretation]) do
+      {:ok, img}
+    end
+  end
+
+  @doc """
+  Builds an Image
+
+  Same as `build_image/3` but raises error instead of returning it.
+
+  ## Examples
+
+  ```elixir
+  iex> img = Image.build_image!(1, 2, [10])
+  iex> Image.to_list(img)
+  {:ok, [[[10]], [[10]]]}
+  iex> Image.shape(img)
+  {1, 2, 1}
+  ```
+
+  See `build_image/3` for more detailed examples.
+  """
+  @spec build_image!(pos_integer, pos_integer, [number]) :: t() | no_return
+  def build_image!(width, height, background \\ [0, 0, 0]) do
+    case build_image(width, height, background) do
+      {:ok, img} -> img
+      {:error, reason} -> raise Error, message: inspect(reason)
+    end
+  end
+
   @spec new_from_file(String.t(), keyword) :: {:ok, t()} | {:error, term()}
 
   def new_from_file(path) do
@@ -1133,6 +1240,22 @@ defmodule Vix.Vips.Image do
     end)
   end
 
+  @doc """
+  Returns 3 element tuple representing `{width, height, number_of_bands}`
+
+  ## Examples
+
+  ```elixir
+  iex> img = Image.build_image!(100, 200, [1, 2, 3])
+  iex> Image.shape(img)
+  {100, 200, 3}
+  ```
+  """
+  @spec shape(Image.t()) :: {pos_integer, pos_integer, pos_integer}
+  def shape(%Image{} = image) do
+    {Image.width(image), Image.height(image), Image.bands(image)}
+  end
+
   defp normalize_string(str) when is_binary(str), do: str
 
   defp normalize_string(str) when is_list(str), do: to_string(str)
@@ -1357,6 +1480,136 @@ defmodule Vix.Vips.Image do
       {:ok, path}
     else
       {:error, :invalid_path}
+    end
+  end
+
+  @spec handle_build_image_opts(keyword, [number], keyword) :: %{
+          interpretation: Vix.Vips.Operation.vips_interpretation(),
+          format: Vix.Vips.Operation.vips_band_format()
+        }
+  defp handle_build_image_opts(opts, background, defaults) do
+    opts = Keyword.validate!(opts, defaults)
+    bands = length(background)
+
+    if bands == 0 do
+      raise ArgumentError, "background must not be empty"
+    end
+
+    interpretation =
+      if opts[:interpretation] == :auto do
+        guess_interpretation(bands)
+      else
+        opts[:interpretation]
+      end
+
+    format =
+      if opts[:format] == :auto do
+        guess_format(background)
+      else
+        opts[:format]
+      end
+
+    %{interpretation: interpretation, format: format}
+  end
+
+  @spec guess_interpretation(pos_integer) :: Vix.Vips.Operation.vips_interpretation()
+  defp guess_interpretation(bands) do
+    cond do
+      bands == 4 -> :VIPS_INTERPRETATION_sRGB
+      bands == 3 -> :VIPS_INTERPRETATION_RGB
+      bands == 1 -> :VIPS_INTERPRETATION_B_W
+      true -> :VIPS_INTERPRETATION_MULTIBAND
+    end
+  end
+
+  @spec guess_format([number]) :: Vix.Vips.Operation.vips_band_format()
+  defp guess_format(background) do
+    types = Enum.map(background, &guess_num_type/1)
+
+    max_sizes =
+      types
+      |> Enum.group_by(fn {type, _} -> type end, fn {_, size} -> size end)
+      |> Map.new(fn {type, sizes} -> {type, Enum.max(sizes)} end)
+
+    max_signed = max_sizes[:s]
+    max_unsigned = max_sizes[:u]
+    max_float = max_sizes[:f]
+
+    cond do
+      max_float -> {:f, max_float}
+      !max_signed && !max_unsigned -> raise ArgumentError
+      max_signed && !max_unsigned -> {:s, max_signed}
+      !max_signed && max_unsigned -> {:u, max_unsigned}
+      max_signed > max_unsigned -> {:s, max_signed}
+      # ex: [-100, 250] the size should be `{:s, 16}`
+      max_signed <= max_unsigned -> {:s, max_signed * 2}
+    end
+    |> type_to_vips_band_format()
+  end
+
+  @typep allowed_types ::
+           {:u, 8 | 16 | 32}
+           | {:s, 8 | 16 | 32}
+           | {:f, 64}
+
+  @spec guess_num_type(number) :: allowed_types
+  defp guess_num_type(num) do
+    cond do
+      is_integer(num) && num >= 0 ->
+        {:u, bsize(num)}
+
+      is_integer(num) ->
+        {:s, bsize(num)}
+
+      is_float(num) ->
+        # currently we treat all float values as 64bit
+        {:f, 64}
+    end
+  end
+
+  @spec type_to_vips_band_format(allowed_types) :: Vix.Vips.Operation.vips_band_format()
+  defp type_to_vips_band_format(type) do
+    case type do
+      {:u, 8} ->
+        :VIPS_FORMAT_UCHAR
+
+      {:s, 8} ->
+        :VIPS_FORMAT_CHAR
+
+      {:u, 16} ->
+        :VIPS_FORMAT_USHORT
+
+      {:s, 16} ->
+        :VIPS_FORMAT_SHORT
+
+      {:u, 32} ->
+        :VIPS_FORMAT_UINT
+
+      {:s, 32} ->
+        :VIPS_FORMAT_INT
+
+      {:f, 32} ->
+        :VIPS_FORMAT_FLOAT
+
+      {:f, 64} ->
+        :VIPS_FORMAT_DOUBLE
+
+      {_, _} = type ->
+        raise ArgumentError, "#{type} is not supported"
+    end
+  end
+
+  @spec bsize(integer) :: 8 | 16 | 32
+  defp bsize(int) do
+    # negative values there will be additional
+    # prefix char `-` which should take care of signed-bit
+    size = Integer.to_string(int, 2) |> byte_size()
+
+    cond do
+      size <= 8 -> 8
+      size <= 16 -> 16
+      size <= 32 -> 32
+      true -> raise ArgumentError, "integer size must be <= 32bit"
     end
   end
 end

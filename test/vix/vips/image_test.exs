@@ -6,6 +6,8 @@ defmodule Vix.Vips.ImageTest do
 
   import Vix.Support.Images
 
+  doctest Image
+
   setup do
     Temp.track!()
     dir = Temp.mkdir!()
