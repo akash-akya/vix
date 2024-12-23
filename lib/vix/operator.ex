@@ -44,6 +44,38 @@ defmodule Vix.Operator do
     end
   end
 
+  @doc """
+  Checks if all of the values are "true" (255) or "false" (0).
+  Useful together with relational operators.
+
+  ### Examples
+
+  Check if two images are equal
+
+  ```elixir
+  iex> all?(Image.build_image!(10, 20, [255, 255, 255]), true)
+  true
+  iex> img = (Image.build_image!(10, 20, [50, 100, 150]) == Image.build_image!(10, 20, [50, 100, 150]))
+  iex> all?(img, true)
+  true
+  iex> img = (Image.build_image!(10, 20, [100, 150, 200]) < Image.build_image!(10, 20, [50, 100, 150]))
+  iex> all?(img, true)
+  false
+  iex> all?(img, false)
+  true
+  ```
+  """
+  @spec all?(Image.t(), boolean()) :: boolean
+  def all?(%Image{} = image, true) do
+    {min, _additional_output} = Operation.min!(image, size: 1)
+    min == 255.0
+  end
+
+  def all?(%Image{} = image, false) do
+    {max, _additional_output} = Operation.max!(image, size: 1)
+    max == +0.0
+  end
+
   ### Arithmetic Operators
 
   @basic_arithmetic_format_doc """
@@ -176,41 +208,59 @@ defmodule Vix.Operator do
       sym: :VIPS_OPERATION_RELATIONAL_LESS,
       inv_sym: :VIPS_OPERATION_RELATIONAL_MOREEQ,
       examples: """
+      Comparison return value is an Image
+
+      ```elixir
+      iex> img = Image.build_image!(2, 2, [10, 15]) < Image.build_image!(2, 2, [5, 20])
+      iex> Image.shape(img)
+      {2, 2, 2}
+      iex> Image.to_list(img)
+      {:ok, [[[0, 255], [0, 255]], [[0, 255], [0, 255]]]}
+      ```
+
+      We can use `all?(image, true)` to check if all of output image pixels are true (255)
+
+      ```elixir
+      iex> img = Image.build_image!(2, 2, [5]) < Image.build_image!(2, 2, [10])
+      iex> all?(img, true)
+      true
+      ```
+
       Comparing two images
 
       ```elixir
-      iex> Image.build_image!(10, 10, [4, 5, 6]) < Image.build_image!(10, 10, [5, 6, 7])
+      iex> (Image.build_image!(10, 10, [10, 20, 30]) < Image.build_image!(10, 10, [20, 30, 40])) |> all?(true)
       true
-      iex> Image.build_image!(10, 10, [4, 5, 6]) < Image.build_image!(10, 10, [4, 5, 6])
+      iex> (Image.build_image!(10, 10, [10]) < Image.build_image!(10, 10, [5, 10, 20])) |> all?(true)
       false
-      iex> Image.build_image!(10, 10, [1, 2, 3]) < Image.build_image!(10, 10, [6])
+      iex> (Image.build_image!(10, 10, [10, 20, 30]) < Image.build_image!(10, 10, [40])) |> all?(true)
       true
-      iex> Image.build_image!(10, 10, [7]) < Image.build_image!(10, 10, [6])
-      false
       ```
 
       Comparing an Image with a number
 
       ```elixir
-      # when we compare with a number we compare all values
-      iex> Image.build_image!(10, 10, [4, 4, 4]) < 5
-      true
-      iex> Image.build_image!(10, 10, [4]) < 2
+      # when the value is a number we compare the same value with all the bands
+      iex> img = Image.build_image!(1, 2, [1, 10, 20]) < 5
+      iex> Image.to_list(img)
+      {:ok, [[[255, 0, 0]], [[255, 0, 0]]]}
+      iex> (Image.build_image!(10, 10, [10]) < 5) |> all?(true)
       false
       # comparing different types
-      iex> Image.build_image!(10, 10, [4]) < 5.0
+      iex> (Image.build_image!(10, 10, [10]) < 20.0) |> all?(true)
       true
       # when we compare with a list we compare respective bands
-      iex> Image.build_image!(10, 10, [4, 5, 6]) < [5, 6, 7]
-      true
+      iex> img = Image.build_image!(1, 1, [10, 20]) < [20, 10]
+      iex> Image.to_list(img)
+      {:ok, [[[255, 0]]]}
       ```
 
       Comparison works other way as well
 
       ```elixir
-      iex> 4.0 < Image.build_image!(10, 10, [5])
+      iex> (10.0 < Image.build_image!(10, 10, [20])) |> all?(true)
       true
-      iex> [4, 5, 6] < Image.build_image!(10, 10, [5, 6,7 ])
+      iex> ([10, 20, 30] < Image.build_image!(10, 10, [20, 30, 40])) |> all?(true)
       true
       ```
 
@@ -228,41 +278,59 @@ defmodule Vix.Operator do
       sym: :VIPS_OPERATION_RELATIONAL_LESSEQ,
       inv_sym: :VIPS_OPERATION_RELATIONAL_MORE,
       examples: """
+      Comparison return value is an Image
+
+      ```elixir
+      iex> img = Image.build_image!(2, 2, [10, 15]) <= Image.build_image!(2, 2, [5, 20])
+      iex> Image.shape(img)
+      {2, 2, 2}
+      iex> Image.to_list(img)
+      {:ok, [[[0, 255], [0, 255]], [[0, 255], [0, 255]]]}
+      ```
+
+      We can use `all?(image, true)` to check if all of output image pixels are true (255)
+
+      ```elixir
+      iex> img = Image.build_image!(2, 2, [5]) <= Image.build_image!(2, 2, [10])
+      iex> all?(img, true)
+      true
+      ```
+
       Comparing two images
 
       ```elixir
-      iex> Image.build_image!(10, 10, [4, 5, 6]) <= Image.build_image!(10, 10, [5, 6, 7])
+      iex> (Image.build_image!(10, 10, [10, 20, 30]) <= Image.build_image!(10, 10, [20, 30, 40])) |> all?(true)
       true
-      iex> Image.build_image!(10, 10, [4, 5, 6]) <= Image.build_image!(10, 10, [4, 5, 6])
-      true
-      iex> Image.build_image!(10, 10, [1, 2, 3]) <= Image.build_image!(10, 10, [6])
-      true
-      iex> Image.build_image!(10, 10, [7]) <= Image.build_image!(10, 10, [6])
+      iex> (Image.build_image!(10, 10, [20]) <= Image.build_image!(10, 10, [10, 20, 30])) |> all?(true)
       false
+      iex> (Image.build_image!(10, 10, [1, 2, 3]) <= Image.build_image!(10, 10, [6])) |> all?(true)
+      true
       ```
 
       Comparing an Image with a number
 
       ```elixir
-      # when we compare with a number we compare all values
-      iex> Image.build_image!(10, 10, [4, 4, 4]) <= 5
-      true
-      iex> Image.build_image!(10, 10, [4]) <= 2
+      # when the value is a number we compare the same value with all the bands
+      iex> img = Image.build_image!(1, 2, [5, 10, 15]) <= 5
+      iex> Image.to_list(img)
+      {:ok, [[[255, 0, 0]], [[255, 0, 0]]]}
+      iex> (Image.build_image!(10, 10, [4]) <= 2) |> all?(true)
       false
       # comparing different types
-      iex> Image.build_image!(10, 10, [4]) <= 5.0
+      iex> (Image.build_image!(10, 10, [4]) <= 4.0) |> all?(true)
       true
       # when we compare with a list we compare respective bands
-      iex> Image.build_image!(10, 10, [4, 5, 6]) <= [5, 6, 7]
-      true
+      iex> img = Image.build_image!(1, 1, [10, 20]) <= [20, 10]
+      iex> Image.to_list(img)
+      {:ok, [[[255, 0]]]}
       ```
 
       Comparison works other way as well
 
       ```elixir
-      iex> 4.0 <= Image.build_image!(10, 10, [5])
+      iex> (4.0 <= Image.build_image!(10, 10, [5])) |> all?(true)
       true
-      iex> [4, 5, 6] <= Image.build_image!(10, 10, [5, 6,7 ])
+      iex> ([10, 20, 30] <= Image.build_image!(10, 10, [20, 30, 40])) |> all?(true)
       true
       ```
 
@@ -280,41 +348,59 @@ defmodule Vix.Operator do
       sym: :VIPS_OPERATION_RELATIONAL_MORE,
       inv_sym: :VIPS_OPERATION_RELATIONAL_LESSEQ,
       examples: """
+      Comparison return value is an Image
+
+      ```elixir
+      iex> img = Image.build_image!(2, 2, [10, 15]) > Image.build_image!(2, 2, [5, 20])
+      iex> Image.shape(img)
+      {2, 2, 2}
+      iex> Image.to_list(img)
+      {:ok, [[[255, 0], [255, 0]], [[255, 0], [255, 0]]]}
+      ```
+
+      We can use `all?(image, true)` to check if all of output image pixels are true (255)
+
+      ```elixir
+      iex> img = Image.build_image!(2, 2, [10]) > Image.build_image!(2, 2, [5])
+      iex> all?(img, true)
+      true
+      ```
+
       Comparing two images
 
       ```elixir
-      iex> Image.build_image!(10, 10, [5, 6, 7]) > Image.build_image!(10, 10, [4, 5, 6])
-      true
-      iex> Image.build_image!(10, 10, [4, 5, 6]) > Image.build_image!(10, 10, [4, 5, 6])
+      iex> (Image.build_image!(10, 10, [10, 20, 30]) > Image.build_image!(10, 10, [10, 20, 30])) |> all?(true)
       false
-      iex> Image.build_image!(10, 10, [2, 3, 4]) > Image.build_image!(10, 10, [1])
-      true
-      iex> Image.build_image!(10, 10, [6]) > Image.build_image!(10, 10, [7])
+      iex> (Image.build_image!(10, 10, [10]) > Image.build_image!(10, 10, [20, 30, 40])) |> all?(true)
       false
+      iex> (Image.build_image!(10, 10, [10, 20, 30]) > Image.build_image!(10, 10, [5])) |> all?(true)
+      true
       ```
 
       Comparing an Image with a number
 
       ```elixir
-      # when we compare with a number we compare all values
-      iex> Image.build_image!(10, 10, [5, 5, 5]) > 4
-      true
-      iex> Image.build_image!(10, 10, [1]) > 2
+      # when the value is a number we compare the same value with all the bands
+      iex> img = Image.build_image!(1, 2, [5, 15, 25]) > 20
+      iex> Image.to_list(img)
+      {:ok, [[[0, 0, 255]], [[0, 0, 255]]]}
+      iex> (Image.build_image!(10, 10, [10]) > 20) |> all?(true)
       false
       # comparing different types
-      iex> Image.build_image!(10, 10, [5]) > 4.0
+      iex> (Image.build_image!(10, 10, [20]) > 10.0) |> all?(true)
       true
       # when we compare with a list we compare respective bands
-      iex> Image.build_image!(10, 10, [5, 6, 7]) > [4, 5, 6]
-      true
+      iex> img = Image.build_image!(1, 1, [10, 20]) > [20, 10]
+      iex> Image.to_list(img)
+      {:ok, [[[0, 255]]]}
       ```
 
       Comparison works other way as well
 
       ```elixir
-      iex> 5.0 > Image.build_image!(10, 10, [4])
+      iex> (5.0 > Image.build_image!(10, 10, [4])) |> all?(true)
       true
-      iex> [5, 6, 7] > Image.build_image!(10, 10, [4, 5, 6])
+      iex> ([20, 30, 40] > Image.build_image!(10, 10, [10, 20, 30])) |> all?(true)
       true
       ```
 
@@ -332,41 +418,61 @@ defmodule Vix.Operator do
       sym: :VIPS_OPERATION_RELATIONAL_MOREEQ,
       inv_sym: :VIPS_OPERATION_RELATIONAL_LESS,
       examples: """
+      Comparison return value is an Image
+
+      ```elixir
+      iex> img = Image.build_image!(2, 2, [10, 15]) >= Image.build_image!(2, 2, [5, 20])
+      iex> Image.shape(img)
+      {2, 2, 2}
+      iex> Image.to_list(img)
+      {:ok, [[[255, 0], [255, 0]], [[255, 0], [255, 0]]]}
+      ```
+
+      We can use `all?(image, true)` to check if all of output image pixels are true (255)
+
+      ```elixir
+      iex> img = Image.build_image!(2, 2, [10]) >= Image.build_image!(2, 2, [5])
+      iex> all?(img, true)
+      true
+      ```
+
       Comparing two images
 
       ```elixir
-      iex> Image.build_image!(10, 10, [5, 6, 7]) >= Image.build_image!(10, 10, [4, 5, 6])
+      iex> (Image.build_image!(10, 10, [20, 30, 40]) >= Image.build_image!(10, 10, [10, 20, 30])) |> all?(true)
       true
-      iex> Image.build_image!(10, 10, [4, 5, 6]) >= Image.build_image!(10, 10, [4, 5, 6])
+      iex> (Image.build_image!(10, 10, [10, 20, 30]) >= Image.build_image!(10, 10, [10, 20, 30])) |> all?(true)
       true
-      iex> Image.build_image!(10, 10, [2, 3, 4]) >= Image.build_image!(10, 10, [1])
-      true
-      iex> Image.build_image!(10, 10, [6]) >= Image.build_image!(10, 10, [7])
+      iex> (Image.build_image!(10, 10, [20]) >= Image.build_image!(10, 10, [10, 20, 30])) |> all?(true)
       false
+      iex> (Image.build_image!(10, 10, [10, 20, 30]) >= Image.build_image!(10, 10, [10])) |> all?(true)
+      true
       ```
 
       Comparing an Image with a number
 
       ```elixir
-      # when we compare with a number we compare all values
-      iex> Image.build_image!(10, 10, [5, 5, 5]) >= 4
-      true
-      iex> Image.build_image!(10, 10, [1]) >= 2
+      # when the value is a number we compare the same value with all the bands
+      iex> img = Image.build_image!(1, 2, [5, 10, 15]) >= 10
+      iex> Image.to_list(img)
+      {:ok, [[[0, 255, 255]], [[0, 255, 255]]]}
+      iex> (Image.build_image!(10, 10, [10]) >= 20) |> all?(true)
       false
       # comparing different types
-      iex> Image.build_image!(10, 10, [5]) >= 4.0
+      iex> (Image.build_image!(10, 10, [20]) >= 10.0) |> all?(true)
       true
       # when we compare with a list we compare respective bands
-      iex> Image.build_image!(10, 10, [5, 6, 7]) >= [4, 5, 6]
-      true
+      iex> img = Image.build_image!(1, 1, [10, 20]) >= [20, 10]
+      iex> Image.to_list(img)
+      {:ok, [[[0, 255]]]}
       ```
 
       Comparison works other way as well
 
       ```elixir
-      iex> 5.0 >= Image.build_image!(10, 10, [4])
+      iex> (10.0 >= Image.build_image!(10, 10, [5])) |> all?(true)
       true
-      iex> [5, 6, 7] >= Image.build_image!(10, 10, [4, 5, 6])
+      iex> ([20, 30, 40] >= Image.build_image!(10, 10, [10, 20, 30])) |> all?(true)
       true
       ```
 
@@ -384,37 +490,59 @@ defmodule Vix.Operator do
       sym: :VIPS_OPERATION_RELATIONAL_EQUAL,
       inv_sym: :VIPS_OPERATION_RELATIONAL_EQUAL,
       examples: """
+      Comparison return value is an Image
+
+      ```elixir
+      iex> img = Image.build_image!(2, 2, [10, 20]) == Image.build_image!(2, 2, [20, 20])
+      iex> Image.shape(img)
+      {2, 2, 2}
+      iex> Image.to_list(img)
+      {:ok, [[[0, 255], [0, 255]], [[0, 255], [0, 255]]]}
+      ```
+
+      We can use `all?(image, true)` to check if all of output image pixels are true (255)
+
+      ```elixir
+      iex> img = Image.build_image!(2, 2, [10]) == Image.build_image!(2, 2, [10])
+      iex> all?(img, true)
+      true
+      ```
+
       Comparing two images
 
       ```elixir
-      iex> Image.build_image!(10, 10, [4, 5, 6]) == Image.build_image!(10, 10, [4, 5, 6])
+      iex> (Image.build_image!(10, 10, [10, 20, 30]) == Image.build_image!(10, 10, [10, 20, 30])) |> all?(true)
       true
-      iex> Image.build_image!(10, 10, [5]) == Image.build_image!(10, 10, [6])
+      iex> (Image.build_image!(10, 10, [20]) == Image.build_image!(10, 10, [10, 20, 30])) |> all?(true)
       false
+      iex> (Image.build_image!(10, 10, [10, 10, 10]) == Image.build_image!(10, 10, [10])) |> all?(true)
+      true
       ```
 
       Comparing an Image with a number
 
       ```elixir
-      # when we compare with a number we compare all values
-      iex> Image.build_image!(10, 10, [4, 4, 4]) == 4
-      true
-      iex> Image.build_image!(10, 10, [4]) == 5
+      # when the value is a number we compare the same value with all the bands
+      iex> img = Image.build_image!(1, 2, [5, 10, 20]) == 5
+      iex> Image.to_list(img)
+      {:ok, [[[255, 0, 0]], [[255, 0, 0]]]}
+      iex> (Image.build_image!(10, 10, [10]) == 5) |> all?(true)
       false
       # comparing different types
-      iex> Image.build_image!(10, 10, [4]) == 4.0
+      iex> (Image.build_image!(10, 10, [10]) == 10.0) |> all?(true)
       true
       # when we compare with a list we compare respective bands
-      iex> Image.build_image!(10, 10, [4, 5, 6]) == [4, 5, 6]
-      true
+      iex> img = Image.build_image!(1, 1, [10, 20]) == [10, 10]
+      iex> Image.to_list(img)
+      {:ok, [[[255, 0]]]}
       ```
 
       Comparison works other way as well
 
       ```elixir
-      iex> 4 == Image.build_image!(10, 10, [4])
+      iex> (10.0 == Image.build_image!(10, 10, [10])) |> all?(true)
       true
-      iex> [4, 5, 6] == Image.build_image!(10, 10, [4, 5, 6])
+      iex> ([10, 20, 30] == Image.build_image!(10, 10, [10, 20, 30])) |> all?(true)
       true
       ```
 
@@ -432,42 +560,60 @@ defmodule Vix.Operator do
       sym: :VIPS_OPERATION_RELATIONAL_NOTEQ,
       inv_sym: :VIPS_OPERATION_RELATIONAL_NOTEQ,
       examples: """
+      Comparison return value is an Image
+
+      ```elixir
+      iex> img = Image.build_image!(2, 2, [10, 15]) != Image.build_image!(2, 2, [15, 15])
+      iex> Image.shape(img)
+      {2, 2, 2}
+      iex> Image.to_list(img)
+      {:ok, [[[255, 0], [255, 0]], [[255, 0], [255, 0]]]}
+      ```
+
+      We can use `all?(image, true)` to check if all of output image pixels are true (255)
+
+      ```elixir
+      iex> img = Image.build_image!(2, 2, [5]) != Image.build_image!(2, 2, [10])
+      iex> all?(img, true)
+      true
+      ```
+
       Comparing two images
 
       ```elixir
-      iex> Image.build_image!(10, 10, [4, 5, 6]) != Image.build_image!(10, 10, [4, 5, 6])
+      iex> (Image.build_image!(10, 10, [10, 20, 30]) != Image.build_image!(10, 10, [10, 20, 30])) |> all?(true)
       false
-      iex> Image.build_image!(10, 10, [5]) != Image.build_image!(10, 10, [6])
+      iex> (Image.build_image!(10, 10, [20]) != Image.build_image!(10, 10, [10, 10, 10])) |> all?(true)
       true
+      iex> (Image.build_image!(10, 10, [10, 20, 30]) != Image.build_image!(10, 10, [30])) |> all?(true)
+      false
       ```
 
       Comparing an Image with a number
 
       ```elixir
-      # when we compare with a number we compare all values
-      iex> Image.build_image!(10, 10, [4, 4, 4]) != 4
+      # when the value is a number we compare the same value with all the bands
+      iex> img = Image.build_image!(1, 2, [5, 10, 20]) != 5
+      iex> Image.to_list(img)
+      {:ok, [[[0, 255, 255]], [[0, 255, 255]]]}
+      iex> (Image.build_image!(10, 10, [10]) != 10) |> all?(true)
       false
-      iex> Image.build_image!(10, 10, [4]) != 5
-      true
       # comparing different types
-      iex> Image.build_image!(10, 10, [4]) != 4.0
-      false
-      iex> Image.build_image!(10, 10, [4]) != 1.0
+      iex> (Image.build_image!(10, 10, [10]) != 20.0) |> all?(true)
       true
       # when we compare with a list we compare respective bands
-      iex> Image.build_image!(10, 10, [4, 5, 6]) != [4, 5, 6]
-      false
+      iex> img = Image.build_image!(1, 1, [10, 20]) != [10, 10]
+      iex> Image.to_list(img)
+      {:ok, [[[0, 255]]]}
       ```
 
       Comparison works other way as well
 
       ```elixir
-      iex> 4 != Image.build_image!(10, 10, [4])
-      false
-      iex> 5 != Image.build_image!(10, 10, [4])
+      iex> (10.0 != Image.build_image!(10, 10, [20])) |> all?(true)
       true
-      iex> [4, 5, 6] != Image.build_image!(10, 10, [4, 5, 6])
-      false
+      iex> ([10, 20, 30] != Image.build_image!(10, 10, [20, 30, 40])) |> all?(true)
+      true
       ```
 
       Fallback to `Kernel/2`
@@ -483,7 +629,9 @@ defmodule Vix.Operator do
     header = "#{String.replace(to_string(name), "_", "-")} (`#{op}`)"
 
     @doc """
-    Perform #{header} comparison between Images and numbers.
+    Perform #{header} comparison between Images and numbers and returns result as an Image.
+
+    Returned Image has the value `0` for `false` and `255` for `true`.
 
     * if argument is a number or a list of only one number, then the same number is used
       for all image bands for the operation.
@@ -506,7 +654,7 @@ defmodule Vix.Operator do
 
     #{examples}
     """
-    @spec unquote(op)(unquote(@arg_typespec), unquote(@arg_typespec)) :: boolean
+    @spec unquote(op)(unquote(@arg_typespec), unquote(@arg_typespec)) :: Image.t()
     @spec unquote(op)(term, term) :: boolean()
     def unquote(op)(a, b) do
       unquote(name)(a, b)
@@ -522,7 +670,7 @@ defmodule Vix.Operator do
   end)
 
   @spec relational_operation(unquote(@arg_typespec), unquote(@arg_typespec), atom, atom) ::
-          term | no_return()
+          Image.t() | no_return()
   defp relational_operation(a, b, op, inv_op) do
     operation(
       a,
@@ -537,7 +685,6 @@ defmodule Vix.Operator do
         Operation.relational_const!(b, inv_op, a)
       end
     )
-    |> true?()
   end
 
   @spec operation(
@@ -546,7 +693,7 @@ defmodule Vix.Operator do
           (Image.t(), Image.t() -> Image.t()),
           (Image.t(), [number] -> Image.t()),
           ([number], Image.t() -> Image.t())
-        ) :: term | no_return()
+        ) :: Image.t() | no_return()
   # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
   defp operation(a, b, img_img_cb, img_list_cb, list_img_cb) do
     cond do
@@ -583,10 +730,4 @@ defmodule Vix.Operator do
 
   defp image?(%Image{}), do: true
   defp image?(_), do: false
-
-  @spec true?(Image.t()) :: boolean
-  defp true?(%Image{} = image) do
-    {min, _additional_output} = Operation.min!(image, size: 1)
-    min == 255.0
-  end
 end
