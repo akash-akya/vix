@@ -44,6 +44,38 @@ defmodule Vix.Operator do
     end
   end
 
+  @doc """
+  Checks if all of the values are "true" (255) or "false" (0).
+  Useful together with relational operators.
+
+  ### Examples
+
+  Check if two images are equal
+
+  ```elixir
+  iex> all?(Image.build_image!(10, 20, [255, 255, 255]), true)
+  true
+  iex> img = (Image.build_image!(10, 20, [50, 100, 150]) == Image.build_image!(10, 20, [50, 100, 150]))
+  iex> all?(img, true)
+  true
+  iex> img = (Image.build_image!(10, 20, [100, 150, 200]) < Image.build_image!(10, 20, [50, 100, 150]))
+  iex> all?(img, true)
+  false
+  iex> all?(img, false)
+  true
+  ```
+  """
+  @spec all?(Image.t(), boolean()) :: boolean
+  def all?(%Image{} = image, true) do
+    {min, _additional_output} = Operation.min!(image, size: 1)
+    min == 255.0
+  end
+
+  def all?(%Image{} = image, false) do
+    {max, _additional_output} = Operation.max!(image, size: 1)
+    max == +0.0
+  end
+
   ### Arithmetic Operators
 
   @basic_arithmetic_format_doc """
@@ -506,7 +538,7 @@ defmodule Vix.Operator do
 
     #{examples}
     """
-    @spec unquote(op)(unquote(@arg_typespec), unquote(@arg_typespec)) :: boolean
+    @spec unquote(op)(unquote(@arg_typespec), unquote(@arg_typespec)) :: Image.t()
     @spec unquote(op)(term, term) :: boolean()
     def unquote(op)(a, b) do
       unquote(name)(a, b)
@@ -522,7 +554,7 @@ defmodule Vix.Operator do
   end)
 
   @spec relational_operation(unquote(@arg_typespec), unquote(@arg_typespec), atom, atom) ::
-          term | no_return()
+          Image.t() | no_return()
   defp relational_operation(a, b, op, inv_op) do
     operation(
       a,
@@ -537,7 +569,6 @@ defmodule Vix.Operator do
         Operation.relational_const!(b, inv_op, a)
       end
     )
-    |> true?()
   end
 
   @spec operation(
@@ -546,7 +577,7 @@ defmodule Vix.Operator do
           (Image.t(), Image.t() -> Image.t()),
           (Image.t(), [number] -> Image.t()),
           ([number], Image.t() -> Image.t())
-        ) :: term | no_return()
+        ) :: Image.t() | no_return()
   # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
   defp operation(a, b, img_img_cb, img_list_cb, list_img_cb) do
     cond do
@@ -584,8 +615,8 @@ defmodule Vix.Operator do
   defp image?(%Image{}), do: true
   defp image?(_), do: false
 
-  @spec true?(Image.t()) :: boolean
-  defp true?(%Image{} = image) do
+  @spec to_boolean(Image.t()) :: boolean
+  def to_boolean(%Image{} = image) do
     {min, _additional_output} = Operation.min!(image, size: 1)
     min == 255.0
   end
