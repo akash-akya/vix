@@ -68,6 +68,7 @@ static int on_load(ErlNifEnv *env, void **priv, ERL_NIF_TERM load_info) {
 static ErlNifFunc nif_funcs[] = {
     /* GObject */
     {"nif_g_object_type_name", 1, nif_g_object_type_name, 0},
+    {"nif_g_object_unref", 1, nif_g_object_unref, ERL_NIF_DIRTY_JOB_CPU_BOUND},
 
     /* GType */
     {"nif_g_type_from_instance", 1, nif_g_type_from_instance, 0},
@@ -151,6 +152,7 @@ static ErlNifFunc nif_funcs[] = {
     {"nif_vips_blob_to_erl_binary", 1, nif_vips_blob_to_erl_binary, 0},
     {"nif_vips_ref_string_to_erl_binary", 1, nif_vips_ref_string_to_erl_binary,
      0},
+    {"nif_g_boxed_unref", 1, nif_g_boxed_unref, ERL_NIF_DIRTY_JOB_CPU_BOUND},
 
     /* VipsForeign */
     {"nif_foreign_find_load", 1, nif_foreign_find_load, 0},

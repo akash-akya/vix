@@ -19,6 +19,12 @@ ERL_NIF_TERM ATOM_NULL_VALUE;
 ERL_NIF_TERM ATOM_UNDEFINED;
 ERL_NIF_TERM ATOM_EAGAIN;
 
+/**
+ * Name of the process responsible for cleanup, we send resources
+ * requiring cleanup to this process.
+ */
+static ERL_NIF_TERM VIX_JANITOR_PROCESS_NAME;
+
 const guint VIX_LOG_LEVEL_NONE = 0;
 const guint VIX_LOG_LEVEL_WARNING = 1;
 const guint VIX_LOG_LEVEL_ERROR = 2;
@@ -102,6 +108,26 @@ VixResult vix_result(ERL_NIF_TERM term) {
   return (VixResult){.is_success = true, .result = term};
 }
 
+void send_to_janitor(ErlNifEnv *env, ERL_NIF_TERM label,
+                     ERL_NIF_TERM resource_term) {
+  ErlNifPid pid;
+
+  /* Currently there is no way to raise error when any of the
+     condition fail. Realistically this should never fail */
+  if (!enif_whereis_pid(env, VIX_JANITOR_PROCESS_NAME, &pid)) {
+    error("Failed to get pid for vix janitor process");
+    return;
+  }
+
+  if (!enif_send(env, &pid, NULL,
+                 enif_make_tuple2(env, label, resource_term))) {
+    error("Failed to send unref msg to vix janitor");
+    return;
+  }
+
+  return;
+}
+
 static void vix_binary_dtor(ErlNifEnv *env, void *ptr) {
   VixBinaryResource *vix_bin_r = (VixBinaryResource *)ptr;
   g_free(vix_bin_r->data);
@@ -117,6 +143,8 @@ int utils_init(ErlNifEnv *env, const char *log_level) {
   ATOM_NULL_VALUE = make_atom(env, "null_value");
   ATOM_UNDEFINED = make_atom(env, "undefined");
   ATOM_EAGAIN = make_atom(env, "eagain");
+
+  VIX_JANITOR_PROCESS_NAME = make_atom(env, "Elixir.Vix.Nif.Janitor");
 
   VIX_BINARY_RT = enif_open_resource_type(
       env, NULL, "vix_binary_resource", (ErlNifResourceDtor *)vix_binary_dtor,
