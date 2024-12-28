@@ -155,7 +155,12 @@ int utils_init(ErlNifEnv *env, const char *log_level) {
   } else if (strcmp(log_level, "error") == 0) {
     VIX_LOG_LEVEL = VIX_LOG_LEVEL_ERROR;
   } else {
+#ifdef DEBUG
+    // default to ERROR if we are running in debug mode
+    VIX_LOG_LEVEL = VIX_LOG_LEVEL_ERROR;
+#else
     VIX_LOG_LEVEL = VIX_LOG_LEVEL_NONE;
+#endif
   }
 
   if (VIX_LOG_LEVEL == VIX_LOG_LEVEL_WARNING ||
