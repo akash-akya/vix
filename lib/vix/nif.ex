@@ -2,13 +2,68 @@ defmodule Vix.Nif do
   @moduledoc false
   @on_load :load_nifs
 
+  defmodule Janitor do
+    @moduledoc false
+    use GenServer
+
+    # Singleton process to safely cleanup native resources
+    alias __MODULE__
+
+    require Logger
+
+    def start do
+      GenServer.start(Janitor, nil, name: Janitor)
+    end
+
+    ## Callbacks
+
+    @impl true
+    def init(nil) do
+      {:ok, nil}
+    end
+
+    @allowd_types [:unref_gobject, :unref_gboxed]
+
+    @impl true
+    def handle_info({type, term}, nil) when type in @allowd_types do
+      # Use a dedicated process to prevent blocking the Janitor
+      # singleton process. The task process is not linked to the
+      # parent to ensure that errors do not cause the Janitor to
+      # crash.
+      _ = Task.start(Janitor, :unref, [type, term])
+      {:noreply, nil}
+    end
+
+    @doc false
+    @spec unref(atom, reference()) :: :ok
+    def unref(type, term) do
+      case type do
+        :unref_gboxed ->
+          :ok = Vix.Nif.nif_g_boxed_unref(term)
+
+        :unref_gobject ->
+          :ok = Vix.Nif.nif_g_object_unref(term)
+      end
+    end
+  end
+
   def load_nifs do
+    # must be started outside the supervision tree since the process
+    # that calls `load_nifs` will exit eventually.
+    case Vix.Nif.Janitor.start() do
+      {:ok, _pid} -> :ok
+      {:error, {:already_started, _pid}} -> :ok
+    end
+
     nif_path = :filename.join(:code.priv_dir(:vix), "vix")
     :erlang.load_nif(nif_path, load_config())
   end
 
   # GObject
   def nif_g_object_type_name(_obj),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
+  def nif_g_object_unref(_obj),
     do: :erlang.nif_error(:nif_library_not_loaded)
 
   # GType
@@ -171,6 +226,9 @@ defmodule Vix.Nif do
     do: :erlang.nif_error(:nif_library_not_loaded)
 
   def nif_vips_ref_string_to_erl_binary(_vips_blob),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
+  def nif_g_boxed_unref(_obj),
     do: :erlang.nif_error(:nif_library_not_loaded)
 
   # VipsForeign
