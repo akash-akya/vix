@@ -6,16 +6,28 @@ defmodule Vix.Operator do
   operation pipelines.
 
   ```elixir
-  def foo do
-    use Vix.Operator
+  defmodule Debug do
+    # Avoid importing operators at the module level
+    # use Vix.Operator
 
-    black = Operation.black!(100, 100, bands: 3)
-    white = Operation.invert!(black)
+    alias Vix.Vips.Operation
 
-    white == white + black
-    grey = black + 125  # same as [125]
-    grey = black + [125] # same as [125, 125, 125], since the image contains 3 bands
-    grey = black + [125, 125, 125]
+    def add_images do
+      # Prefer importing at function level:
+      # Prefer to import required operators explicitly
+      use Vix.Operator, only: [+: 2]
+
+      black = Operation.black!(100, 100, bands: 3)
+      white = Operation.invert!(black)
+
+      # Adds pixel: [255, 255, 255] + [0, 0, 0]
+      out == white + black
+
+      # All of the following generates same image
+      grey = black + 125
+      grey = black + [125]
+      grey = black + [125, 125, 125]
+    end
   end
   ```
   """
@@ -35,12 +47,17 @@ defmodule Vix.Operator do
   import Kernel, except: [+: 2, -: 2, *: 2, /: 2, **: 2, <: 2, >: 2, >=: 2, <=: 2, ==: 2, !=: 2]
 
   @doc false
-  defmacro __using__(_opts) do
-    quote do
-      import Kernel,
-        except: [+: 2, -: 2, *: 2, /: 2, **: 2, <: 2, >: 2, >=: 2, <=: 2, ==: 2, !=: 2]
+  defmacro __using__(opts) do
+    all_operators = [+: 2, -: 2, *: 2, /: 2, **: 2, <: 2, >: 2, >=: 2, <=: 2, ==: 2, !=: 2]
 
-      import Vix.Operator
+    [only: only] =
+      opts
+      |> Keyword.validate!(only: all_operators)
+      |> Enum.sort()
+
+    quote do
+      import Kernel, except: unquote(only)
+      import Vix.Operator, only: unquote(only)
     end
   end
 
