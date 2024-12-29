@@ -141,7 +141,7 @@ defmodule Vix.Operator do
     @spec unquote(op)(unquote(@arg_typespec), unquote(@arg_typespec)) :: Image.t()
     @spec unquote(op)(number, number) :: number()
     def unquote(op)(a, b) do
-      if image?(a) || image?(b) do
+      if image?(a) or image?(b) do
         unquote(name)(a, b)
       else
         Kernel.unquote(op)(a, b)
@@ -662,9 +662,6 @@ defmodule Vix.Operator do
 
     The two input images are cast up to the smallest common format before performing the comparison.
 
-    Always returns a boolean. If you want bandwise comparison with output as Image, then
-    check `Operation.relational!(a, b, #{inspect(sym)})`
-
     When none of the argument is an image then delegates to `Kernel.#{op}/2`
 
     ### Examples
@@ -678,7 +675,7 @@ defmodule Vix.Operator do
     end
 
     defp unquote(name)(a, b) do
-      if image?(a) || image?(b) do
+      if image?(a) or image?(b) do
         relational_operation(a, b, unquote(sym), unquote(inv_sym))
       else
         Kernel.unquote(op)(a, b)
