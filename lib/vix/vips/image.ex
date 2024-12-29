@@ -735,6 +735,17 @@ defmodule Vix.Vips.Image do
   end
 
   @doc """
+  Same as `to_list!/1` but raises error instead of returning it.
+  """
+  @spec to_list!(Image.t()) :: list(list(list(number()))) | no_return
+  def to_list!(%Image{} = image) do
+    case to_list(image) do
+      {:ok, list} -> list
+      {:error, reason} -> raise Error, reason
+    end
+  end
+
+  @doc """
   Returns list of supported extension for *saving* the image.
 
   Supported suffix can be used to save image in a particular format.
