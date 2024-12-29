@@ -44,15 +44,42 @@ defmodule Vix.Operator do
                 ]
                 |> Enum.reduce(&{:|, [], [&1, &2]})
 
-  import Kernel, except: [+: 2, -: 2, *: 2, /: 2, **: 2, <: 2, >: 2, >=: 2, <=: 2, ==: 2, !=: 2]
+  import Kernel,
+    except: [
+      +: 2,
+      -: 2,
+      *: 2,
+      /: 2,
+      **: 2,
+      <: 2,
+      >: 2,
+      >=: 2,
+      <=: 2,
+      ==: 2
+      !=: 2
+    ]
 
   @doc false
   defmacro __using__(opts) do
-    all_operators = [+: 2, -: 2, *: 2, /: 2, **: 2, <: 2, >: 2, >=: 2, <=: 2, ==: 2, !=: 2]
+    overriden_operators = [
+      +: 2,
+      -: 2,
+      *: 2,
+      /: 2,
+      **: 2,
+      <: 2,
+      >: 2,
+      >=: 2,
+      <=: 2,
+      ==: 2,
+      !=: 2
+    ]
+
+    vix_specific_operators = [all?: 2]
 
     [only: only] =
       opts
-      |> Keyword.validate!(only: all_operators)
+      |> Keyword.validate!(only: overriden_operators ++ vix_specific_operators)
       |> Enum.sort()
 
     quote do
