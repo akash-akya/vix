@@ -72,17 +72,45 @@ defmodule Vix.Vips.ImageTest do
     assert File.read!(img_buf_out_path) == File.read!(img_file_out_path)
   end
 
-  test "write_to_file", %{dir: dir} do
-    path = img_path("puppies.jpg")
+  describe "write_to_file" do
+    test "write_to_file", %{dir: dir} do
+      path = img_path("puppies.jpg")
 
-    {:ok, %Image{ref: ref} = im} = Image.new_from_file(path)
-    assert is_reference(ref)
+      {:ok, %Image{ref: ref} = im} = Image.new_from_file(path)
+      assert is_reference(ref)
 
-    out_path = Temp.path!(suffix: ".png", basedir: dir)
-    assert :ok == Image.write_to_file(im, out_path)
+      out_path = Temp.path!(suffix: ".png", basedir: dir)
+      assert :ok == Image.write_to_file(im, out_path)
 
-    stat = File.stat!(out_path)
-    assert stat.size > 0 and stat.type == :regular
+      stat = File.stat!(out_path)
+      assert stat.size > 0 and stat.type == :regular
+    end
+
+    test "write_to_file supports optional arguments", %{dir: dir} do
+      {:ok, img} = Image.new_from_file(img_path("puppies.jpg"))
+
+      out_path1 = Temp.path!(suffix: ".png", basedir: dir)
+      assert :ok = Image.write_to_file(img, out_path1, compression: 0)
+
+      out_path2 = Temp.path!(suffix: ".png", basedir: dir)
+      assert :ok = Image.write_to_file(img, out_path2, compression: 9)
+
+      # currently I only found this option to be verifiable easily!
+      assert File.stat!(out_path1).size > File.stat!(out_path2).size
+    end
+
+    test "write_to_file supports optional options suffix", %{dir: dir} do
+      {:ok, img} = Image.new_from_file(img_path("puppies.jpg"))
+
+      out_path1 = Temp.path!(suffix: ".png", basedir: dir)
+      assert :ok = Image.write_to_file(img, out_path1 <> "[compression=0]")
+
+      out_path2 = Temp.path!(suffix: ".png", basedir: dir)
+      assert :ok = Image.write_to_file(img, out_path2 <> "[compression=9]")
+
+      # currently I only found this option to be verifiable easily!
+      assert File.stat!(out_path1).size > File.stat!(out_path2).size
+    end
   end
 
   test "new_matrix_from_array", %{dir: _dir} do
@@ -232,9 +260,31 @@ defmodule Vix.Vips.ImageTest do
     assert 2 == Image.n_pages(im)
   end
 
-  test "write image to buffer", %{dir: _dir} do
-    {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
-    {:ok, _bin} = Image.write_to_buffer(im, ".jpg[Q=90]")
+  describe "write_to_buffer" do
+    test "write image to buffer", %{dir: _dir} do
+      {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
+      {:ok, _bin} = Image.write_to_buffer(im, ".jpg[Q=90]")
+    end
+
+    test "write_to_buffer supports optional arguments" do
+      {:ok, img} = Image.new_from_file(img_path("puppies.jpg"))
+
+      assert {:ok, bin1} = Image.write_to_buffer(img, ".png", compression: 0)
+      assert {:ok, bin2} = Image.write_to_buffer(img, ".png", compression: 9)
+
+      # currently I only found this option to be verifiable easily!
+      assert byte_size(bin1) > byte_size(bin2)
+    end
+
+    test "write_to_buffer supports optional options suffix" do
+      {:ok, img} = Image.new_from_file(img_path("puppies.jpg"))
+
+      assert {:ok, bin1} = Image.write_to_buffer(img, ".png[compression=0]")
+      assert {:ok, bin2} = Image.write_to_buffer(img, ".png[compression=9]")
+
+      # currently I only found this option to be verifiable easily!
+      assert byte_size(bin1) > byte_size(bin2)
+    end
   end
 
   test "new image from other image", %{dir: _dir} do
