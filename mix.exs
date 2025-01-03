@@ -131,7 +131,7 @@ defmodule Vix.MixProject do
         {:dialyxir, "~> 1.4", only: [:dev], runtime: false},
         {:ex_doc, ">= 0.0.0", only: :dev},
         {:excoveralls, "~> 0.15", only: :test},
-        {:temp, "~> 0.4", only: :test, runtime: false}
+        {:briefly, "~> 0.5.0", only: :test}
       ]
   end
 

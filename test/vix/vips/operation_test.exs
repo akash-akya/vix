@@ -6,33 +6,27 @@ defmodule Vix.Vips.OperationTest do
 
   import Vix.Support.Images
 
-  setup do
-    Temp.track!()
-    dir = Temp.mkdir!()
-    {:ok, %{dir: dir}}
-  end
-
-  test "invert", %{dir: dir} do
+  test "invert" do
     {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
     assert {:ok, out} = Operation.invert(im)
 
-    out_path = Temp.path!(suffix: ".jpg", basedir: dir)
+    out_path = Briefly.create!(extname: ".jpg")
     :ok = Image.write_to_file(out, out_path)
 
     assert_files_equal(img_path("invert_puppies.jpg"), out_path)
   end
 
-  test "affine", %{dir: dir} do
+  test "affine" do
     {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
     assert {:ok, out} = Operation.affine(im, [1, 0, 0, 0.5])
 
-    out_path = Temp.path!(suffix: ".jpg", basedir: dir)
+    out_path = Briefly.create!(extname: ".jpg")
     :ok = Image.write_to_file(out, out_path)
 
     assert_files_equal(img_path("affine_puppies.jpg"), out_path)
   end
 
-  test "gravity", %{dir: dir} do
+  test "gravity" do
     {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
 
     assert {:ok, out} =
@@ -40,25 +34,25 @@ defmodule Vix.Vips.OperationTest do
                extend: :VIPS_EXTEND_COPY
              )
 
-    out_path = Temp.path!(suffix: ".jpg", basedir: dir)
+    out_path = Briefly.create!(extname: ".jpg")
     :ok = Image.write_to_file(out, out_path)
 
     assert_files_equal(img_path("gravity_puppies.jpg"), out_path)
   end
 
-  test "conv with simple edge detection kernel", %{dir: dir} do
+  test "conv with simple edge detection kernel" do
     {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
     {:ok, mask} = Image.new_matrix_from_array(3, 3, [[-1, -1, -1], [-1, 8, -1], [-1, -1, -1]])
 
     assert {:ok, out} = Operation.conv(im, mask, precision: :VIPS_PRECISION_FLOAT)
 
-    out_path = Temp.path!(suffix: ".jpg", basedir: dir)
+    out_path = Briefly.create!(extname: ".jpg")
     :ok = Image.write_to_file(out, out_path)
 
     assert_files_equal(img_path("conv_puppies.jpg"), out_path)
   end
 
-  test "additional return values", %{dir: _dir} do
+  test "additional return values" do
     {:ok, im} = Image.new_from_file(img_path("black_on_white.jpg"))
 
     assert {:ok, {min, %{x: _, y: _, "out-array": [min], "x-array": [_ | _], "y-array": [_ | _]}}} =
@@ -67,17 +61,17 @@ defmodule Vix.Vips.OperationTest do
     assert min in [-0.0, +0.0]
   end
 
-  test "required output order", %{dir: _dir} do
+  test "required output order" do
     {:ok, im} = Image.new_from_file(img_path("black_on_white.jpg"))
     assert Operation.find_trim(im) == {:ok, {41, 44, 45, 45}}
   end
 
-  test "when unsupported argument is passed", %{dir: _dir} do
+  test "when unsupported argument is passed" do
     buf = File.read!(img_path("alpha_band.png"))
     assert {:ok, {%Image{}, _}} = Operation.pngload_buffer(buf, foo: "bar")
   end
 
-  test "operation error", %{dir: _dir} do
+  test "operation error" do
     {:ok, im} = Image.new_from_file(img_path("black_on_white.jpg"))
 
     assert Operation.affine(im, [1, 1, 1, 1]) ==
@@ -85,17 +79,17 @@ defmodule Vix.Vips.OperationTest do
               "operation build: vips__transform_calc_inverse: singular or near-singular matrix"}
   end
 
-  test "image type mismatch error", %{dir: _dir} do
+  test "image type mismatch error" do
     assert_raise ArgumentError, "expected Vix.Vips.Image. given: :invalid", fn ->
       Operation.invert(:invalid)
     end
   end
 
-  test "enum parameter", %{dir: dir} do
+  test "enum parameter" do
     {:ok, im} = Image.new_from_file(img_path("black_on_white.jpg"))
     {:ok, out} = Operation.flip(im, :VIPS_DIRECTION_HORIZONTAL)
 
-    out_path = Temp.path!(suffix: ".jpg", basedir: dir)
+    out_path = Briefly.create!(extname: ".jpg")
     :ok = Image.write_to_file(out, out_path)
 
     assert_files_equal(img_path("black_on_white_hflip.jpg"), out_path)
