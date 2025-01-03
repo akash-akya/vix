@@ -155,8 +155,13 @@ static ErlNifFunc nif_funcs[] = {
     /* VipsForeign */
     {"nif_foreign_find_load", 1, nif_foreign_find_load, 0},
     {"nif_foreign_find_save", 1, nif_foreign_find_save, 0},
-    {"nif_foreign_find_load_buffer", 1, nif_foreign_find_load_buffer, 0},
+    {"nif_foreign_find_load_buffer", 1, nif_foreign_find_load_buffer,
+     ERL_NIF_DIRTY_JOB_IO_BOUND},
+    // it might read bytes form the file
     {"nif_foreign_find_save_buffer", 1, nif_foreign_find_save_buffer, 0},
+    {"nif_foreign_find_load_source", 1, nif_foreign_find_load_source,
+     ERL_NIF_DIRTY_JOB_IO_BOUND}, // it might read bytes from source
+    {"nif_foreign_find_save_target", 1, nif_foreign_find_save_target, 0},
     {"nif_foreign_get_suffixes", 0, nif_foreign_get_suffixes, 0},
     {"nif_foreign_get_loader_suffixes", 0, nif_foreign_get_loader_suffixes, 0},
 

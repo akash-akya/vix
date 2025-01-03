@@ -135,6 +135,72 @@ exit:
   return ret;
 }
 
+ERL_NIF_TERM nif_foreign_find_load_source(ErlNifEnv *env, int argc,
+                                          const ERL_NIF_TERM argv[]) {
+  ASSERT_ARGC(argc, 1);
+
+  ErlNifTime start;
+  ERL_NIF_TERM ret;
+  VipsSource *source;
+  const char *name;
+
+  start = enif_monotonic_time(ERL_NIF_USEC);
+
+  if (!erl_term_to_g_object(env, argv[0], (GObject **)&source)) {
+    ret = make_error(env, "Failed to get VipsSource");
+    goto exit;
+  }
+
+  name = vips_foreign_find_load_source(source);
+
+  if (!name) {
+    error("Failed to find the loader for the source. error: %s",
+          vips_error_buffer());
+    vips_error_clear();
+    ret = make_error(env, "Failed to find loader for the source");
+    goto exit;
+  }
+
+  ret = make_ok(env, make_binary(env, name));
+
+exit:
+  notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
+  return ret;
+}
+
+ERL_NIF_TERM nif_foreign_find_save_target(ErlNifEnv *env, int argc,
+                                          const ERL_NIF_TERM argv[]) {
+  ASSERT_ARGC(argc, 1);
+
+  ErlNifTime start;
+  ERL_NIF_TERM ret;
+  char suffix[VIPS_PATH_MAX];
+  const char *name;
+
+  start = enif_monotonic_time(ERL_NIF_USEC);
+
+  if (!get_binary(env, argv[0], suffix, VIPS_PATH_MAX)) {
+    ret = make_error(env, "Failed to get suffix");
+    goto exit;
+  }
+
+  name = vips_foreign_find_save_target(suffix);
+
+  if (!name) {
+    error("Failed to find saver for the target. error: %s",
+          vips_error_buffer());
+    vips_error_clear();
+    ret = make_error(env, "Failed to find saver for the target");
+    goto exit;
+  }
+
+  ret = make_ok(env, make_binary(env, name));
+
+exit:
+  notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
+  return ret;
+}
+
 ERL_NIF_TERM nif_foreign_get_suffixes(ErlNifEnv *env, int argc,
                                       const ERL_NIF_TERM argv[]) {
   ASSERT_ARGC(argc, 0);

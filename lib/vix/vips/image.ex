@@ -447,6 +447,7 @@ defmodule Vix.Vips.Image do
   @doc since: "0.31.0"
   def new_from_file(path, opts) do
     with {:ok, path} <- normalize_path(path),
+         :ok <- validate_options(opts),
          {:ok, loader} <- Vix.Vips.Foreign.find_load(path),
          {:ok, {ref, _optional}} <- Operation.Helper.operation_call(loader, [path], opts) do
       {:ok, wrap_type(ref)}
@@ -504,7 +505,8 @@ defmodule Vix.Vips.Image do
   """
   @spec new_from_buffer(binary(), keyword()) :: {:ok, t()} | {:error, term()}
   def new_from_buffer(bin, opts \\ []) do
-    with {:ok, loader} <- Vix.Vips.Foreign.find_load_buffer(bin),
+    with :ok <- validate_options(opts),
+         {:ok, loader} <- Vix.Vips.Foreign.find_load_buffer(bin),
          {:ok, {ref, _optional}} <- Operation.Helper.operation_call(loader, [bin], opts) do
       {:ok, wrap_type(ref)}
     end
@@ -580,26 +582,18 @@ defmodule Vix.Vips.Image do
   :ok = Image.write_to_file(image, "puppies.png")
   ```
 
-  Optional param `opts` string is passed to the image loader. It is a string
-  of the format "[name=value,...]".
+  Optional param `opts` is passed to the image loader. Available
+  options depends on the format.
 
   ```elixir
-  Image.new_from_enum(stream, "[shrink=2]")
+  Image.new_from_enum(stream, [shrink: 2])
   ```
 
-  Will read the stream with downsampling by a factor of two.
-
-  The full set of options available depend upon the image format. You
-  can find all options available at the command-line. To see a summary
-  of the available options for the JPEG loader:
-
-  ```shell
-  $ vips jpegload_source
-  ```
-
+  You can find all options available for a format under operation function in
+  [Operation](./search.html?q=load+-buffer+-filename+-profile) module.
   """
-  @spec new_from_enum(Enumerable.t(), String.t()) :: {:ok, t()} | {:error, term()}
-  def new_from_enum(enum, opts \\ "") do
+  @spec new_from_enum(Enumerable.t(), String.t() | keyword) :: {:ok, t()} | {:error, term()}
+  def new_from_enum(enum, opts \\ []) do
     parent = self()
 
     pid =
@@ -625,9 +619,17 @@ defmodule Vix.Vips.Image do
       end)
 
     receive do
-      {^pid, source} ->
-        Nif.nif_image_new_from_source(source, opts)
+      # for backward compatibility
+      {^pid, source} when is_binary(opts) ->
+        Nif.nif_image_new_from_source(source.ref, opts)
         |> wrap_type()
+
+      {^pid, source} ->
+        with :ok <- validate_options(opts),
+             {:ok, loader} <- Vix.Vips.Foreign.find_load_source(source),
+             {:ok, {ref, _optional}} <- Operation.Helper.operation_call(loader, [source], opts) do
+          {:ok, wrap_type(ref)}
+        end
     end
   end
 
@@ -649,29 +651,22 @@ defmodule Vix.Vips.Image do
     |> Stream.run()
   ```
 
-  Second param `suffix` determines the format of the output
-  stream. Save options may be appended to the suffix as
-  "[name=value,...]".
+  Optional param `opts` is passed to the image saver. Available
+  options depends on the file format. You can find all options
+  available for a format under operation function in
+  [Operation](./search.html?q=save+buffer+-filename+-profile) module.
 
   ```elixir
-  Image.write_to_stream(vips_image, ".jpg[Q=90]")
+  Image.write_to_stream(vips_image, ".jpg", Q: 90)
   ```
-
-  Options are specific to save operation. You can find out all
-  available options for the save operation at command line. For
-  example:
-
-  ```shell
-  $ vips jpegsave_target
-  ```
-
   """
-  @spec write_to_stream(t(), String.t()) :: Enumerable.t()
-  def write_to_stream(%Image{ref: vips_image}, suffix) do
+  @spec write_to_stream(t(), String.t(), keyword) :: Enumerable.t()
+
+  @doc since: "0.32.0"
+  def write_to_stream(%Image{ref: _} = image, suffix, opts) do
     Stream.resource(
       fn ->
-        {:ok, pipe} = Vix.TargetPipe.new(vips_image, suffix)
-        pipe
+        init_write_stream(image, suffix, opts)
       end,
       fn pipe ->
         ret = Vix.TargetPipe.read(pipe)
@@ -691,6 +686,10 @@ defmodule Vix.Vips.Image do
         Vix.TargetPipe.stop(pipe)
       end
     )
+  end
+
+  def write_to_stream(%Image{ref: _} = image, suffix) do
+    write_to_stream(%Image{ref: _} = image, suffix, [])
   end
 
   @doc """
@@ -804,12 +803,9 @@ defmodule Vix.Vips.Image do
   def write_to_file(%Image{ref: _} = image, path, opts) do
     path = normalize_string(Path.expand(path))
 
-    case Vix.Vips.Foreign.find_save(path) do
-      {:ok, saver} ->
-        Operation.Helper.operation_call(saver, [image, path], opts)
-
-      error ->
-        error
+    with :ok <- validate_options(opts),
+         {:ok, saver} <- Vix.Vips.Foreign.find_save(path) do
+      Operation.Helper.operation_call(saver, [image, path], opts)
     end
   end
 
@@ -834,7 +830,7 @@ defmodule Vix.Vips.Image do
 
   ```elixir
   # returns image in JPEG format as binary with Q factor set 90
-  Image.write_to_buffer(img, ".jpg", [Q: 90])
+  Image.write_to_buffer(img, ".jpg", Q: 90)
   ```
 
   If you want more control over the saver, Use specific format saver
@@ -845,12 +841,9 @@ defmodule Vix.Vips.Image do
 
   @doc since: "0.32.0"
   def write_to_buffer(%Image{ref: _} = image, suffix, opts) do
-    case Vix.Vips.Foreign.find_save_buffer(normalize_string(suffix)) do
-      {:ok, saver} ->
-        Operation.Helper.operation_call(saver, [image], opts)
-
-      error ->
-        error
+    with :ok <- validate_options(opts),
+         {:ok, saver} <- Vix.Vips.Foreign.find_save_buffer(normalize_string(suffix)) do
+      Operation.Helper.operation_call(saver, [image], opts)
     end
   end
 
@@ -1648,6 +1641,29 @@ defmodule Vix.Vips.Image do
       size <= 16 -> 16
       size <= 32 -> 32
       true -> raise ArgumentError, "integer size must be <= 32bit"
+    end
+  end
+
+  @spec validate_options(keyword) :: :ok | {:error, String.t()}
+  defp validate_options(opts) do
+    if Keyword.keyword?(opts) do
+      :ok
+    else
+      {:error, "Opts must be a keyword list"}
+    end
+  end
+
+  @spec init_write_stream(Image.t(), String.t(), keyword) :: term | no_return
+  defp init_write_stream(image, suffix, opts) do
+    with :ok <- validate_options(opts),
+         {:ok, pipe} <- Vix.TargetPipe.new(image, suffix, opts) do
+      pipe
+    else
+      {:error, reason} when is_binary(reason) ->
+        raise Error, reason
+
+      {:error, reason} ->
+        raise Error, inspect(reason)
     end
   end
 end

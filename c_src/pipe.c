@@ -385,11 +385,12 @@ static bool cancel_select(ErlNifEnv *env, int *fd) {
 
 static void fd_rt_dtor(ErlNifEnv *env, void *obj) {
   debug("fd_rt_dtor called");
+  int *fd = (int *)obj;
+  close_fd(fd);
 }
 
 static void fd_rt_stop(ErlNifEnv *env, void *obj, int fd, int is_direct_call) {
   debug("fd_rt_stop called %d", fd);
-  close_fd(&fd);
 }
 
 static void fd_rt_down(ErlNifEnv *env, void *obj, ErlNifPid *pid,
