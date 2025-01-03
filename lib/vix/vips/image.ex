@@ -1,98 +1,76 @@
 defmodule Vix.Vips.Image do
   @moduledoc """
-  Functions for reading and writing images as well as
-  accessing and updating image metadata.
+  Primary module for reading and writing image and image metadata.
 
-  ## Access syntax (slicing)
+  This module allows you to read, write, manipulate and analyze images efficiently using the powerful
+  libvips image processing library. It offers operations like loading images, accessing metadata,
+  and extracting image bands.
 
-  Vix images implement Elixir's access syntax. This allows developers
-  to slice images and easily access sub-dimensions and values.
+  ## Basic Usage
 
-  ### Integer
-  Access accepts integers. Integers will extract an image band using parameter as index:
+      # Load an image from file
+      {:ok, image} = Image.new_from_file("path/to/image.jpg")
 
-      #=> {:ok, i} = Image.new_from_file("./test/images/puppies.jpg")
-      {:ok, %Vix.Vips.Image{ref: #Reference<0.2448791511.2685009949.153539>}}
-      #=> i[0]
-      %Vix.Vips.Image{ref: #Reference<0.2448791511.2685009949.153540>}
+      # Create a new RGB image
+      {:ok, blank} = Image.build_image(width, height, [0, 0, 0])
 
-  If a negative index is given, it accesses the band from the back:
+  ## Access Syntax (Image Slicing)
 
-      #=> i[-1]
-      %Vix.Vips.Image{ref: #Reference<0.2448791511.2685009949.153540>}
+  The module implements Elixir's Access behavior, providing an intuitive way to slice and extract
+  image data across three dimensions: width, height, and bands (color channels).
 
-  Out of bound access will throw an `ArgumentError` exception:
+  ### Band Extraction
 
-      #=> i[-4]
-      ** (ArgumentError) Invalid band requested. Found -4
+  Access individual color bands using integer indices:
 
-  ### Range
+      # Get the red channel from an RGB image
+      red_channel = image[0]
 
-  Access also accepts ranges. Ranges in Elixir are inclusive:
+      # Get the alpha channel (last band) from an RGBA image
+      alpha = image[-1]
 
-      #=> i[0..1]
-      %Vix.Vips.Image{ref: #Reference<0.2448791511.2685009949.153641>}
+  ### Band Ranges
 
-  Ranges can receive negative positions and they will read from
-  the back. In such cases, the range step must be explicitly given
-  (on Elixir 1.12 and later) and the right-side of the range must
-  be equal or greater than the left-side:
+  Extract multiple consecutive bands using ranges:
 
-      #=> i[0..-1//1]
-      %Vix.Vips.Image{ref: #Reference<0.2448791511.2685009949.153703>}
+      # Get red and green channels from RGB
+      red_green = image[0..1]
 
-  To slice across multiple dimensions, you can wrap the ranges in a list.
-  The list will be of the form `[with_slice, height_slice, band_slice]`.
+      # Get all channels.
+      all_channels = image[0..-1//1]
+      # Same as `all_channels = image`
 
-      # Returns an image that slices a 10x10 pixel square
-      # from the top left of the image with three bands
-      #=> i[[0..9, 0..9, 0..3]]
-      %Vix.Vips.Image{ref: #Reference<0.2448791511.2685009949.153738>}
+  ### Dimensional Slicing
 
-  If number of dimensions are less than 3 then remaining dimensions
-  are returned in full
+  Slice images across multiple dimensions using lists of the form [width, height, bands]:
 
-      # If `i` size is 100x100 with 3 bands
-      #=> i[[0..9, 0..9]] # equivalent to `i[[0..9, 0..9, 0..2]]`
-      %Vix.Vips.Image{ref: #Reference<0.2448791511.2685009949.153740>}
+      # Get a 100x100 pixel square from the top-left corner
+      top_left = image[[0..99, 0..99]]
 
-      #=> i[[0..9]] # equivalent to `i[[0..9, 0..99, 0..2]]`
-      %Vix.Vips.Image{ref: #Reference<0.2448791511.2685009949.153703>}
+      # Get the bottom-right 50x50 pixel square
+      bottom_right = image[[-50..-1, -50..-1]]
 
-  Slices can include negative ranges in which case the indexes
-  are calculated from the right and bottom of the image.
+      # Get the bottom-right 50x50 pixel square, and only green channel
+      bottom_right = image[[-50..-1, -50..-1, 1]]
 
-      # Slices the bottom right 10x10 pixels of the image
-      # and returns all bands.
-      #=> i[[-10..-1, -10..-1]]
-      %Vix.Vips.Image{ref: #Reference<0.2448791511.2685009949.153742>}
+  ### Named Dimension Access
 
-  Slice can mix integers and ranges
+  Use keyword lists for more explicit dimension specification:
 
-      # Slices the bottom right 10x1 pixels of the image
-      # and returns all bands.
-      #=> i[[-10..-1, -1]]
-      %Vix.Vips.Image{ref: #Reference<0.2448791511.2685009949.153742>}
+      # Get first 200 pixels in width, maintaining full height and bands
+      slice = image[[width: 0..199]]
 
-  ### Keyword List
+      # Get specific height range with all bands
+      middle = image[[height: 100..299]]
 
-  Access also accepts keyword list. Where key can be any of `width`,
-  `height`, `band`.  and value must be an `integer`, `range`. This is
-  useful for complex scenarios when you want omit dimensions arbitrary
-  dimensions.
+      # Extract specific band
+      green = image[[band: 1]]
 
-      # Slices an image with height 10 with max width and all bands
-      #=> i[[height: 0..10]]
-      %Vix.Vips.Image{ref: #Reference<0.2448791511.2685009949.153742>}
+      # Get a 100x100 pixel square from the top-left corner, and only red-green channels
+      bottom_right = image[[width: 0..99, height: 0..99, band: 0..1]]
 
-      # Slices an image with single band 1
-      #=> i[[band: 1]]
-      %Vix.Vips.Image{ref: #Reference<0.2448791511.2685009949.153742>}
+  See `Vix.Vips.Operation` for available image processing operations.
 
-      # Slices the bottom right 10x10 pixels of the image
-      # and returns all bands.
-      #=> i[[width: -10..-1, height: -10..-1]]
-      %Vix.Vips.Image{ref: #Reference<0.2448791511.2685009949.153742>}
   """
 
   defstruct [:ref]
@@ -148,6 +126,42 @@ defmodule Vix.Vips.Image do
   @behaviour Access
 
   @impl Access
+
+  @doc """
+  Extracts a band from an image using Access syntax.
+
+  This function implements the Access behaviour for images, enabling array-like
+  syntax for extracting bands and slices. See the module documentation for
+  detailed examples of Access syntax usage.
+
+  ## Parameters
+
+    * `image` - The source image
+    * `band` - Integer index, Range, or list specifying what to extract
+
+  ## Returns
+
+    * `{:ok, image}` with extracted data
+    * Raises ArgumentError for invalid access patterns
+
+  Access is read-only - `get_and_update/3` and `pop/2` are not supported.
+
+  ## Examples
+
+      # Get red channel
+      {:ok, red} = Image.fetch(rgb_image, 0)
+
+      # Get first two channels
+      {:ok, rg} = Image.fetch(rgb_image, 0..1)
+
+      # Get 100x100 region from top-left
+      {:ok, region} = Image.fetch(image, [0..99, 0..99])
+
+      # Get specific height range
+      {:ok, slice} = Image.fetch(image, [height: 100..199])
+
+  See `Vix.Vips.Image` module docs for more details
+  """
 
   # Extract band when the band number is positive or zero
   def fetch(image, band) when is_integer(band) and band >= 0 do
@@ -307,16 +321,32 @@ defmodule Vix.Vips.Image do
   end
 
   @doc """
-  Builds an Image
+  Creates a new image with specified dimensions and background values.
+
+  Takes width, height, and a list of background values to create a new image. The background values
+  determine both the number of bands and initial pixel values.
+
+  ## Parameters
+
+    * `width` - Width of the image in pixels (positive integer)
+    * `height` - Height of the image in pixels (positive integer)
+    * `background` - List of numbers representing initial pixel values for each band. Defaults to [0, 0, 0]
+    * `opts` - Keyword list of options
 
   ## Options
 
-  * `interpretation` : must be a valid vips_interpretation or `:auto`. When value is
-    `:auto` it will be set based on the number of bands in the `background`. Defaults to `:auto`
+    * `:interpretation` - Color space interpretation. Can be a valid `vips_interpretation` or `:auto`.
+       When `:auto`, determined by number of bands:
+       * 1 band -> `:VIPS_INTERPRETATION_B_W`
+       * 3 bands -> `:VIPS_INTERPRETATION_RGB`
+       * 4 bands -> `:VIPS_INTERPRETATION_sRGB`
+       * other -> `:VIPS_INTERPRETATION_MULTIBAND`
 
-  * `format` : must be a valid vips_format or `:auto`. When value is `:auto` it will
-     be set to a format just large enough to hold all the values. Ex, if any of the
-     value is a float then format will be `:VIPS_FORMAT_DOUBLE`
+    * `:format` - Pixel value format. Can be a valid vips_format or `:auto`.
+       When `:auto`, determined by value ranges. For example:
+       * 0-255 -> `:VIPS_FORMAT_UCHAR`
+       * decimal values -> `:VIPS_FORMAT_DOUBLE`
+       * larger integers -> `:VIPS_FORMAT_INT`
 
   ## Examples
 
@@ -328,7 +358,8 @@ defmodule Vix.Vips.Image do
   {1, 2, 1}
   ```
 
-  Correctly sets interpretation
+  Sets the interpretation based on the bands
+
   ```elixir
   iex> {:ok, img} = Image.build_image(1, 2, [10])
   iex> Image.interpretation(img)
@@ -344,7 +375,8 @@ defmodule Vix.Vips.Image do
   :VIPS_INTERPRETATION_MULTIBAND
   ```
 
-  Correctly sets format
+  Sets the band format based on the values
+
   ```elixir
   iex> {:ok, img} = Image.build_image(1, 2, [10, 9, 220])
   iex> Image.format(img)
@@ -362,7 +394,6 @@ defmodule Vix.Vips.Image do
   iex> Image.format(img)
   :VIPS_FORMAT_CHAR
   ```
-
 
   """
   @spec build_image(
@@ -388,9 +419,9 @@ defmodule Vix.Vips.Image do
   end
 
   @doc """
-  Builds an Image
+  Creates a new image with specified dimensions and background values.
 
-  Same as `build_image/3` but raises error instead of returning it.
+  Similar to `build_image/4` but raises `Image.Error` on failure instead of returning error tuple.
 
   ## Examples
 
@@ -402,7 +433,8 @@ defmodule Vix.Vips.Image do
   {1, 2, 1}
   ```
 
-  See `build_image/3` for more detailed examples.
+  See `build_image/4` for detailed documentation.
+
   """
   @spec build_image!(pos_integer, pos_integer, [number]) :: t() | no_return
   def build_image!(width, height, background \\ [0, 0, 0]) do
@@ -413,34 +445,51 @@ defmodule Vix.Vips.Image do
   end
 
   @doc """
-  Opens `path` for reading, returns an instance of `t:Vix.Vips.Image.t/0`
+  Opens an image file for reading and returns a `t:Vix.Vips.Image.t/0` struct.
 
-  It can load files in many image formats, including VIPS, TIFF, PNG,
-  JPEG, FITS, Matlab, OpenEXR, CSV, WebP, Radiance, RAW, PPM and
-  others.
+  This function provides a high-level interface to load images from many format
+  depending on the libraries installed.
 
-  Optional param `opts` is passed to the image loader. Available
-  options depends on the file format. You can find all options
-  available for a format under operation function in
-  [Operation](./search.html?q=load+-buffer+-filename+-profile) module.
+  ## Options
 
-  For example, you can find all of the options supported by
-  JPEG under `Vix.Vips.Operation.jpegload/2` function documentation.
+  The `opts` parameter accepts format-specific loading options. Each format supports
+  different options which can be found in the [Operation](./search.html?q=load+-buffer+-filename+-profile)
+  module documentation.
+
+
+  ## Examples
 
   ```elixir
-  Image.new_from_file("fred.jpg", shrink: 2)
+  # Basic usage:
+  {:ok, %Image{} = image} = Image.new_from_file("photo.jpg")
+
+  # Loading with options (downsampling by factor of 2):
+  {:ok, image} = Image.new_from_file("large_photo.jpg", shrink: 2)
+
+  # Loading a specific page from a multi-page TIFF
+  {:ok, page} = Image.new_from_file("document.tiff", page: 1)
+
+  # Loading a PNG with specific options:
+  {:ok, image} = Image.new_from_file("transparent.png", access: :VIPS_ACCESS_SEQUENTIAL)
   ```
 
-  Opens "fred.jpg", downsampling by a factor of two.
+  To see all available options for a specific format, you can check the corresponding loader function. For example, `Vix.Vips.Operation.jpegload/2` documents all JPEG-specific options.
 
-  > #### Loading is fast {: .info}
-  > Only enough of the image is loaded to the memory to be able to
-  > fill out the header. Pixels will only be decompressed when they are
-  > needed.
+  ## Performance Notes
 
-  If you want more control over the loader, Use the specific format loader
-  from `Vix.Vips.Operation`. For example for jpeg use
-  `Vix.Vips.Operation.jpegload/2`
+  The loading process is optimized - only the image header is initially loaded into memory.
+  Pixel data is decompressed on-demand when accessed, making this operation memory-efficient
+  for large images.
+
+  ## Advanced Usage
+
+  For more control over the loading process, consider using format-specific loaders from
+  `Vix.Vips.Operation`. For example:
+
+  ```elixir
+  # Using specific JPEG loader
+  {:ok, image} = Vix.Vips.Operation.jpegload("photo.jpg", access: :VIPS_ACCESS_SEQUENTIAL)
+  ```
   """
   @spec new_from_file(String.t(), keyword) :: {:ok, t()} | {:error, term()}
 
@@ -463,11 +512,29 @@ defmodule Vix.Vips.Image do
   end
 
   @doc """
-  Create a new image based on an existing image with each pixel set to `value`
+  Creates a new image by cloning dimensions and properties from an existing image,
+  filling all bands with specified values.
 
-  Creates a new image with width, height, format, interpretation,
-  resolution and offset taken from the input image, but with each band
-  set from `value`.
+  The new image inherits the following properties from the source image:
+  * Width and height
+  * Format and color interpretation
+  * Resolution
+  * Offset
+
+  ## Parameters
+
+  * `image` - Source image to clone properties from
+  * `value` - List of numbers representing values for each band
+
+  ## Examples
+
+  Create a solid red image with same dimensions as source:
+
+      {:ok, red_image} = Image.new_from_image(source_image, [255, 0, 0])
+
+  Create a semi-transparent overlay:
+
+      {:ok, overlay} = Image.new_from_image(source_image, [0, 0, 0, 128])
   """
   @spec new_from_image(t(), [number()]) :: {:ok, t()} | {:error, term()}
   def new_from_image(%Image{ref: vips_image}, value) do
@@ -478,30 +545,37 @@ defmodule Vix.Vips.Image do
   end
 
   @doc """
-  Create a new image from formatted binary
+  Creates a new image from formatted binary data (like JPEG, PNG, etc.).
 
-  Create a new image from formatted binary `bin`. Binary should be an
-  image encoded in a format such as JPEG. It tries to recognize the
-  format by checking the binary.
+  This function attempts to automatically detect the image format from the binary data.
+  It's particularly useful when working with image data from network requests, databases,
+  or other binary sources.
 
-  If you already know the image format of `bin` then you can just use
-  corresponding loader operation function directly from
-  `Vix.Vips.Operation` instead. For example to load jpeg, you can use
-  `Vix.Vips.Operation.jpegload_buffer/2`
+  ## Parameters
 
-  `bin` should be formatted binary (ie. JPEG, PNG etc). For loading
-  unformatted binary (raw pixel data) see `new_from_binary/5`.
+  * `bin` - Binary data containing a formatted image (JPEG, PNG, etc.)
+  * `opts` - Format-specific loading options (same as `new_from_file/2`)
 
-  Optional param `opts` is passed to the image loader. Options
-  available depend on the file format. You can find all options
-  available like this:
+  ## Examples
 
-  ```sh
-  $ vips jpegload_buffer
-  ```
+  Basic usage with binary data:
 
-  Not all loaders support load from buffer, but at least JPEG, PNG and
-  TIFF images will work.
+      {:ok, image} = Image.new_from_buffer(jpeg_binary)
+
+  Loading with specific options:
+
+      {:ok, image} = Image.new_from_buffer(jpeg_binary, shrink: 2)
+
+  Working with HTTP responses:
+
+      {:ok, response} = HTTPClient.get("https://example.com/image.jpg")
+      {:ok, image} = Image.new_from_buffer(response.body)
+
+  ## Format-Specific Loading
+
+  For known formats, you can use specific loaders from `Vix.Vips.Operation`:
+
+      {:ok, image} = Vix.Vips.Operation.jpegload_buffer(jpeg_binary, access: :VIPS_ACCESS_SEQUENTIAL)
   """
   @spec new_from_buffer(binary(), keyword()) :: {:ok, t()} | {:error, term()}
   def new_from_buffer(bin, opts \\ []) do
@@ -513,39 +587,62 @@ defmodule Vix.Vips.Image do
   end
 
   @doc """
-  Create a new image from raw pixel data
+  Creates a new image from raw pixel data with zero-copy performance.
 
-  Creates an image by wrapping passed raw pixel data. This function
-  does not copy the passed binary, instead it just creates a reference
-  to the binary term (zero-copy). So this function is very efficient.
+  This function wraps raw pixel data without copying, making it highly efficient for
+  integrating with other imaging libraries or processing pipelines. It's particularly
+  useful when working with raw pixel data from libraries like [`eVision`](https://github.com/cocoa-xu/evision) or
+  [`Nx`](https://github.com/elixir-nx/).
 
-  This function is useful when you are getting raw pixel data from
-  some other library like
-  [`eVision`](https://github.com/cocoa-xu/evision) or
-  [`Nx`](https://github.com/elixir-nx/) and want to perform some
-  operation on it using Vix.
+  ## Parameters
 
-  Binary should be sequence of pixel data, for example: RGBRGBRGB. and
-  order should be left-to-right, top-to-bottom.
+  * `bin` - Binary containing raw pixel data in left-to-right, top-to-bottom order
+  * `width` - Image width in pixels
+  * `height` - Image height in pixels
+  * `bands` - Number of bands per pixel (e.g., 3 for RGB, 4 for RGBA)
+  * `band_format` - Format of each band (typically `:VIPS_FORMAT_UCHAR`)
 
-  `bands` should be number values which represent the each pixel. For
-  example: if each pixel is RGB then `bands` will be 3. If each pixel
-  is RGBA then `bands` will be 4.  `band_format` refers to type of
-  each band. Usually it will be `:VIPS_FORMAT_UCHAR`.
+  ## Endianness Requirements
 
-  `bin` should be raw pixel data binary. For loading
-  formatted binary (JPEG, PNG) see `new_from_buffer/2`.
+  The binary data MUST be in native endianness. When using bitstring syntax, always
+  specify the `native` modifier:
 
-  ##  Endianness
+      # Correct - using native endianness
+      <<r::native-integer-size(8), g::native-integer-size(8), b::native-integer-size(8)>>
 
-  Byte order of the data *must* be in native endianness. This matters
-  if you are generating or manipulating binary by using bitstring
-  syntax. By default bitstring treat binary byte order as `big` endian
-  which might *not* be native. Always use `native` specifier to
-  ensure. See [Elixir
-  docs](https://hexdocs.pm/elixir/Kernel.SpecialForms.html#%3C%3C%3E%3E/1-endianness)
+      # Incorrect - default big endian
+      <<r::integer-size(8), g::integer-size(8), b::integer-size(8)>>
+
+  See [Elixir docs](https://hexdocs.pm/elixir/Kernel.SpecialForms.html#%3C%3C%3E%3E/1-endianness)
   for more details.
 
+  ## Examples
+
+  Creating an RGB image from raw pixel data
+
+  ```elixir
+  pixels = <<
+    255, 0, 0,    # Red pixel
+    0, 255, 0,    # Green pixel
+    0, 0, 255     # Blue pixel
+  >>
+  {:ok, image} = Image.new_from_binary(pixels, 3, 1, 3, :VIPS_FORMAT_UCHAR)
+  ```
+
+  Working with grayscale data:
+
+  ```elixir
+  gray_data = <<128, 64, 32, 16>>  # 4 gray pixels
+  {:ok, gray_image} = Image.new_from_binary(gray_data, 4, 1, 1, :VIPS_FORMAT_UCHAR)
+  ```
+
+  Creating an RGB image from raw pixel data:
+
+      pixel_data = get_rgb_pixels() # Binary of RGB values
+      {:ok, image} = Image.new_from_binary(pixel_data, 640, 480, 3, :VIPS_FORMAT_UCHAR)
+
+
+  For loading formatted binary (JPEG, PNG, etc) see `new_from_buffer/2`.
   """
   @spec new_from_binary(
           binary(),
@@ -563,34 +660,42 @@ defmodule Vix.Vips.Image do
   end
 
   @doc """
-  Create a new image from Enumerable.
+  Creates a new image by lazily reading from an Enumerable source.
 
-  Returns an image which will lazily pull data from passed
-  Enumerable. `enum` should be stream of bytes of an encoded image
-  such as JPEG. This functions recognizes the image format and
-  metadata by reading starting bytes and wraps passed Enumerable as an
-  image. Remaining bytes are read on-demand.
+  This function is ideal for processing large images without loading the entire file into memory.
+  It detects the image format from the initial bytes and reads remaining data on-demand.
 
-  Useful when working with big images. Where you don't want to load
-  complete input image data to memory.
+  ## Parameters
 
-  ```elixir
-  {:ok, image} =
-    File.stream!("puppies.jpg", [], 1024) # or read from s3, web-request
-    |> Image.new_from_enum()
+  * `enum` - An Enumerable producing image data (e.g., File.stream!, HTTP chunks)
+  * `opts` - Optional keyword list of format-specific options. To be backward compatible it also accepts options
+  as a string in "[name=value,...]" format for the time being.
 
-  :ok = Image.write_to_file(image, "puppies.png")
-  ```
+  ## Examples
 
-  Optional param `opts` is passed to the image loader. Available
-  options depends on the format.
+  Reading from a file stream:
 
-  ```elixir
-  Image.new_from_enum(stream, [shrink: 2])
-  ```
+      {:ok, image} =
+        File.stream!("large_photo.jpg", [], 65_536)
+        |> Image.new_from_enum()
 
-  You can find all options available for a format under operation function in
-  [Operation](./search.html?q=load+-buffer+-filename+-profile) module.
+  Reading from a file with options:
+
+      {:ok, image} =
+        File.stream!("large_photo.jpg", [], 65_536)
+        |> Image.new_from_enum(shrink: 2)
+
+  Processing S3 stream:
+
+      {:ok, image} =
+        ExAws.S3.download_file("bucket", "image.jpg")
+        |> Stream.map(&process_chunk/1)
+        |> Image.new_from_enum()
+
+  ## Format Options
+
+  To see format-specific options, check [Operation](./search.html?q=load+-buffer+-filename+-profile) module.
+
   """
   @spec new_from_enum(Enumerable.t(), String.t() | keyword) :: {:ok, t()} | {:error, term()}
   def new_from_enum(enum, opts \\ []) do
@@ -634,31 +739,47 @@ defmodule Vix.Vips.Image do
   end
 
   @doc """
-  Creates a Stream from Image.
+  Creates a Stream that lazily writes image data in the specified format.
 
-  Returns a Stream which will lazily pull data from passed image.
+  This function is particularly useful for handling large images or when streaming
+  directly to storage/network without intermediate files.
 
-  Useful when working with big images. Where you don't want to keep
-  complete output image in memory.
+  ## Parameters
 
+  * `image` - The source image to stream
+  * `suffix` - Output format suffix. (e.g., ".jpg", ".png")
+  * `opts` - Optional keyword list of format-specific options (e.g., `[Q: 90]`)
 
-  ```elixir
-  {:ok, image} = Image.new_from_file("puppies.jpg")
+  ## Examples
 
-  :ok =
-    Image.write_to_stream(image, ".png")
-    |> Stream.into(File.stream!("puppies.png")) # or write to S3, web-request
-    |> Stream.run()
-  ```
+  Basic streaming to file:
 
-  Optional param `opts` is passed to the image saver. Available
-  options depends on the file format. You can find all options
-  available for a format under operation function in
+      {:ok, image} = Image.new_from_file("input.jpg")
+
+      :ok =
+        Image.write_to_stream(image, ".png")
+        |> Stream.into(File.stream!("output.png"))
+        |> Stream.run()
+
+  Streaming with quality options:
+
+      :ok =
+        Image.write_to_stream(image, ".jpg", Q: 90, strip: true)
+        |> Stream.into(File.stream!("output.jpg"))
+        |> Stream.run()
+
+  Streaming to S3:
+
+      :ok =
+        Image.write_to_stream(image, ".png")
+        |> Stream.each(&upload_chunk_to_s3/1)
+        |> Stream.run()
+
+  ## Format Options
+
+  Each format supports different saving options. View available options in
   [Operation](./search.html?q=save+buffer+-filename+-profile) module.
 
-  ```elixir
-  Image.write_to_stream(vips_image, ".jpg", Q: 90)
-  ```
   """
   @spec write_to_stream(t(), String.t(), keyword) :: Enumerable.t()
 
@@ -775,26 +896,44 @@ defmodule Vix.Vips.Image do
   end
 
   @doc """
-  Write `t:Vix.Vips.Image.t/0` to a file.
+  Writes a VIPS image to a file in the format determined by the file extension.
 
-  The image format is selected based on image extension in `path`.
+  ## Parameters
 
-  Optional param `opts` is passed to the image saver. Available
-  options depends on the file format. You can find all options
-  available for a format under operation function in
-  [Operation](./search.html?q=save+-buffer+-filename+-profile) module.
+  * `image` - The source `t:Vix.Vips.Image.t/0` to save
+  * `path` - Destination file path (format determined by extension)
+  * `opts` - Format-specific saving options
 
-  For example, you can find all of the options supported by JPEG saver
-  undre `Vix.Vips.Operation.jpegsave/3` function documentation.
+  ## Format Options
 
-  ```elixir
-  # save with Quality set to 90
-  Image.write_to_file(vips_image, "fred.jpg", Q: 90)
-  ```
+  Each format supports different saving options, which can be found in the
+  [Operation](./search.html?q=save+-buffer+-filename+-profile) module documentation.
 
-  If you want more control over the saver, Use specific format saver
-  from `Vix.Vips.Operation`. For example for jpeg use
-  `Vix.Vips.Operation.jpegsave/2`
+  ## Examples
+
+  Basic usage:
+
+      :ok = Image.write_to_file(image, "output.jpg")
+
+  Saving with quality settings:
+
+      # JPEG with 90% quality
+      :ok = Image.write_to_file(image, "output.jpg", Q: 90)
+
+      # PNG with maximum compression
+      :ok = Image.write_to_file(image, "output.png", compression: 9)
+
+  Saving with multiple options:
+
+      # JPEG with quality and metadata stripping
+      :ok = Image.write_to_file(image, "output.jpg", Q: 90, strip: true)
+
+  ## Advanced Usage
+
+  For more control, use format-specific savers from `Vix.Vips.Operation`:
+
+      # Using specific JPEG saver
+      :ok = Vix.Vips.Operation.jpegsave(image, "output.jpg", Q: 95)
 
   """
   @spec write_to_file(t(), String.t(), keyword) :: :ok | {:error, term()}
@@ -815,27 +954,47 @@ defmodule Vix.Vips.Image do
   end
 
   @doc """
-  Returns `t:Vix.Vips.Image.t/0` as a binary based on the format specified by `suffix`.
+  Converts a VIPS image to a binary representation in the specified format.
 
-  This function is similar to `write_to_file` but instead of writing
-  the output to the file, it returns it as a binary.
+  This function is similar to `write_to_file/3` but returns the encoded image
+  as a binary instead of writing to a file. This is particularly useful for
+  web applications or when working with in-memory image processing pipelines.
 
-  Optional param `opts` is passed to the image saver. Available
-  options depends on the file format. You can find all options
-  available for a format under operation function in
-  [Operation](./search.html?q=save+buffer+-filename+-profile) module.
+  ## Parameters
 
-  For example, you can find all of the options supported by JPEG saver
-  undre `Vix.Vips.Operation.jpegsave_buffer/2` function documentation.
+  * `image` - The source `t:Vix.Vips.Image.t/0` to convert
+  * `suffix` - Format extension (e.g., ".jpg", ".png")
+  * `opts` - Format-specific encoding options
 
-  ```elixir
-  # returns image in JPEG format as binary with Q factor set 90
-  Image.write_to_buffer(img, ".jpg", Q: 90)
-  ```
+  ## Examples
 
-  If you want more control over the saver, Use specific format saver
-  from `Vix.Vips.Operation`. For example for jpeg use
-  `Vix.Vips.Operation.jpegsave_buffer/2`
+  Basic conversion to different formats:
+
+      # Convert to JPEG binary
+      {:ok, jpeg_binary} = Image.write_to_buffer(image, ".jpg")
+
+      # Convert to PNG binary
+      {:ok, png_binary} = Image.write_to_buffer(image, ".png")
+
+  Converting with quality settings:
+
+      # JPEG with 90% quality
+      {:ok, jpeg_binary} = Image.write_to_buffer(image, ".jpg", Q: 90)
+
+      # PNG with maximum compression
+      {:ok, png_binary} = Image.write_to_buffer(image, ".png", compression: 9)
+
+  Web application example:
+
+      def show_image(conn, %{"id" => id}) do
+        image = MyApp.get_image!(id)
+        {:ok, binary} = Image.write_to_buffer(image, ".jpg", Q: 85)
+
+        conn
+        |> put_resp_content_type("image/jpeg")
+        |> send_resp(200, binary)
+      end
+
   """
   @spec write_to_buffer(t(), String.t(), keyword) :: {:ok, binary()} | {:error, term()}
 
@@ -852,37 +1011,54 @@ defmodule Vix.Vips.Image do
   end
 
   @doc """
-  Returns raw pixel data of the image as `Vix.Tensor`
+  Extracts raw pixel data from a VIPS image as a `Vix.Tensor` structure.
 
-  VIPS images are three-dimensional arrays, the dimensions being
-  width, height and bands.
+  This function provides access to the underlying pixel data in a format suitable
+  for interoperability with other image processing or machine learning libraries.
 
-  Each dimension can be up to 2 ** 31 pixels (or band elements).
-  An image has a format, meaning the machine number type used to
-  represent each value. VIPS supports 10 formats, from 8-bit unsigned
-  integer up to 128-bit double complex.
+  ## Image Structure
 
-  In VIPS, images are uninterpreted arrays, meaning that from
-  the point of view of most operations, they are just large
-  collections of numbers. There's no difference between an RGBA
-  (RGB with alpha) image and a CMYK image, for example, they are
-  both just four-band images.
+  VIPS images are three-dimensional arrays with the following dimensions:
+  * Width: The horizontal size (up to 2^31 pixels)
+  * Height: The vertical size (up to 2^31 pixels)
+  * Bands: The number of channels per pixel (e.g., 3 for RGB, 4 for RGBA)
 
-  This function is intended to support interoperability of image
-  data between different libraries.  Since the array is created as
-  a NIF resource it will be correctly garbage collected when
-  the last reference falls out of scope.
+  ## Data Format
 
-  Libvips might run all the operations to produce the pixel data
-  depending on the caching mechanism and how image is built.
+  VIPS supports 10 different numeric formats for pixel values, ranging from
+  8-bit unsigned integers to 128-bit double complex numbers. Images are treated
+  as uninterpreted arrays of numbers - there's no inherent difference between
+  different color spaces with the same number of bands (e.g., RGBA vs CMYK).
 
-  ##  Endianness
+  ## Performance Notes
 
-  Returned binary term will be in native endianness. By default
-  bitstring treats byte order as `big` endian which might *not* be
-  native. Always use `native` specifier to ensure. See [Elixir
-  docs](https://hexdocs.pm/elixir/Kernel.SpecialForms.html#%3C%3C%3E%3E/1-endianness)
-  for more details.
+  Depending on the caching mechanism and image construction, VIPS may need to run all
+  the operations in the pipeline to produce the pixel data.
+
+  ## Endianness Considerations
+
+  The binary data in the tensor uses native endianness. When processing this
+  data using bitstring syntax, always specify the `native` modifier:
+
+      # Correct - using native endianness
+      <<value::native-integer-size(8)>>
+
+      # Incorrect - default big endian
+      <<value::integer-size(8)>>
+
+  See [Elixir docs](https://hexdocs.pm/elixir/Kernel.SpecialForms.html#%3C%3C%3E%3E/1-endianness) for more details.
+
+  ## Examples
+
+  Converting an image to a tensor:
+
+      {:ok, tensor} = Image.write_to_tensor(rgb_image)
+      %Vix.Tensor{
+        data: <<binary_data>>,
+        shape: {height, width, 3},
+        names: [:height, :width, :bands],
+        type: :u8
+      } = tensor
 
   """
   @spec write_to_tensor(t()) :: {:ok, Vix.Tensor.t()} | {:error, term()}
@@ -900,14 +1076,28 @@ defmodule Vix.Vips.Image do
   end
 
   @doc """
-  Returns raw pixel data of the image as binary term
+  Extracts raw pixel data from a VIPS image as a binary term.
 
-  Please check `write_to_tensor` for more details. This function just
-  returns the data instead of the `Vix.Tensor` struct.
+  This is a lower-level alternative to `write_to_tensor/1` that returns only the
+  raw binary data without the associated metadata. It's primarily intended for
+  cases where you already know the image dimensions and format.
 
-  Prefer using `write_to_tensor` instead of this function. This is
-  only useful if you already know the details about the returned
-  binary blob. Such as height, width and bands.
+  ## Warning
+
+  It's recommended to use `write_to_tensor/1` instead of this function unless you
+  have a specific need for the raw binary data and already know:
+
+  * Image dimensions (height × width)
+  * Number of bands
+  * Pixel data format
+  * Data layout and organization
+
+  ## Examples
+
+  Extracting raw binary data:
+
+      {:ok, binary_data} = Image.write_to_binary(image)
+
   """
   @spec write_to_binary(t()) :: {:ok, binary()} | {:error, term()}
   def write_to_binary(image) do
