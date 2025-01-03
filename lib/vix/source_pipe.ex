@@ -14,6 +14,7 @@ defmodule Vix.SourcePipe do
     defstruct bin: [], client_pid: nil
   end
 
+  @spec new() :: {pid, Vix.Vips.Source.t()}
   def new do
     {:ok, pipe} = GenServer.start_link(__MODULE__, nil)
     source = GenServer.call(pipe, :source, :infinity)
@@ -37,7 +38,13 @@ defmodule Vix.SourcePipe do
   def handle_continue(nil, _) do
     case Nif.nif_source_new() do
       {:ok, {fd, source}} ->
-        {:noreply, %SourcePipe{fd: fd, pending: %Pending{}, source: source}}
+        source_pipe = %SourcePipe{
+          fd: fd,
+          pending: %Pending{},
+          source: %Vix.Vips.Source{ref: source}
+        }
+
+        {:noreply, source_pipe}
 
       {:error, reason} ->
         {:stop, reason, nil}

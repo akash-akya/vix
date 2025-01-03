@@ -304,53 +304,101 @@ defmodule Vix.Vips.ImageTest do
     assert Image.has_alpha?(im)
   end
 
-  test "new_from_enum", %{dir: dir} do
-    {:ok, image} =
-      File.stream!(img_path("puppies.jpg"), [], 1024)
-      |> Image.new_from_enum("")
+  describe "new_from_enum" do
+    test "new_from_enum", %{dir: dir} do
+      {:ok, image} =
+        File.stream!(img_path("puppies.jpg"), [], 1024)
+        |> Image.new_from_enum("")
 
-    out_path = Temp.path!(suffix: ".png", basedir: dir)
-    :ok = Image.write_to_file(image, out_path)
+      out_path = Temp.path!(suffix: ".png", basedir: dir)
+      :ok = Image.write_to_file(image, out_path)
 
-    stat = File.stat!(out_path)
-    assert stat.size > 0 and stat.type == :regular
+      stat = File.stat!(out_path)
+      assert stat.size > 0 and stat.type == :regular
+    end
+
+    @tag capture_log: true
+    test "new_from_enum invalid data write" do
+      {:error, "Failed to find loader for the source"} = Image.new_from_enum(1..100)
+    end
+
+    test "premature end of new_from_enum" do
+      {:error, "Failed to create image from VipsSource"} =
+        File.stream!(img_path("puppies.jpg"), [], 100)
+        |> Stream.take(1)
+        |> Image.new_from_enum("")
+    end
+
+    test "passing options as keyword" do
+      {:ok, img1} = Image.new_from_file(img_path("puppies.jpg"))
+
+      {:ok, img2} =
+        File.stream!(img_path("puppies.jpg"), [], 1024)
+        |> Image.new_from_enum(shrink: 2)
+
+      assert Image.width(img1) == 2 * Image.width(img2)
+    end
+
+    test "passing options as string" do
+      {:ok, img1} = Image.new_from_file(img_path("puppies.jpg"))
+
+      {:ok, img2} =
+        File.stream!(img_path("puppies.jpg"), [], 1024)
+        |> Image.new_from_enum("[shrink=2]")
+
+      assert Image.width(img1) == 2 * Image.width(img2)
+    end
   end
 
-  @tag capture_log: true
-  test "new_from_enum invalid data write" do
-    {:error, "Failed to create image from VipsSource"} = Image.new_from_enum(1..100)
-  end
+  describe "write_to_stream" do
+    test "write_to_stream", %{dir: dir} do
+      {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
 
-  test "premature end of new_from_enum" do
-    {:error, "Failed to create image from VipsSource"} =
-      File.stream!(img_path("puppies.jpg"), [], 100)
-      |> Stream.take(1)
-      |> Image.new_from_enum("")
-  end
+      out_path = Temp.path!(suffix: ".png", basedir: dir)
 
-  test "write_to_stream", %{dir: dir} do
-    {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
+      :ok =
+        Image.write_to_stream(im, ".png")
+        |> Stream.into(File.stream!(out_path))
+        |> Stream.run()
 
-    out_path = Temp.path!(suffix: ".png", basedir: dir)
+      stat = File.stat!(out_path)
+      assert stat.size > 0 and stat.type == :regular
+    end
 
-    :ok =
-      Image.write_to_stream(im, ".png")
-      |> Stream.into(File.stream!(out_path))
-      |> Stream.run()
+    test "write_to_stream with invalid suffix", %{dir: dir} do
+      {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
 
-    stat = File.stat!(out_path)
-    assert stat.size > 0 and stat.type == :regular
-  end
+      out_path = Temp.path!(suffix: ".png", basedir: dir)
 
-  test "write_to_stream with invalid suffix", %{dir: dir} do
-    {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
+      assert_raise Vix.Vips.Image.Error, fn ->
+        Image.write_to_stream(im, ".invalid")
+        |> Stream.into(File.stream!(out_path))
+        |> Stream.run()
+      end
+    end
 
-    out_path = Temp.path!(suffix: ".png", basedir: dir)
+    test "passing options as keyword" do
+      {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
 
-    assert_raise Vix.Vips.Image.Error, fn ->
-      Image.write_to_stream(im, ".invalid")
-      |> Stream.into(File.stream!(out_path))
-      |> Stream.run()
+      buf1 =
+        Image.write_to_stream(im, ".png", compression: 0)
+        |> Enum.into([])
+
+      {:ok, buf2} = Image.write_to_buffer(im, ".png", compression: 9)
+
+      assert IO.iodata_length(buf1) > byte_size(buf2)
+    end
+
+    test "passing options as string" do
+      {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
+
+      buf1 =
+        Image.write_to_stream(im, ".png[compression=0]")
+        |> Enum.into([])
+
+      {:ok, buf2} = Image.write_to_buffer(im, ".png", compression: 9)
+
+      assert IO.iodata_length(buf1) > byte_size(buf2)
     end
   end
 

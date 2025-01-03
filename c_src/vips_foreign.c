@@ -135,7 +135,6 @@ exit:
   return ret;
 }
 
-
 ERL_NIF_TERM nif_foreign_find_load_source(ErlNifEnv *env, int argc,
                                           const ERL_NIF_TERM argv[]) {
   ASSERT_ARGC(argc, 1);
@@ -155,7 +154,8 @@ ERL_NIF_TERM nif_foreign_find_load_source(ErlNifEnv *env, int argc,
   name = vips_foreign_find_load_source(source);
 
   if (!name) {
-    error("Failed to find the loader for the source. error: %s", vips_error_buffer());
+    error("Failed to find the loader for the source. error: %s",
+          vips_error_buffer());
     vips_error_clear();
     ret = make_error(env, "Failed to find loader for the source");
     goto exit;
@@ -187,7 +187,8 @@ ERL_NIF_TERM nif_foreign_find_save_target(ErlNifEnv *env, int argc,
   name = vips_foreign_find_save_target(suffix);
 
   if (!name) {
-    error("Failed to find saver for the target. error: %s", vips_error_buffer());
+    error("Failed to find saver for the target. error: %s",
+          vips_error_buffer());
     vips_error_clear();
     ret = make_error(env, "Failed to find saver for the target");
     goto exit;

@@ -32,8 +32,8 @@ defmodule Vix.Vips.Foreign do
   end
 
   @spec find_load_source(Vix.Vips.Source.t()) :: {:ok, operation_name} | {:error, String.t()}
-  def find_load_source(source) do
-    Nif.nif_foreign_find_load_source(source)
+  def find_load_source(%Vix.Vips.Source{ref: vips_source}) do
+    Nif.nif_foreign_find_load_source(vips_source)
   end
 
   @spec find_save_target(String.t()) :: {:ok, operation_name} | {:error, String.t()}
