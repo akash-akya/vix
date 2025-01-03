@@ -34,11 +34,8 @@ Mix.install([
 
 alias Vix.Vips.{Image, Operation}
 
-# Read an image
-{:ok, img} = Image.new_from_file("profile.jpg")
-
 # Create a thumbnail and optimize for web
-{:ok, thumb} = Operation.thumbnail(img, 300)
+{:ok, thumb} = Operation.thumbnail("profile.jpg", 300)
 :ok = Image.write_to_file(thumb, "thumbnail.jpg", Q: 90, strip: true, interlace: true)
 ```
 
@@ -50,6 +47,9 @@ alias Vix.Vips.{Image, Operation}
 
 ### Basic Processing
 ```elixir
+# Reading an image
+{:ok, img} = Image.new_from_file("profile.jpg")
+
 # Resize preserving aspect ratio
 {:ok, resized} = Operation.resize(img, 0.5)  # 50% of original size
 
