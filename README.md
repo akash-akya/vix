@@ -60,7 +60,6 @@ alias Vix.Vips.{Image, Operation}
 {:ok, rotated} = Operation.rotate(img, 90, background: [255, 255, 255])
 
 # Smart thumbnail (preserves important features)
-# See:
 {:ok, thumb} = Operation.thumbnail("large.jpg", 300, size: :VIPS_SIZE_DOWN, crop: :VIPS_INTERESTING_ATTENTION)
 ```
 
@@ -159,11 +158,19 @@ See [libvips installation guide](https://www.libvips.org/install.html) for more 
 ## FAQ
 
 ### Should I use Vix or Image?
-- [Image](https://github.com/kipcole9/image) is a library which builds on top of Vix and others. Use Image if you want a more Elixir-friendly API for common operations or if you want higher level operations such as Blurhash.
-- Use Vix directly if you
-  - need advanced features
-  - building image processing pipeline which is more than few lines
-  - only need libvips and want to be close to the metal
+
+[Image](https://github.com/kipcole9/image) is a library which builds on top of Vix.
+
+- Use [Image](https://github.com/kipcole9/image) when you need:
+  - A more Elixir-friendly API for common operations
+  - Higher-level operations like Blurhash
+  - Simple, chainable functions for common operations
+
+- Use Vix directly when you need:
+  - Advanced VIPS features and fine-grained control
+  - Complex image processing pipelines
+  - Direct libvips performance and capabilities
+  - Lesser dependencies
 
 ### What image formats are supported?
 Out of the box: JPEG, PNG, WEBP, TIFF, SVG, HEIF, GIF, and more. Need others? Just install libvips with the required libraries!
