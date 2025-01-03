@@ -6,13 +6,7 @@ defmodule Vix.Vips.Operation.HelperTest do
 
   import Vix.Support.Images
 
-  setup do
-    Temp.track!()
-    dir = Temp.mkdir!()
-    {:ok, %{dir: dir}}
-  end
-
-  test "operation_call", %{dir: dir} do
+  test "operation_call" do
     {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
 
     assert {:ok, out} =
@@ -22,7 +16,7 @@ defmodule Vix.Vips.Operation.HelperTest do
                extend: :VIPS_EXTEND_COPY
              )
 
-    out_path = Temp.path!(suffix: ".jpg", basedir: dir)
+    out_path = Briefly.create!(extname: ".jpg")
     :ok = Image.write_to_file(out, out_path)
 
     assert_files_equal(img_path("gravity_puppies.jpg"), out_path)

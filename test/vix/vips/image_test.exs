@@ -8,12 +8,6 @@ defmodule Vix.Vips.ImageTest do
 
   doctest Image
 
-  setup do
-    Temp.track!()
-    dir = Temp.mkdir!()
-    {:ok, %{dir: dir}}
-  end
-
   test "new_from_file" do
     assert {:error, :invalid_path} == Image.new_from_file("invalid.jpg", [])
     assert {:error, "Failed to find load"} == Image.new_from_file(__ENV__.file, [])
@@ -56,56 +50,56 @@ defmodule Vix.Vips.ImageTest do
     assert is_reference(ref)
   end
 
-  test "new_from_buffer", %{dir: dir} do
+  test "new_from_buffer" do
     assert {:error, "Failed to find load buffer"} == Image.new_from_buffer(<<>>)
 
     path = img_path("puppies.jpg")
 
     assert {:ok, img_from_buf} = Image.new_from_buffer(File.read!(path))
-    img_buf_out_path = Temp.path!(suffix: ".png", basedir: dir)
+    img_buf_out_path = Briefly.create!(extname: ".png")
     assert :ok == Image.write_to_file(img_from_buf, img_buf_out_path)
 
     {:ok, img_from_file} = Image.new_from_file(path)
-    img_file_out_path = Temp.path!(suffix: ".png", basedir: dir)
+    img_file_out_path = Briefly.create!(extname: ".png")
     assert :ok == Image.write_to_file(img_from_file, img_file_out_path)
 
     assert File.read!(img_buf_out_path) == File.read!(img_file_out_path)
   end
 
   describe "write_to_file" do
-    test "write_to_file", %{dir: dir} do
+    test "write_to_file" do
       path = img_path("puppies.jpg")
 
       {:ok, %Image{ref: ref} = im} = Image.new_from_file(path)
       assert is_reference(ref)
 
-      out_path = Temp.path!(suffix: ".png", basedir: dir)
+      out_path = Briefly.create!(extname: ".png")
       assert :ok == Image.write_to_file(im, out_path)
 
       stat = File.stat!(out_path)
       assert stat.size > 0 and stat.type == :regular
     end
 
-    test "write_to_file supports optional arguments", %{dir: dir} do
+    test "write_to_file supports optional arguments" do
       {:ok, img} = Image.new_from_file(img_path("puppies.jpg"))
 
-      out_path1 = Temp.path!(suffix: ".png", basedir: dir)
+      out_path1 = Briefly.create!(extname: ".png")
       assert :ok = Image.write_to_file(img, out_path1, compression: 0)
 
-      out_path2 = Temp.path!(suffix: ".png", basedir: dir)
+      out_path2 = Briefly.create!(extname: ".png")
       assert :ok = Image.write_to_file(img, out_path2, compression: 9)
 
       # currently I only found this option to be verifiable easily!
       assert File.stat!(out_path1).size > File.stat!(out_path2).size
     end
 
-    test "write_to_file supports optional options suffix", %{dir: dir} do
+    test "write_to_file supports optional options suffix" do
       {:ok, img} = Image.new_from_file(img_path("puppies.jpg"))
 
-      out_path1 = Temp.path!(suffix: ".png", basedir: dir)
+      out_path1 = Briefly.create!(extname: ".png")
       assert :ok = Image.write_to_file(img, out_path1 <> "[compression=0]")
 
-      out_path2 = Temp.path!(suffix: ".png", basedir: dir)
+      out_path2 = Briefly.create!(extname: ".png")
       assert :ok = Image.write_to_file(img, out_path2 <> "[compression=9]")
 
       # currently I only found this option to be verifiable easily!
@@ -113,7 +107,7 @@ defmodule Vix.Vips.ImageTest do
     end
   end
 
-  test "new_matrix_from_array", %{dir: _dir} do
+  test "new_matrix_from_array" do
     assert {:ok, img} =
              Image.new_matrix_from_array(2, 2, [
                [-1, -1],
@@ -130,7 +124,7 @@ defmodule Vix.Vips.ImageTest do
   end
 
   describe "new_from_list" do
-    test "when argument is range", %{dir: _dir} do
+    test "when argument is range" do
       assert {:ok, img} = Image.new_from_list(0..2)
 
       assert %{width: 3, height: 1} = Image.headers(img)
@@ -139,7 +133,7 @@ defmodule Vix.Vips.ImageTest do
                Image.write_to_binary(img)
     end
 
-    test "when argument is range within list", %{dir: _dir} do
+    test "when argument is range within list" do
       assert {:ok, img} = Image.new_from_list([0..1, -1..0])
 
       assert %{width: 2, height: 2} = Image.headers(img)
@@ -151,7 +145,7 @@ defmodule Vix.Vips.ImageTest do
               >>} = Image.write_to_binary(img)
     end
 
-    test "when list is 1D", %{dir: _dir} do
+    test "when list is 1D" do
       assert {:ok, img} = Image.new_from_list([0, 1, 2])
 
       assert %{width: 3, height: 1} = Image.headers(img)
@@ -160,7 +154,7 @@ defmodule Vix.Vips.ImageTest do
                Image.write_to_binary(img)
     end
 
-    test "when list is 2D", %{dir: _dir} do
+    test "when list is 2D" do
       assert {:ok, img} =
                Image.new_from_list([
                  [1, 2, 3],
@@ -177,7 +171,7 @@ defmodule Vix.Vips.ImageTest do
     end
   end
 
-  test "mutate", %{dir: _dir} do
+  test "mutate" do
     {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
 
     {:ok, updated_image} =
@@ -190,7 +184,7 @@ defmodule Vix.Vips.ImageTest do
     assert {:ok, 0} = Image.header_value(updated_image, "new-field")
   end
 
-  test "get_fields", %{dir: _dir} do
+  test "get_fields" do
     {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
     assert {:ok, fields} = Image.header_field_names(im)
 
@@ -210,12 +204,12 @@ defmodule Vix.Vips.ImageTest do
            )
   end
 
-  test "get_header", %{dir: _dir} do
+  test "get_header" do
     {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
     assert {:ok, 518} = Image.header_value(im, "width")
   end
 
-  test "headers", %{dir: _dir} do
+  test "headers" do
     {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
 
     assert %{
@@ -239,19 +233,19 @@ defmodule Vix.Vips.ImageTest do
            } = Image.headers(im)
   end
 
-  test "get_header binary", %{dir: _dir} do
+  test "get_header binary" do
     {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
     assert {:ok, <<_::binary>>} = Image.header_value(im, "exif-data")
   end
 
-  test "get_as_string", %{dir: _dir} do
+  test "get_as_string" do
     {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
 
     assert {:ok, "((VipsInterpretation) VIPS_INTERPRETATION_sRGB)"} =
              Image.header_value_as_string(im, "interpretation")
   end
 
-  test "macro generated function", %{dir: _dir} do
+  test "macro generated function" do
     {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
     assert 518 == Image.width(im)
     assert :VIPS_INTERPRETATION_sRGB == Image.interpretation(im)
@@ -261,7 +255,7 @@ defmodule Vix.Vips.ImageTest do
   end
 
   describe "write_to_buffer" do
-    test "write image to buffer", %{dir: _dir} do
+    test "write image to buffer" do
       {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
       {:ok, _bin} = Image.write_to_buffer(im, ".jpg[Q=90]")
     end
@@ -287,7 +281,7 @@ defmodule Vix.Vips.ImageTest do
     end
   end
 
-  test "new image from other image", %{dir: _dir} do
+  test "new image from other image" do
     {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
     {:ok, new_im} = Image.new_from_image(im, [250])
 
@@ -296,7 +290,7 @@ defmodule Vix.Vips.ImageTest do
     assert Image.bands(new_im) == 1
   end
 
-  test "image has an alpha band", %{dir: _dir} do
+  test "image has an alpha band" do
     {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
     refute Image.has_alpha?(im)
 
@@ -305,12 +299,12 @@ defmodule Vix.Vips.ImageTest do
   end
 
   describe "new_from_enum" do
-    test "new_from_enum", %{dir: dir} do
+    test "new_from_enum" do
       {:ok, image} =
         File.stream!(img_path("puppies.jpg"), [], 1024)
         |> Image.new_from_enum("")
 
-      out_path = Temp.path!(suffix: ".png", basedir: dir)
+      out_path = Briefly.create!(extname: ".png")
       :ok = Image.write_to_file(image, out_path)
 
       stat = File.stat!(out_path)
@@ -351,10 +345,10 @@ defmodule Vix.Vips.ImageTest do
   end
 
   describe "write_to_stream" do
-    test "write_to_stream", %{dir: dir} do
+    test "write_to_stream" do
       {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
 
-      out_path = Temp.path!(suffix: ".png", basedir: dir)
+      out_path = Briefly.create!(extname: ".png")
 
       :ok =
         Image.write_to_stream(im, ".png")
@@ -365,10 +359,10 @@ defmodule Vix.Vips.ImageTest do
       assert stat.size > 0 and stat.type == :regular
     end
 
-    test "write_to_stream with invalid suffix", %{dir: dir} do
+    test "write_to_stream with invalid suffix" do
       {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
 
-      out_path = Temp.path!(suffix: ".png", basedir: dir)
+      out_path = Briefly.create!(extname: ".png")
 
       assert_raise Vix.Vips.Image.Error, fn ->
         Image.write_to_stream(im, ".invalid")
@@ -402,7 +396,7 @@ defmodule Vix.Vips.ImageTest do
     end
   end
 
-  test "new_from_binary", %{dir: dir} do
+  test "new_from_binary" do
     {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
     # same image in raw pixel format
     bin = File.read!(img_path("puppies.raw"))
@@ -416,7 +410,7 @@ defmodule Vix.Vips.ImageTest do
                Image.format(im)
              )
 
-    out_path = Temp.path!(suffix: ".png", basedir: dir)
+    out_path = Briefly.create!(extname: ".png")
     :ok = Image.write_to_file(image, out_path)
 
     stat = File.stat!(out_path)
@@ -469,7 +463,7 @@ defmodule Vix.Vips.ImageTest do
     end
   end
 
-  test "new_from_binary and write_to_binary endianness handling", %{dir: dir} do
+  test "new_from_binary and write_to_binary endianness handling" do
     {width, height} = {125, 125}
 
     # generate a test pixel data in native endianness
@@ -486,7 +480,7 @@ defmodule Vix.Vips.ImageTest do
     {:ok, expected} = Image.new_from_file(img_path("gradient.png"))
     assert_images_equal(expected, img)
 
-    out_path = Temp.path!(suffix: ".v", basedir: dir)
+    out_path = Briefly.create!(extname: ".v")
     :ok = Image.write_to_file(img, out_path)
 
     {:ok, vimg} = Image.new_from_file(out_path)
