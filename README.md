@@ -120,7 +120,7 @@ alias Vix.Vips.{Image, Operation}
 
 ## Performance
 
-Libvips very fast and uses very little memory. See the detailed benachmark. Resizing an image is typically 4x-5x faster than using the quickest ImageMagick settings. It can also work with very large images without completely loading them to the memory.
+Libvips very fast and uses very little memory. See the detailed [benchmark](https://github.com/libvips/libvips/wiki/Speed-and-memory-use). Resizing an image is typically 4x-5x faster than using the quickest ImageMagick settings. It can also work with very large images without completely loading them to the memory.
 
 ## Installation
 
