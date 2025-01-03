@@ -1,14 +1,95 @@
 defmodule Vix.Vips.Operation do
   @moduledoc """
-  Vips Operations
+  Provides access to VIPS operations for image processing.
 
-  See libvips
-  [documentation](https://libvips.github.io/libvips/API/current/func-list.html)
-  for more detailed description of the operation.
+  This module exposes VIPS operations as Elixir functions, allowing you to perform
+  various image processing tasks like resizing, color manipulation, filtering,
+  and format conversion.
 
-  Vips operation functions are generated using vips-introspection and
-  are up-to-date with libvips version installed. Documentation in the
-  hexdocs might *not* match for you.
+  ## Quick Start
+
+  Here's a simple example to resize an image:
+
+      # Load and resize an image to 500px width, maintaining aspect ratio
+      {:ok, image} = Operation.thumbnail("input.jpg", 500)
+
+  ## Working with Operations
+
+  Operations in Vix can be grouped into several categories:
+
+  * **Loading/Saving** - `Vix.Vips.Image`, `thumbnail/2`, and format specific functions.
+  * **Resizing** - `resize/2`, `thumbnail/2`, `smartcrop/3`
+  * **Color Management** - `colourspace/2`, `icc_transform/2`
+  * **Filters & Effects** - `gaussblur/2`, `sharpen/2`
+  * **Composition** - `composite/3`, `join/3`, `insert/4`
+
+  Most operations follow a consistent pattern:
+
+  1. Load your image
+  2. Apply one or more operations
+  3. Save the result
+
+  ## Common Examples
+
+      # Basic image resizing while preserving aspect ratio
+      {:ok, image} = Vix.Vips.Image.new_from_file("input.jpg")
+      # scale down by 50%
+      {:ok, resized} = Operation.resize(image, scale: 0.5)
+      :ok = Vix.Vips.Image.write_to_file(resized, "output.jpg")
+
+      # Convert to grayscale and apply Gaussian blur
+      {:ok, image} = Vix.Vips.Image.new_from_file("input.jpg")
+      {:ok, gray} = Operation.colourspace(image, :VIPS_INTERPRETATION_B_W)
+      {:ok, blurred} = Operation.gaussblur(gray, 3.0)
+
+  ## Advanced Usage
+
+  ### Smart Cropping for Thumbnails
+
+      # Generate a smart-cropped thumbnail focusing on interesting areas
+      {:ok, thumb} = Operation.thumbnail("input.jpg", 300,
+        crop: :attention,  # Uses image analysis to find interesting areas
+        height: 300,      # Force square thumbnail
+      )
+
+  ### Complex Image Composition
+
+      # Create a watermarked image with transparency
+      {:ok, base} = Vix.Vips.Image.new_from_file("photo.jpg")
+      {:ok, watermark} = Vix.Vips.Image.new_from_file("watermark.png")
+      {:ok, composed} = Operation.composite2(base, watermark,
+        :VIPS_BLEND_MODE_OVER,  # Blend mode
+        x: 20,         # Offset from left
+        y: 20,         # Offset from top
+        opacity: 0.8   # Watermark transparency
+      )
+
+  ### Color Management
+
+      # Convert between color spaces with ICC profiles
+      {:ok, image} = Vix.Vips.Image.new_from_file("input.jpg")
+      {:ok, converted} = Operation.icc_transform(image,
+        "sRGB.icc",     # Target color profile
+        "input-profile": "Adobe-RGB.icc"
+      )
+
+
+  > ## Performance Tips {: .tip}
+  >
+  > * Use `thumbnail/2` instead of `resize/2` when possible - it's optimized for common cases
+  > * Chain operations to avoid intermediate file I/O
+  > * For batch processing, reuse loaded ICC profiles and watermarks
+  > * Consider using sequential mode for large images
+
+  ## Additional Resources
+
+  * [VIPS Documentation](https://www.libvips.org/API/current/)
+
+  <!-- TODO: Add section about memory management best practices -->
+  <!-- TODO: Add examples for animation handling -->
+  <!-- TODO: Document format-specific options for loading/saving -->
+  <!-- TODO: Add common recipes for web image optimization -->
+
   """
 
   import Vix.Vips.Operation.Helper
