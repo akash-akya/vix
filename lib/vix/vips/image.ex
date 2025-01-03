@@ -412,18 +412,6 @@ defmodule Vix.Vips.Image do
     end
   end
 
-  @spec new_from_file(String.t(), keyword) :: {:ok, t()} | {:error, term()}
-
-  def new_from_file(path) do
-    path =
-      path
-      |> Path.expand()
-      |> normalize_string()
-
-    Nif.nif_image_new_from_file(path)
-    |> wrap_type()
-  end
-
   @doc """
   Opens `path` for reading, returns an instance of `t:Vix.Vips.Image.t/0`
 
@@ -454,6 +442,8 @@ defmodule Vix.Vips.Image do
   from `Vix.Vips.Operation`. For example for jpeg use
   `Vix.Vips.Operation.jpegload/2`
   """
+  @spec new_from_file(String.t(), keyword) :: {:ok, t()} | {:error, term()}
+
   @doc since: "0.31.0"
   def new_from_file(path, opts) do
     with {:ok, path} <- normalize_path(path),
@@ -461,6 +451,14 @@ defmodule Vix.Vips.Image do
          {:ok, {ref, _optional}} <- Operation.Helper.operation_call(loader, [path], opts) do
       {:ok, wrap_type(ref)}
     end
+  end
+
+  # TODO: deprecate accepting suffix options
+  def new_from_file(path) do
+    path = normalize_string(Path.expand(path))
+
+    Nif.nif_image_new_from_file(path)
+    |> wrap_type()
   end
 
   @doc """
@@ -778,56 +776,84 @@ defmodule Vix.Vips.Image do
   end
 
   @doc """
-  Write `vips_image` to a file.
+  Write `t:Vix.Vips.Image.t/0` to a file.
 
-  A saver is selected based on image extension in `path`. You can
-  get list of supported extensions by `supported_saver_suffixes/0`.
+  The image format is selected based on image extension in `path`.
 
-  Save options may be encoded in the filename. For example:
+  Optional param `opts` is passed to the image saver. Available
+  options depends on the file format. You can find all options
+  available for a format under operation function in
+  [Operation](./search.html?q=save+-buffer+-filename+-profile) module.
+
+  For example, you can find all of the options supported by JPEG saver
+  undre `Vix.Vips.Operation.jpegsave/3` function documentation.
 
   ```elixir
-  Image.write_to_file(vips_image, "fred.jpg[Q=90]")
+  # save with Quality set to 90
+  Image.write_to_file(vips_image, "fred.jpg", Q: 90)
   ```
-
-  The full set of save options depend on the selected saver.
-  You can check the supported options for a saver by checking
-  docs for the particular format save function in `Operation` module.
-  For example, for you jpeg, `Vix.Vips.Operation.jpegsave/2`.
-
 
   If you want more control over the saver, Use specific format saver
   from `Vix.Vips.Operation`. For example for jpeg use
   `Vix.Vips.Operation.jpegsave/2`
 
   """
-  @spec write_to_file(t(), String.t()) :: :ok | {:error, term()}
+  @spec write_to_file(t(), String.t(), keyword) :: :ok | {:error, term()}
+
+  @doc since: "0.32.0"
+  def write_to_file(%Image{ref: _} = image, path, opts) do
+    path = normalize_string(Path.expand(path))
+
+    case Vix.Vips.Foreign.find_save(path) do
+      {:ok, saver} ->
+        Operation.Helper.operation_call(saver, [image, path], opts)
+
+      error ->
+        error
+    end
+  end
+
   def write_to_file(%Image{ref: vips_image}, path) do
-    Nif.nif_image_write_to_file(vips_image, normalize_string(Path.expand(path)))
+    path = normalize_string(Path.expand(path))
+    Nif.nif_image_write_to_file(vips_image, path)
   end
 
   @doc """
-  Returns `vips_image` as binary based on the format specified by `suffix`.
+  Returns `t:Vix.Vips.Image.t/0` as a binary based on the format specified by `suffix`.
 
   This function is similar to `write_to_file` but instead of writing
   the output to the file, it returns it as a binary.
 
-  Currently only TIFF, JPEG and PNG formats are supported.
+  Optional param `opts` is passed to the image saver. Available
+  options depends on the file format. You can find all options
+  available for a format under operation function in
+  [Operation](./search.html?q=save+buffer+-filename+-profile) module.
 
-  Save options may be encoded in the filename. For example:
+  For example, you can find all of the options supported by JPEG saver
+  undre `Vix.Vips.Operation.jpegsave_buffer/2` function documentation.
 
   ```elixir
-  Image.write_to_buffer(vips_image, ".jpg[Q=90]")
+  # returns image in JPEG format as binary with Q factor set 90
+  Image.write_to_buffer(img, ".jpg", [Q: 90])
   ```
 
-  The full set of save options depend on the selected saver. You can
-  get list of available options for the saver
-
-  ```shell
-  $ vips jpegsave
-  ```
+  If you want more control over the saver, Use specific format saver
+  from `Vix.Vips.Operation`. For example for jpeg use
+  `Vix.Vips.Operation.jpegsave_buffer/2`
   """
-  @spec write_to_buffer(t(), String.t()) ::
-          {:ok, binary()} | {:error, term()}
+  @spec write_to_buffer(t(), String.t(), keyword) :: {:ok, binary()} | {:error, term()}
+
+  @doc since: "0.32.0"
+  def write_to_buffer(%Image{ref: _} = image, suffix, opts) do
+    case Vix.Vips.Foreign.find_save_buffer(normalize_string(suffix)) do
+      {:ok, saver} ->
+        Operation.Helper.operation_call(saver, [image], opts)
+
+      error ->
+        error
+    end
+  end
+
   def write_to_buffer(%Image{ref: vips_image}, suffix) do
     Nif.nif_image_write_to_buffer(vips_image, normalize_string(suffix))
   end
