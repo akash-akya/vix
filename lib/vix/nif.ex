@@ -186,6 +186,12 @@ defmodule Vix.Nif do
   def nif_foreign_find_save(_filename),
     do: :erlang.nif_error(:nif_library_not_loaded)
 
+  def nif_foreign_find_load_source(_source),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
+  def nif_foreign_find_save_target(_suffix),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
   def nif_foreign_get_suffixes,
     do: :erlang.nif_error(:nif_library_not_loaded)
 

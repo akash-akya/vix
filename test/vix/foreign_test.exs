@@ -20,4 +20,18 @@ defmodule Vix.Vips.ForeignTest do
   test "find_save" do
     assert {:ok, "VipsForeignSaveJpegFile"} = Foreign.find_save("puppies.jpg")
   end
+
+  test "find_load_source" do
+    bin = File.read!(img_path("puppies.jpg"))
+
+    assert {pipe, source} = Vix.SourcePipe.new()
+    assert :ok = Vix.SourcePipe.write(pipe, bin)
+    assert :ok = Vix.SourcePipe.stop(pipe)
+
+    assert {:ok, "VipsForeignLoadJpegSource"} = Foreign.find_load_source(source)
+  end
+
+  test "find_save_target" do
+    assert {:ok, "VipsForeignSaveJpegTarget"} = Foreign.find_save_target(".jpg")
+  end
 end
