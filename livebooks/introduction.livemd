@@ -1,219 +1,529 @@
-# Introduction
+# Vix Introduction
+
+## Overview
+
+Welcome to an in-depth exploration of Vix, a powerful Elixir library for image processing. This guide will walk you through using Vix to handle common and advanced image processing tasks efficiently. Vix is particularly valuable for applications requiring high-performance image manipulation, such as web applications, scientific image analysis, digital art creation, and batch processing of large image datasets.
+
+## Why Vix?
+
+Vix provides Elixir bindings to libvips, a robust and mature image processing library. Here's why Vix stands out:
+
+* **Speed**: Processes images up to 10x faster than alternatives by using sophisticated algorithms and parallel processing
+* **Memory efficiency**: Rather than loading entire images into memory, Vix streams data in small chunks, making it ideal for processing large images
+* **Rich feature set**: Access to hundreds of image operations from basic transformations to complex filters and analysis tools
+* **Elixir integration**: Seamlessly integrates with Elixir's functional programming paradigm, offering immutable operations and pipeline-friendly APIs
+
+## Setup
+
+First, let's set up our development environment with the necessary dependencies:
 
 ```elixir
 Mix.install([
-  {:kino, "~> 0.7.0"},
-  {:vix, "~> 0.5"}
+  {:vix, "~> 0.5"},
+  {:kino, "~> 0.7"},  # For interactive examples
+  {:req, "~> 0.4"}    # For fetching sample images
 ])
+
+# Let's check our Vix version. Vix comes with pre-built libvips binaries
+IO.puts("Using libvips version: " <> Vix.Vips.version())
 ```
 
-```elixir
-# print vips version
-IO.puts("Version: " <> Vix.Vips.version())
-```
+## Core Concepts
 
-## Vips Image
+### The Image Struct
 
-All image IO operations, such as reading and writing files, are available in the `Vix.Vips.Image` module. The `Image` module also contains functions to get image attributes. Most Vips operations take a `%Vix.Vips.Image{}` struct.
+In Vix, images are represented by `%Vix.Vips.Image{}` structs. Following functional programming principles, these structs are immutable - every operation creates a new image rather than modifying the existing one. This approach ensures thread safety and makes it easier to reason about image transformations.
+
+Let's explore the various ways to create and work with images:
 
 ```elixir
 alias Vix.Vips.Image
+alias Vix.Vips.Operation
+
+# 1. Loading from file. Change the image path
+# {:ok, from_file} = Image.new_from_file("input.jpg")
+
+# 2. Loading from memory - useful for handling uploaded files or HTTP responses
+# image_binary = File.read!("input.jpg")
+# {:ok, from_binary} = Image.new_from_buffer(image_binary)
+
+# 3. Creating a solid color image - useful for backgrounds or overlays
+red = Image.build_image!(100, 100, [255, 0, 0])
+
+# Vix implements `Kino.Render` protocol, so you can see the image by just
+# returning it for the Livebook cell.
 ```
 
-Reading an image from a file. Note that an image is not actually loaded into memory at this point. `img` is an `%Image{}` struct.
+To make our examples more practical, let's create a helper module to fetch sample images and display them:
 
 ```elixir
-{:ok, %Image{} = img} = Image.new_from_file("~/Downloads/kitty.png")
-```
+defmodule ImageHelper do
+  def get_sample_image(width, height) do
+    response = Req.get!("https://picsum.photos/#{width}/#{height}", decode_body: false)
+    {:ok, image} = Image.new_from_buffer(response.body)
+    image
+  end
 
-You can also load an image from a binary. This allows us to work with images without touching the file system. It tries to guess the image format from the binary and uses the correct loader.
+  def show(images, columns \\ nil)
+  def show(%Image{} = img, _), do: show([img], 1)
 
-```elixir
-bin = File.read!("~/Downloads/kitty.png")
-{:ok, %Image{} = img} = Image.new_from_buffer(bin)
-```
+  def show(images, columns) when is_list(images) do
+    columns = columns || length(images)
 
-If you know the image format beforehand, you can use the appropriate function from `Vix.Vips.Operation`. For example, you would use `Vix.Vips.Operation.pngload_buffer/2` to load a PNG.
-
-```elixir
-bin = File.read!("~/Downloads/kitty.png")
-{:ok, {img, _flags}} = Vix.Vips.Operation.pngload_buffer(bin)
-```
-
-Writing `Image` to a file. Image type selected based on the image path extension. See documentation for more options
-
-```elixir
-:ok = Image.write_to_file(img, "kitty.jpg[Q=90]")
-```
-
-```elixir
-# let's print image dimensions
-IO.puts("Width: #{Image.width(img)}")
-IO.puts("Height: #{Image.height(img)}")
-```
-
-Kino supports showing images inline. We can use this to display image in the livebook.
-This opens gate for exploratory image processing
-
-```elixir
-defmodule VixExt do
-  alias Vix.Vips.Operation
-
-  @max_height 500
-
-  def show(%Image{} = image) do
-    height = Image.height(image)
-
-    # scale down if image height is larger than 500px
-    image =
-      if height > @max_height do
-        Operation.resize!(image, @max_height / height)
-      else
-        image
-      end
-
-    # write vips-image as png image to memory
-    {:ok, image_bin} = Image.write_to_buffer(image, ".png")
-    Kino.render(Kino.Image.new(image_bin, "image/png"))
+    images
+    |> Kino.Layout.grid(boxed: true, columns: columns)
+    |> Kino.render()
 
     :ok
   end
 end
 ```
 
+Let's fetch a sample image to use throughout our examples:
+
 ```elixir
-import VixExt
+import ImageHelper
 
-# Let's see show in action
-
-show(img)
+# For our examples, let's use a sample image.
+image = get_sample_image(800, 600)
 ```
 
-## Vips Operations
+### Image Properties and Metadata
 
-All image processing operations are available in `Vix.Vips.Operation`
+Understanding image properties is crucial for processing. Vix provides comprehensive access to image metadata, which can be essential for making processing decisions or maintaining image information:
 
 ```elixir
-alias Vix.Vips.Operation
+# Get all available metadata fields - useful for debugging and understanding image characteristics
+{:ok, fields} = Image.header_field_names(image)
+IO.puts("Available fields: #{Enum.join(fields, ", ")}")
+
+# Get specific field value - useful for understanding image format and processing history
+{:ok, value} = Image.header_value(image, "vips-loader")
+IO.puts("Loader used: #{value}")
+
+# Get image dimensions and number of color channels - essential for proper image manipulation
+{width, height, bands} = Image.shape(image)
 ```
 
-### Crop
+## Basic Operations
 
-Getting a rectangular region from the image
+### Resizing and Scaling
+
+Image resizing is one of the most common operations in image processing. Each method has its specific use case and trade-offs between speed and quality:
 
 ```elixir
-{:ok, extract_img} = Operation.extract_area(img, 100, 50, 200, 200)
-show(extract_img)
+# Fast thumbnail generation - optimized for speed, perfect for preview generation
+thumbnail = Operation.thumbnail_image!(image, 400)
+# For even better performance use `Operation.thumbnail!` and pass path directly
+# thumbnail = Operation.thumbnail!("input.jpg", 300)
+
+# High-quality resize with Lanczos3 kernel - best for preserving image quality
+# Lanczos3 provides excellent results for both upscaling and downscaling
+resized = Operation.resize!(image, 0.5, kernel: :VIPS_KERNEL_LANCZOS3)
+
+# Scale to specific dimensions while maintaining proper aspect ratio
+# Useful for fitting images into specific containers while preventing distortion
+scaled = Operation.resize!(image, 400 / Image.width(image), vscale: 300 / Image.height(image))
+
+# Smart cropping - uses edge detection and entropy analysis to keep important parts
+# Perfect for automated content-aware thumbnail generation
+{smart_crop, _} = Operation.smartcrop!(image, 300, 200)
+
+show([thumbnail, resized, scaled, smart_crop], 2)
 ```
 
-### Thumbnail
+### Color Operations
 
-This operation is significantly faster than normal resize due to
-several optimizations such as shrink-on-load.  You can read more about
-it in the libvips docs: https://github.com/libvips/libvips/wiki/HOWTO----Image-shrinking
-
-Check Vix docs for more details about several optional parameters
+Color manipulation is essential for image enhancement, artistic effects, and preparing images for specific use cases:
 
 ```elixir
-{:ok, thumb} = Operation.thumbnail("~/Downloads/kitty.png", 100)
-show(thumb)
+# Convert to grayscale - useful for reducing complexity or preparing for analysis
+# Also great for artistic effects or preparing images for machine learning
+grayscale = Operation.colourspace!(image, :VIPS_INTERPRETATION_B_W)
+
+# Adjust RGB channels individually for color balance
+# Values > 1 increase channel intensity, < 1 decrease it
+# This can correct color casts or create artistic effects
+adjusted = Operation.linear!(image,
+  [1.2, 1.0, 0.8],  # RGB multipliers: boost red, normal green, reduce blue
+  [0, 0, 0]         # RGB offsets: no additional adjustment
+)
+
+# Extract alpha channel (transparency) if present
+# Useful for masking operations or analyzing image transparency
+{:ok, alpha} = Operation.extract_band(image, bands - 1)
+
+# Add an alpha channel - useful for creating partially transparent images
+# Essential for overlays and composition effects
+with_alpha = Operation.bandjoin!([image, Image.build_image!(width, height, [125])])
+
+show([grayscale, adjusted, with_alpha])
 ```
 
-### Resize
+### Operators
 
-Resize the image to 400x600. The `resize` function accepts scaling factor.
-Skip `vscale` if you want to preserve the aspect ratio.
+Vix provides convenient operator overloading for common image manipulations. These operators make the code more readable and intuitive:
 
 ```elixir
-hscale = 400 / Image.width(img)
-vscale = 600 / Image.height(img)
+use Vix.Operator, only: [+: 2, -: 2, *: 2]  # Import specific operators
 
-{:ok, resized_img} = Operation.resize(img, hscale, vscale: vscale)
-show(resized_img)
+# Adjust brightness using operators - multiplication scales pixel values
+brighter = image * 1.2  # Increase brightness by 20%
+darker = image * 0.8    # Decrease brightness by 20%
+
+# Combining operators for complex effects
+# This creates an enhanced image with adjusted brightness, contrast, and blur
+enhanced = (image * 1.2) - 10 + Operation.gaussblur!(image, 2)
+
+show([brighter, darker, enhanced])
 ```
 
-### Flip
+### The Access Protocol
+
+Vix implements Elixir's Access protocol, providing a powerful way to work with image channels and regions. This makes it easy to extract and manipulate specific parts of an image:
 
 ```elixir
-direction_input =
-  Kino.Input.select("Direction: ",
-    VIPS_DIRECTION_HORIZONTAL: "Horizontal",
-    VIPS_DIRECTION_VERTICAL: "Vertical"
+# Get the red channel from an RGB image
+# Useful for channel-specific analysis or effects
+red = image[0]
+
+# Get a 200x100 pixel square from the top-left corner
+# Perfect for creating image tiles or focusing on specific regions
+top_left = image[[0..199, 0..99]]
+
+# Get the bottom-right 200x100 pixel square
+# Negative indices count from the end, just like in Elixir lists
+bottom_right = image[[-200..-1, -100..-1]]
+
+# Alternatively you can use keyword list for more readable code
+# Get a 200x100 pixel square from the top-left corner, and only red-green channels
+red_top_left = image[[width: 0..199, height: 0..99, band: 0..1]]
+
+show([top_left, bottom_right, red_top_left])
+
+# Rearrange color channels - useful for color space manipulation
+# RGB -> GBR: Swapping channels can create interesting color effects
+remaped = Operation.bandjoin!([image[1], image[2], image[0]])
+
+show([red, remaped])
+```
+
+## Advanced Techniques
+
+### Creating Processing Pipelines
+
+One of Vix's strengths is its ability to chain operations efficiently using Elixir's pipe operator. This allows you to create complex image processing pipelines that are both readable and performant. Each operation in the pipeline creates a new immutable image, ensuring thread safety and making it easy to debug:
+
+```elixir
+defmodule ImagePipeline do
+  def process(image) do
+    image
+    |> Operation.resize!(0.8)
+    |> Operation.sharpen!()
+    |> Operation.linear!([1.1], [-0.1])
+  end
+end
+
+ImagePipeline.process(image)
+```
+
+### Image Composition
+
+Combining images with text or other elements is essential for creating watermarks, annotations, or complex composite images. This example demonstrates professional text overlay with proper DPI handling and alpha channel management:
+
+```elixir
+# Create high-quality text overlay with anti-aliasing
+{text, _} =
+  Operation.text!(
+    "Hello from Vix!",
+    width: 400,
+    dpi: 300,         # High DPI ensures sharp text at any size
+    font: "sans-serif bold",
+    rgba: true        # Alpha channel enables smooth blending
   )
-```
 
-```elixir
-direction = Kino.Input.read(direction_input)
-
-{:ok, flipped_img} = Operation.flip(img, direction)
-show(flipped_img)
-```
-
-### Text
-
-The `text` operation takes multiple optional parameters. See [libvips documentation](https://libvips.github.io/libvips/API/current/libvips-create.html#vips-text ) for more details.
-
-```elixir
-text_input = Kino.Input.text("Text: ")
-```
-
-```elixir
-str = String.trim(Kino.Input.read(text_input))
-{:ok, {text, _}} = Operation.text(str, dpi: 300, rgba: true)
-
-# add text to an image
-{:ok, inserted_text_img} = Operation.composite2(img, text, :VIPS_BLEND_MODE_OVER, x: 50, y: 20)
-
-show(inserted_text_img)
-```
-
-### Creating a GIF
-
-```elixir
-black = Operation.black!(500, 500, bands: 3)
-
-# create images with different grayscale
-frames = Enum.map(1..255//10, fn n ->
-  Operation.linear!(black, [1], [n/255, n/255, n/255])
-end)
-
-{:ok, joined_img} = Operation.arrayjoin(frames, across: 1)
-
-{:ok, joined_img} =
-  Image.mutate(joined_img, fn mut_img ->
-    frame_delay = List.duplicate(100, length(frames))
-    :ok = Vix.Vips.MutableImage.set(mut_img, "delay", :VipsArrayInt, frame_delay)
-  end)
-
-:ok = Operation.gifsave(joined_img, Path.expand("~/Downloads/bw.gif"), "page-height": 500)
-```
-
-### A few more operations
-
-```elixir
-# Gaussian blur
-{:ok, blurred_img} = Operation.gaussblur(img, 5)
-show(blurred_img)
-
-# convert image to a grayscale image
-{:ok, bw_img} = Operation.colourspace(img, :VIPS_INTERPRETATION_B_W)
-show(bw_img)
-
-# adding gray border
-{:ok, extended_img} =
-  Operation.embed(img, 10, 10, Image.width(img) + 20, Image.height(img) + 20,
-    extend: :VIPS_EXTEND_BACKGROUND,
-    background: [128]
+# Position text precisely on the image
+# The embed operation handles proper padding and positioning
+positioned_text =
+  Operation.embed!(
+    text,
+    50,              # X offset from left
+    50,              # Y offset from top
+    Image.width(image),
+    Image.height(image)
   )
 
-show(extended_img)
+# Blend using alpha composition for professional results
+composite = Operation.composite2!(image, positioned_text, :VIPS_BLEND_MODE_OVER)
 
-# rotate image 90 degrees clockwise
-{:ok, rotated_img} = Operation.rot(img, :VIPS_ANGLE_D90)
-show(rotated_img)
-
-# join two images horizontally
-{:ok, main_img} = Image.new_from_file("~/Downloads/kitten.svg")
-{:ok, joined_img} = Operation.join(img, main_img, :VIPS_DIRECTION_HORIZONTAL, expand: true)
-show(joined_img)
+show([text, composite])
 ```
+
+### Filters and Effects
+
+Vix provides a comprehensive set of filters and effects suitable for both practical image enhancement and creative artistic expression. Understanding these operations allows you to create sophisticated image processing applications:
+
+```elixir
+# Gaussian blur - essential for noise reduction and creating depth-of-field effects
+# Higher sigma values create stronger blur effects
+blurred = Operation.gaussblur!(image, 3.0)
+
+# Edge detection using the Canny algorithm
+# Perfect for image analysis and artistic effects
+# Multiply by 64 to make edges more visible in the output
+edges = Operation.canny!(image, sigma: 1.4) * 64
+
+# Advanced sharpening with fine-grained control
+# sigma: controls the radius of the effect
+# x1: adjusts the threshold between flat and jagged areas
+# m2: determines overall sharpening strength
+sharpened =
+  Operation.sharpen!(image,
+    sigma: 1.0,
+    x1: 2.0,
+    m2: 20
+  )
+
+# Emboss effect using convolution matrix
+# The matrix defines the relationship between each pixel and its neighbors
+# This creates a 3D-like effect by emphasizing directional changes
+{:ok, conv_matrix} =
+  Image.new_from_list([
+    [-2, -1, 0],   # Top row emphasizes vertical edges
+    [-1, 1, 1],    # Middle row provides center weighting
+    [0, 1, 2]      # Bottom row creates directional lighting effect
+  ])
+
+embossed = Operation.conv!(image, conv_matrix)
+
+show([blurred, edges, sharpened, embossed], 2)
+```
+
+### Image Analysis
+
+Vix includes powerful tools for analyzing image characteristics, making it suitable for both artistic applications and scientific image analysis. The histogram functionality is particularly useful for understanding and adjusting image exposure and color distribution:
+
+```elixir
+# Create histogram from grayscale image
+# Converting to grayscale first simplifies the analysis
+histogram =
+  image
+  |> Operation.colourspace!(:VIPS_INTERPRETATION_B_W)
+  |> Operation.hist_find!()
+
+# Convert histogram to List for programmatic analysis
+# Useful for automated image adjustment algorithms
+Image.to_list!(histogram)
+|> List.flatten()
+|> IO.inspect(limit: 15, label: :histogram)
+
+# Create visual representation of the grayscale histogram
+# Normalizing ensures consistent visualization regardless of image size
+bw_plot =
+  histogram
+  |> Operation.hist_norm!()  # Scale values to 0..255 range
+  |> Operation.hist_plot!()  # Create visual representation
+
+# Generate and plot full color histogram
+# Useful for analyzing color balance and distribution
+color_plot =
+  image
+  |> Operation.hist_find!()    # Calculate histogram for each channel
+  |> Operation.hist_norm!()    # Normalize values
+  |> Operation.hist_plot!()    # Create visual representation
+
+show([bw_plot, color_plot])
+```
+
+### Error Handling
+
+Vix offers two complementary approaches to error handling, allowing you to choose the most appropriate strategy for your application:
+
+```elixir
+# Pattern 1: Explicit error handling with with
+# Useful for complex workflows where you need fine-grained error control
+result =
+  with {:ok, resized} <- Operation.resize(image, 0.5),
+       {:ok, processed} <- Operation.sharpen(resized, sigma: 1.0) do
+    {:ok, processed}
+  else
+    {:error, reason} ->
+      IO.puts("Failed: #{reason}")
+      {:error, reason}
+  end
+
+# Pattern 2: Bang (!) variants for simplified error propagation
+# Ideal for scripts or when you want errors to halt execution
+image
+|> Operation.resize!(0.5)
+|> Operation.sharpen!(sigma: 1.0)
+```
+
+### Creating a Color Gradient
+
+This example demonstrates how to programmatically generate color gradients using Vix's color space manipulation capabilities:
+
+```elixir
+defmodule ColorGradient do
+  def create(width, height) do
+    use Vix.Operator, only: [*: 2, +: 2, /: 2]
+
+    # Generate linear hue gradient
+    # identity! creates a gradient from 0 to width
+    # Multiply by 255/width normalizes values to 0..255 range
+    hue = Operation.identity!(size: width, ushort: true) * 255 / width
+
+    # Convert to HSV color space for vibrant colors
+    # Add full saturation and value channels
+    hsv =
+      hue
+      |> Operation.bandjoin_const!([255, 255])  # Add S and V channels
+      |> Operation.copy!(interpretation: :VIPS_INTERPRETATION_HSV)
+
+    # Create final gradient by repeating horizontally
+    rainbow = Operation.embed!(hsv, 0, 0, width, height, extend: :VIPS_EXTEND_REPEAT)
+
+    show([hue, hsv, rainbow], 1)
+  end
+end
+
+ColorGradient.create(600, 100)
+```
+
+### Creating a Photo Collage
+
+Create professional-looking photo collages with automatic layout, borders, and titles. This example demonstrates combining multiple images into a single composition:
+
+```elixir
+defmodule Collage do
+  def create(images, across, gap) do
+    # create collage by arranging images in a grid pattern
+    # across parameter determines number of images per row
+    # gap specifies spacing between images
+    collage = Operation.arrayjoin!(images, across: across, shim: gap)
+
+    # Add a consistent border around the entire collage
+    # This creates a frame effect and ensures clean edges
+    {width, height, _} = Image.shape(collage)
+    collage = Operation.embed!(collage, gap, gap, width + gap * 2, height + gap * 2)
+
+    # Add a title overlay with high DPI for crisp text
+    {title, _} = Operation.text!("My Photo Collage", dpi: 300)
+
+    # Composite the title onto the collage with proper positioning
+    Operation.composite2!(collage, title, :VIPS_BLEND_MODE_OVER, x: 20, y: 20)
+  end
+end
+
+# Create sample collage using multiple images
+# Download sample images for demonstration
+images = for _ <- 1..4, do: get_sample_image(600, 400)
+
+Collage.create(images, 2, 10)
+```
+
+### Creating Instagram-style Filters
+
+Modern photo apps often use preset filters to enhance images. Here's how to create custom filters using Vix's operations:
+
+```elixir
+defmodule PhotoFilters do
+  def vintage(image) do
+    image
+    # Adjust color balance for warm, aged look
+    |> Operation.linear!([0.9, 0.7, 0.6], [-0.1, 0.1, 0.2])
+    # Add subtle blur to soften details
+    |> Operation.gaussblur!(0.5)
+    # Enhance contrast for dramatic effect
+    |> Operation.linear!([1.2], [-0.1])
+  end
+
+  def dramatic(image) do
+    # Create vignette mask using Gaussian distribution
+    # This darkens the edges while keeping the center bright
+    mask = Operation.gaussmat!(Image.width(image), 0.5, min: 0, max: 0.8)
+
+    image
+    # Increase contrast significantly
+    |> Operation.linear!([1.4], [-0.2])
+    # Enhance edge details for cinematic look
+    |> Operation.sharpen!(sigma: 1.0, x1: 2.0)
+    # Apply vignette effect using overlay blend
+    |> Operation.composite2!(mask, :VIPS_BLEND_MODE_OVERLAY)
+  end
+end
+
+# Apply our custom filters to sample image
+vintage_photo = PhotoFilters.vintage(image)
+dramatic_photo = PhotoFilters.dramatic(image)
+
+show([vintage_photo, dramatic_photo])
+```
+
+## Performance Considerations
+
+When working with Vix in production environments, keep these performance optimization strategies in mind:
+
+1. **Lazy Operation Execution**:
+
+   * Operations are only executed when the final result is needed
+   * Chain operations together to minimize intermediate processing
+   * Use bang variants (`!`) when you're confident about inputs and want to avoid error checking overhead
+
+2. **Memory-Efficient Processing**:
+
+   ```elixir
+   # Use sequential access for large images to reduce memory usage
+   {:ok, image} = Image.new_from_file("large.jpg", access: :sequential)
+   ```
+
+3. **Optimization Tips**:
+
+   * Use `thumbnail` operations for quick resizes when absolute quality isn't critical
+   * Chain operations to avoid creating unnecessary intermediate images
+   * Consider format-specific loaders when you need fine-grained control
+   * Use appropriate color spaces for your operations (e.g., LAB for color analysis)
+
+## Next Steps
+
+To continue your journey with Vix, here are some valuable resources:
+
+* **Documentation**:
+
+  * Explore the [Vix documentation](https://hexdocs.pm/vix) for comprehensive API details
+  * Study the [libvips documentation](https://www.libvips.org/API/current/) for understanding the underlying technology
+
+* **Community**:
+
+  * Join the [Elixir Forum](https://elixirforum.com/) to discuss Vix with other developers
+  * Share your custom filters and processing pipelines with the community
+
+## Advanced Topics for Further Exploration
+
+Several advanced features deserve deeper investigation:
+
+* **Complex Convolution Operations**:
+
+  * Custom kernel design for specialized filters
+  * Multi-pass convolutions for complex effects
+  * Edge handling strategies
+
+* **Color Management**:
+
+  * Working with ICC profiles for color accuracy
+  * Color space transformations
+  * Calibration and profiling
+
+* **Animation Support**:
+
+  * Processing animated GIFs
+  * Creating animations from static images
+  * Timeline-based effects
+
+* **Advanced Composition**:
+
+  * Complex masking operations
+  * Layer blending modes
+  * Alpha channel manipulation
+
+Remember that Vix operations are non-destructive - they always create new image objects. This makes it safe to experiment with different processing pipelines while keeping your original images intact. The functional nature of Vix operations makes it easy to compose complex transformations while maintaining code clarity and testability.
