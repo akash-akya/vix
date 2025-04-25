@@ -6,6 +6,12 @@ defmodule Vix.Nif do
     @moduledoc false
     use GenServer
 
+    # Because Vix needs to run NIFs at compile-time and the `@on_load`
+    # callback uses the Janitor, let's ensure the Janitor is explicitly
+    # loaded after compilation, otherwise the Janitor may not be found
+    # from within the `@on_load` callback.
+    @compile {:autoload, true}
+
     # Singleton process to safely cleanup native resources
     alias __MODULE__
 
