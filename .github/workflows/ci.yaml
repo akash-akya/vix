@@ -84,7 +84,7 @@ jobs:
           path: |
             deps
             _build
-          key: ${{ runner.os }}-${{ matrix.otp }}-${{ matrix.elixir }}-${{ hashFiles('mix.lock') }}
+          key: ${{ runner.os }}-test-${{ matrix.otp }}-${{ matrix.elixir }}-${{ hashFiles('mix.lock') }}
 
       - name: Install Dependencies
         if: steps.mix-cache.outputs.cache-hit != 'true'
@@ -118,7 +118,7 @@ jobs:
           # _build contains compiled files. So we should not cache them
           path: |
             deps
-          key: ${{ runner.os }}-Precompiled_Libvips-${{ matrix.otp }}-${{ matrix.elixir }}-${{ hashFiles('mix.lock') }}
+          key: ${{ runner.os }}-precompiled-libvips-${{ matrix.otp }}-${{ matrix.elixir }}-${{ hashFiles('mix.lock') }}
 
       - name: Install Dependencies
         if: steps.mix-cache.outputs.cache-hit != 'true'
@@ -151,11 +151,17 @@ jobs:
           # _build contains compiled files. So we should not cache them
           path: |
             deps
-          key: ${{ runner.os }}-Precompiled_Nif_And_Libvips-${{ matrix.otp }}-${{ matrix.elixir }}-${{ hashFiles('mix.lock') }}
+          key: ${{ runner.os }}-precompiled-nif-${{ matrix.otp }}-${{ matrix.elixir }}-${{ hashFiles('mix.lock') }}
 
       - name: Install Dependencies
         if: steps.mix-cache.outputs.cache-hit != 'true'
         run: mix deps.get
+
+      - name: Remove Artifacts & Generate checksum.exs
+        run: |
+          ELIXIR_MAKE_CACHE_DIR="$(pwd)/cache"
+          rm -rf priv/* _build/*/lib/vix "${ELIXIR_MAKE_CACHE_DIR}"
+          MIX_ENV=prod mix elixir_make.checksum --all
 
       - run: mix test --trace
 
@@ -198,7 +204,7 @@ jobs:
             deps
             _build
             priv/plts
-          key: ${{ runner.os }}-${{ matrix.otp }}-${{ matrix.elixir }}-${{ hashFiles('mix.lock') }}
+          key: ${{ runner.os }}-lint-${{ matrix.otp }}-${{ matrix.elixir }}-${{ hashFiles('mix.lock') }}
 
       - name: Install Dependencies
         if: steps.mix-cache.outputs.cache-hit != 'true'
