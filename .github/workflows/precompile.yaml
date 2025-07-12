@@ -34,10 +34,7 @@ jobs:
           key: musl-${{ runner.os }}-build
       - if: ${{ steps.cache-musl.outputs.cache-hit != 'true' }}
         name: Setup musl compilers
-        run: |
-          set -e
-          curl -s https://more.musl.cc/11.2.1/x86_64-linux-musl/x86_64-linux-musl-cross.tgz | tar -xz
-          curl -s https://more.musl.cc/11.2.1/x86_64-linux-musl/aarch64-linux-musl-cross.tgz | tar -xz
+        run: scripts/mirror_toolchains.sh
       - name: Install Dependencies
         run: |
           set -e
