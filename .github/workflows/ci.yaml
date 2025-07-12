@@ -1,11 +1,14 @@
 name: CI
 on:
-  - push
-  - pull_request
+  push:
+    branches: [master, dev]
+  pull_request:
+    branches: [master, dev]
 jobs:
   linux:
     runs-on: ubuntu-24.04
     name: Test Compiled - Elixir ${{matrix.elixir}} / OTP ${{matrix.otp}}
+    timeout-minutes: 45
     env:
       VIX_COMPILATION_MODE: PLATFORM_PROVIDED_LIBVIPS
     strategy:
@@ -29,7 +32,8 @@ jobs:
           otp-version: ${{matrix.otp}}
           elixir-version: ${{matrix.elixir}}
 
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Install libvips build dependencies
         run: |
@@ -61,12 +65,17 @@ jobs:
       - name: Compile libvips from source
         if: steps.vips-cache.outputs.cache-hit != 'true'
         run: |
+          set -e
           mkdir vips
+          echo "Downloading libvips from: ${VIPS_LATEST_RELEASE}"
           curl -s -L "${VIPS_LATEST_RELEASE}" | tar xJ -C ./vips --strip-components=1
           cd vips
+          echo "Setting up meson build..."
           meson setup build -Ddeprecated=false -Dmagick=disabled \
-            || (cat build/meson-logs/meson-log.txt && exit 1)
-          meson compile -C build
+            || { echo "Meson setup failed:"; cat build/meson-logs/meson-log.txt; exit 1; }
+          echo "Compiling libvips..."
+          meson compile -C build \
+            || { echo "Compilation failed"; exit 1; }
 
       - name: Install libvips
         run: |
@@ -91,6 +100,7 @@ jobs:
   linux-precompiled-libvips:
     runs-on: ubuntu-24.04
     name: Test Pre-compiled libvips - Elixir ${{matrix.elixir}} / OTP ${{matrix.otp}}
+    timeout-minutes: 30
     env:
       VIX_COMPILATION_MODE: PRECOMPILED_LIBVIPS
     strategy:
@@ -103,13 +113,29 @@ jobs:
         with:
           otp-version: ${{matrix.otp}}
           elixir-version: ${{matrix.elixir}}
-      - uses: actions/checkout@v3
-      - run: mix deps.get
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Cache Dependencies
+        id: mix-cache
+        uses: actions/cache@v4
+        with:
+          # _build contains compiled files. So we should not cache them
+          path: |
+            deps
+          key: ${{ runner.os }}-Precompiled_Libvips-${{ matrix.otp }}-${{ matrix.elixir }}-${{ hashFiles('mix.lock') }}
+
+      - name: Install Dependencies
+        if: steps.mix-cache.outputs.cache-hit != 'true'
+        run: mix deps.get
+
       - run: mix test --trace
 
   linux-precompiled:
     runs-on: ubuntu-24.04
     name: Test Pre-compiled - Elixir ${{matrix.elixir}} / OTP ${{matrix.otp}}
+    timeout-minutes: 30
     strategy:
       matrix:
         include:
@@ -120,14 +146,32 @@ jobs:
         with:
           otp-version: ${{matrix.otp}}
           elixir-version: ${{matrix.elixir}}
-      - uses: actions/checkout@v3
-      - run: mix deps.get
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Cache Dependencies
+        id: mix-cache
+        uses: actions/cache@v4
+        with:
+          # _build contains compiled files. So we should not cache them
+          path: |
+            deps
+          key: ${{ runner.os }}-Precompiled_Nif_And_Libvips-${{ matrix.otp }}-${{ matrix.elixir }}-${{ hashFiles('mix.lock') }}
+
+      - name: Install Dependencies
+        if: steps.mix-cache.outputs.cache-hit != 'true'
+        run: mix deps.get
+
       - run: mix test --trace
 
   macos-precompiled:
     runs-on: macos-14
+    name: Test macOS
+    timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@main
       - uses: DeterminateSystems/magic-nix-cache-action@main
       - uses: DeterminateSystems/flake-checker-action@main
@@ -136,7 +180,8 @@ jobs:
 
   lint:
     runs-on: ubuntu-24.04
-    name: Lint
+    name: Lint & Type Check
+    timeout-minutes: 30
     strategy:
       matrix:
         include:
@@ -148,7 +193,8 @@ jobs:
           otp-version: ${{matrix.otp}}
           elixir-version: ${{matrix.elixir}}
 
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Cache Dependencies
         id: mix-cache
@@ -167,7 +213,6 @@ jobs:
           mix deps.get
           mix dialyzer --plt
 
-      - run: mix deps.get
       - run: mix clean && mix deep_clean
       - run: mix compile --force --warnings-as-errors
       - run: mix deps.unlock --check-unused
