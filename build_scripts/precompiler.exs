@@ -1,22 +1,22 @@
 defmodule Vix.LibvipsPrecompiled do
   require Logger
 
-  def run do
+  def run(priv_dir) do
     {:ok, _} = Application.ensure_all_started(:inets)
     {:ok, _} = Application.ensure_all_started(:ssl)
 
-    fetch_libvips()
+    fetch_libvips(priv_dir)
   end
 
   @vips_version "8.15.3"
 
-  def fetch_libvips do
+  def fetch_libvips(priv_dir) do
     version = System.get_env("LIBVIPS_VERSION") || @vips_version
     target = current_target()
     {url, filename} = url(version, target)
 
-    {:ok, path} = download(url, Path.join(priv_dir(), filename))
-    :ok = extract(path)
+    {:ok, path} = download(url, Path.join(priv_dir, filename))
+    :ok = extract(path, priv_dir)
 
     :ok
   end
@@ -60,9 +60,9 @@ defmodule Vix.LibvipsPrecompiled do
     end
   end
 
-  defp extract(path) do
+  defp extract(path, priv_dir) do
     Logger.debug("Extracting to #{path}")
-    destination = to_charlist(Path.join(priv_dir(), "precompiled_libvips"))
+    destination = to_charlist(Path.join(priv_dir, "precompiled_libvips"))
     _ = File.rmdir(destination)
 
     :ok = :erl_tar.extract(to_charlist(path), [{:cwd, destination}, :compressed])
@@ -92,7 +92,8 @@ defmodule Vix.LibvipsPrecompiled do
     [
       ssl: [
         verify: :verify_peer,
-        cacertfile: String.to_charlist(CAStore.file_path()),
+        # Use system CA certificates to avoid Mix dependencies during compilation
+        cacerts: :public_key.cacerts_get(),
         server_name_indication: hostname,
         customize_hostname_check: [
           match_fun: :public_key.pkix_verify_hostname_match_fun(:https)
@@ -177,10 +178,14 @@ defmodule Vix.LibvipsPrecompiled do
         {:error, "cannot decide current target"}
     end
   end
-
-  defp priv_dir do
-    Path.join(Mix.Project.app_path(), "priv")
-  end
 end
 
-Vix.LibvipsPrecompiled.run()
+# Main execution
+case System.argv() do
+  [priv_dir] ->
+    Vix.LibvipsPrecompiled.run(priv_dir)
+
+  _ ->
+    IO.puts("Usage: elixir precompiler.exs [priv_dir]")
+    System.halt(1)
+end
