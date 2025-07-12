@@ -34,7 +34,7 @@ jobs:
           key: musl-${{ runner.os }}-build
       - if: ${{ steps.cache-musl.outputs.cache-hit != 'true' }}
         name: Setup musl compilers
-        run: scripts/mirror_toolchains.sh
+        run: scripts/download_toolchains.sh
       - name: Install Dependencies
         run: |
           set -e
