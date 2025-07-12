@@ -41,6 +41,7 @@ defmodule Vix.MixProject do
             "x86_64-linux-gnu" => "x86_64-linux-gnu-",
             "aarch64-linux-gnu" => "aarch64-linux-gnu-",
             "armv7l-linux-gnueabihf" => "arm-linux-gnueabihf-",
+            "arm-linux-gnueabihf" => "arm-linux-gnueabihf-",
             "x86_64-linux-musl" => "x86_64-linux-musl-",
             "aarch64-linux-musl" => "aarch64-linux-musl-"
           },
@@ -124,7 +125,6 @@ defmodule Vix.MixProject do
       [
         {:elixir_make, "~> 0.8 or ~> 0.7.3", runtime: false},
         {:cc_precompiler, "~> 0.2 or ~> 0.1.4", runtime: false},
-        {:castore, "~> 1.0 or ~> 0.1"},
 
         # development & test
         {:credo, "~> 1.6", only: [:dev], runtime: false},

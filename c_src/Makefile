@@ -160,7 +160,7 @@ $(VIX): $(PREFIX) $(OBJ)
 # Precompiled libvips setup
 $(PRECOMPILED_LIBVIPS_PREREQUISITE):
 	$(SAY) "Setting up precompiled libvips..."
-	$(Q)MIX_EXS="../mix.exs" mix run --no-start --no-compile --no-deps-check ../build_scripts/precompiler.exs
+	$(Q) elixir ../build_scripts/precompiler.exs "$(PREFIX)"
 
 # Clean targets
 clean:
