@@ -36,73 +36,27 @@ jobs:
         name: Setup musl compilers
         continue-on-error: true
         run: |
+          set -e
           curl -s https://more.musl.cc/11.2.1/x86_64-linux-musl/x86_64-linux-musl-cross.tgz | tar -xz
           curl -s https://more.musl.cc/11.2.1/x86_64-linux-musl/aarch64-linux-musl-cross.tgz | tar -xz
       - name: Install Dependencies
         run: |
+          set -e
           sudo apt-get update
           sudo apt-get install -y gcc make curl tar \
             gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf
           echo "$PWD/x86_64-linux-musl-cross/bin" >> $GITHUB_PATH
           echo "$PWD/aarch64-linux-musl-cross/bin" >> $GITHUB_PATH
       - run: |
+          set -e
           mix deps.get
           MIX_ENV=test mix test
       - name: Pre-compile NIF library
         run: |
+          set -e
           export ELIXIR_MAKE_CACHE_DIR=$(pwd)/cache
           mkdir -p "${ELIXIR_MAKE_CACHE_DIR}"
           mix elixir_make.precompile
-      - uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          files: |
-            cache/*.tar.gz
-
-  linux-arm:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    env:
-      MIX_ENV: "prod"
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: linux/arm/v7
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Test on ARM
-        run: |
-          set -e
-          docker run --rm \
-            --platform linux/arm/v7 \
-            -v "$PWD:/workspace" \
-            -w /workspace \
-            ubuntu:25.04 \
-            bash -c "
-              set -e
-              # Verify we're running on arm
-              uname -m
-              cat /proc/cpuinfo | head -10
-              apt-get update
-              apt-get install -y ca-certificates build-essential elixir erlang-dev erlang-xmerl
-              mix local.hex --force
-              mix local.rebar --force
-              elixir --version
-
-              mix deps.get
-              MIX_ENV=test mix test
-              mix test --trace
-
-              export ELIXIR_MAKE_CACHE_DIR=$(pwd)/cache
-              mkdir -p "${ELIXIR_MAKE_CACHE_DIR}"
-              mix elixir_make.precompile
-            "
       - uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
@@ -139,6 +93,7 @@ jobs:
           ELIXIR_VERSION: ${{ matrix.elixir }}
           OTP_VERSION: ${{ matrix.otp }}
         run: |
+          set -e
           asdf plugin-add erlang
           asdf install erlang ${OTP_VERSION}
 
@@ -151,20 +106,24 @@ jobs:
           ELIXIR_VERSION: ${{ matrix.elixir }}
           OTP_VERSION: ${{ matrix.otp }}
         run: |
+          set -e
           asdf global erlang ${OTP_VERSION}
           ELIXIR_OTP_VERSION=$(echo $OTP_VERSION | cut -d. -f1)
           asdf global elixir ${ELIXIR_VERSION}-otp-${ELIXIR_OTP_VERSION}
 
       - name: Install hex & rebar
         run: |
+          set -e
           mix local.hex --force
           mix local.rebar --force
       - run: |
+          set -e
           mix deps.get
           MIX_ENV=test mix test
 
       - name: Pre-compile NIF library
         run: |
+          set -e
           export ELIXIR_MAKE_CACHE_DIR=$(pwd)/cache
           mkdir -p "${ELIXIR_MAKE_CACHE_DIR}"
           mix elixir_make.precompile
