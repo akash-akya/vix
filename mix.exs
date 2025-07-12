@@ -41,6 +41,7 @@ defmodule Vix.MixProject do
             "x86_64-linux-gnu" => "x86_64-linux-gnu-",
             "aarch64-linux-gnu" => "aarch64-linux-gnu-",
             "armv7l-linux-gnueabihf" => "arm-linux-gnueabihf-",
+            "arm-linux-gnueabihf" => "arm-linux-gnueabihf-",
             "x86_64-linux-musl" => "x86_64-linux-musl-",
             "aarch64-linux-musl" => "aarch64-linux-musl-"
           },

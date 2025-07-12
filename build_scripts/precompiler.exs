@@ -52,6 +52,9 @@ defmodule Vix.LibvipsPrecompiled do
       {"armv7l", "linux", "gnueabihf"} ->
         {:ok, "linux-armv7"}
 
+      {"arm", "linux", "gnueabihf"} ->
+        {:ok, "linux-armv6"}
+
       {"x86_64", "apple", "darwin"} ->
         {:ok, "darwin-x64"}
 

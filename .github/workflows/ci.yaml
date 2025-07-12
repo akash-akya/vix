@@ -165,6 +165,44 @@ jobs:
 
       - run: mix test --trace
 
+  linux-precompiled-arm:
+    runs-on: ubuntu-24.04
+    name: Test Pre-compiled ARM
+    timeout-minutes: 60
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: linux/arm/v7
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Test on ARM
+        run: |
+          set -e
+          docker run --rm \
+            --platform linux/arm/v7 \
+            -v "$PWD:/workspace" \
+            -w /workspace \
+            ubuntu:25.04 \
+            bash -c "
+              set -e
+              # Verify we're running on arm
+              uname -m
+              cat /proc/cpuinfo | head -10
+              apt-get update
+              apt-get install -y ca-certificates build-essential elixir erlang-dev erlang-xmerl
+              mix local.hex --force
+              mix local.rebar --force
+              elixir --version
+              mix deps.get
+              mix test --trace
+            "
+
   macos-precompiled:
     runs-on: macos-14
     name: Test macOS
