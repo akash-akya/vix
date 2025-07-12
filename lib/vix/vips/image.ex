@@ -883,12 +883,40 @@ defmodule Vix.Vips.Image do
   @spec supported_loader_suffixes :: {:ok, [String.t()]} | {:error, term}
   def supported_loader_suffixes, do: Vix.Vips.Foreign.get_loader_suffixes()
 
-  # Copy an image to a memory area.
-  # If image is already a memory buffer, just ref and return. If it's
-  # a file on disc or a partial, allocate memory and copy the image to
-  # it. Intended to be used with draw operations when they are
-  # properly supported
-  @doc false
+  @doc """
+  Copies an image to a memory buffer.
+
+  This function ensures that an image is fully loaded into memory, which is
+  required for certain operations like drawing or when you need to guarantee
+  the image is memory-resident for performance reasons.
+
+  If the image is already a memory buffer, it returns a reference to the
+  existing buffer. If the image is file-backed or represents a partial
+  computation, it allocates memory and copies the entire image to it.
+
+  ## Parameters
+
+  * `image` - The source `t:Vix.Vips.Image.t/0` to copy to memory
+
+  ## Returns
+
+  * `{:ok, image}` - A memory-resident copy of the image
+  * `{:error, reason}` - If the copy operation fails
+
+  ## Examples
+
+      iex> {:ok, image} = Image.new_from_file("test/images/puppies.jpg")
+      iex> {:ok, _memory_image} = Image.copy_memory(image)
+      iex> # _memory_image is now guaranteed to be in memory
+
+  ## Use Cases
+
+  * Before performing draw operations that require memory-resident images
+  * When you need to ensure consistent performance for repeated operations
+  * Creating mutable copies for in-place modifications
+  * Optimizing memory access patterns for complex processing pipelines
+
+  """
   @spec copy_memory(t()) :: {:ok, t()} | {:error, term()}
   def copy_memory(%Image{ref: vips_image}) do
     Nif.nif_image_copy_memory(vips_image)

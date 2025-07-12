@@ -106,7 +106,7 @@ defmodule Vix.Vips.Operation.Helper do
       Enum.reject(args, fn %{flags: flags} ->
         # skip required deprecated arguments, but allow optional deprecated arguments.
         # This is similar to ruby-vips.
-        :vips_argument_required in flags && :vips_argument_deprecated in flags
+        :vips_argument_deprecated in flags
       end)
 
     {input, rest} =

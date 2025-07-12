@@ -38,7 +38,13 @@ defmodule Vix.Vips.Foreign do
 
   @spec find_save_target(String.t()) :: {:ok, operation_name} | {:error, String.t()}
   def find_save_target(suffix) do
-    Nif.nif_foreign_find_save_target(suffix)
+    # TIFF files cannot be saved via pipe operations in libvips, despite having a save target.
+    # This workaround prevents attempting unsupported pipe-based TIFF saves.
+    if suffix in [".tif", ".tiff"] do
+      {:error, "Failed to find saver for the target"}
+    else
+      Nif.nif_foreign_find_save_target(suffix)
+    end
   end
 
   def get_suffixes do

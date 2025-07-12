@@ -512,4 +512,23 @@ defmodule Vix.Vips.ImageTest do
       Image.get_pixel!(im, 10, 1000)
     end
   end
+
+  test "copy_memory" do
+    {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
+
+    # Test successful copy
+    assert {:ok, memory_im} = Image.copy_memory(im)
+    assert %Image{} = memory_im
+
+    # Verify the copied image has the same properties
+    assert Image.width(memory_im) == Image.width(im)
+    assert Image.height(memory_im) == Image.height(im)
+    assert Image.bands(memory_im) == Image.bands(im)
+
+    # Verify pixel data is identical
+    assert Image.get_pixel!(memory_im, 10, 10) == Image.get_pixel!(im, 10, 10)
+
+    # Test that copy_memory can be called multiple times
+    assert {:ok, _memory_im2} = Image.copy_memory(memory_im)
+  end
 end

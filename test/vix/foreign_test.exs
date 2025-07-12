@@ -33,5 +33,7 @@ defmodule Vix.Vips.ForeignTest do
 
   test "find_save_target" do
     assert {:ok, "VipsForeignSaveJpegTarget"} = Foreign.find_save_target(".jpg")
+    assert {:error, "Failed to find saver for the target"} = Foreign.find_save_target(".pdf")
+    assert {:error, "Failed to find saver for the target"} = Foreign.find_save_target(".tiff")
   end
 end
