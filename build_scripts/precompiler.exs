@@ -8,12 +8,8 @@ defmodule Vix.LibvipsPrecompiled do
     fetch_libvips(priv_dir)
   end
 
-  @vips_version "8.15.3"
-
   def fetch_libvips(priv_dir) do
-    version = System.get_env("LIBVIPS_VERSION") || @vips_version
-    target = current_target()
-    {url, filename} = url(version, target)
+    {url, filename} = url(current_target())
 
     {:ok, path} = download(url, Path.join(priv_dir, filename))
     :ok = extract(path, priv_dir)
@@ -21,15 +17,15 @@ defmodule Vix.LibvipsPrecompiled do
     :ok
   end
 
-  @release_tag "8.15.3-rc3"
+  @release_tag "v1.2.0-rc4"
 
-  @filename "libvips-<%= version %>-<%= suffix %>.tar.gz"
-  @url "https://github.com/akash-akya/sharp-libvips/releases/download/v<%= tag %>/<%= filename %>"
+  @filename "sharp-libvips-<%= suffix %>.tar.gz"
+  @url "https://github.com/akash-akya/sharp-libvips/releases/download/<%= tag %>/<%= filename %>"
 
-  defp url(version, target) do
+  defp url(target) do
     {:ok, suffix} = cast_target(target)
 
-    filename = EEx.eval_string(@filename, version: version, suffix: suffix)
+    filename = EEx.eval_string(@filename, suffix: suffix)
     url = EEx.eval_string(@url, tag: @release_tag, filename: filename)
 
     {url, filename}
@@ -50,7 +46,7 @@ defmodule Vix.LibvipsPrecompiled do
         {:ok, "linux-arm64v8"}
 
       {"armv7l", "linux", "gnueabihf"} ->
-        {:ok, "linux-armv7"}
+        {:ok, "linux-armv6"}
 
       {"arm", "linux", "gnueabihf"} ->
         {:ok, "linux-armv6"}
