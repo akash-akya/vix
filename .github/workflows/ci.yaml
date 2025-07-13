@@ -161,7 +161,7 @@ jobs:
         run: |
           ELIXIR_MAKE_CACHE_DIR="$(pwd)/cache"
           rm -rf priv/* _build/*/lib/vix "${ELIXIR_MAKE_CACHE_DIR}"
-          MIX_ENV=prod mix elixir_make.checksum --all
+          mix elixir_make.checksum --only-local
 
       - run: mix test --trace
 
@@ -195,11 +195,14 @@ jobs:
               uname -m
               cat /proc/cpuinfo | head -10
               apt-get update
-              apt-get install -y ca-certificates build-essential elixir erlang-dev erlang-xmerl
+              apt-get install -y ca-certificates elixir erlang-dev erlang-xmerl
               mix local.hex --force
               mix local.rebar --force
               elixir --version
               mix deps.get
+              ELIXIR_MAKE_CACHE_DIR="$(pwd)/cache"
+              rm -rf priv/* _build/*/lib/vix "${ELIXIR_MAKE_CACHE_DIR}"
+              mix elixir_make.checksum --only-local
               mix test --trace
             "
 
