@@ -45,3 +45,8 @@ eips-*.tar
 
 # Ignore pre-compiler checksum file
 checksum.exs
+
+# C Dependency Files
+*.d
+
+/cache
