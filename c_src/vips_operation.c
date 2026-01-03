@@ -394,6 +394,7 @@ ERL_NIF_TERM nif_vips_enum_list(ErlNifEnv *env, int argc,
   ERL_NIF_TERM enum_values, tuple, enum_atom, enum_int, enums, name;
   guint count = 0;
   ErlNifTime start;
+  const char *nick;
 
   start = enif_monotonic_time(ERL_NIF_USEC);
 
@@ -408,12 +409,16 @@ ERL_NIF_TERM nif_vips_enum_list(ErlNifEnv *env, int argc,
 
     enum_values = enif_make_list(env, 0);
 
-    for (guint j = 0; j < enum_class->n_values - 1; j++) {
-      enum_atom = make_atom(env, enum_class->values[j].value_name);
-      enum_int = enif_make_int(env, enum_class->values[j].value);
+    for (guint j = 0; j < enum_class->n_values; j++) {
+      nick = enum_class->values[j].value_nick;
 
-      tuple = enif_make_tuple2(env, enum_atom, enum_int);
-      enum_values = enif_make_list_cell(env, tuple, enum_values);
+      if (g_strcmp0(nick, "last") != 0) {
+        enum_atom = make_atom(env, enum_class->values[j].value_name);
+        enum_int = enif_make_int(env, enum_class->values[j].value);
+
+        tuple = enif_make_tuple2(env, enum_atom, enum_int);
+        enum_values = enif_make_list_cell(env, tuple, enum_values);
+      }
     }
 
     name = make_binary(env, g_type_name(type));
@@ -441,6 +446,7 @@ ERL_NIF_TERM nif_vips_flag_list(ErlNifEnv *env, int argc,
   ERL_NIF_TERM flag_values, tuple, flag_atom, flag_int, flags, name;
   guint count = 0;
   ErlNifTime start;
+  const char *nick;
 
   start = enif_monotonic_time(ERL_NIF_USEC);
 
@@ -455,12 +461,16 @@ ERL_NIF_TERM nif_vips_flag_list(ErlNifEnv *env, int argc,
 
     flag_values = enif_make_list(env, 0);
 
-    for (guint j = 0; j < flag_class->n_values - 1; j++) {
-      flag_atom = make_atom(env, flag_class->values[j].value_name);
-      flag_int = enif_make_int(env, flag_class->values[j].value);
+    for (guint j = 0; j < flag_class->n_values; j++) {
+      nick = flag_class->values[j].value_nick;
 
-      tuple = enif_make_tuple2(env, flag_atom, flag_int);
-      flag_values = enif_make_list_cell(env, tuple, flag_values);
+      if (g_strcmp0(nick, "last") != 0) {
+        flag_atom = make_atom(env, flag_class->values[j].value_name);
+        flag_int = enif_make_int(env, flag_class->values[j].value);
+
+        tuple = enif_make_tuple2(env, flag_atom, flag_int);
+        flag_values = enif_make_list_cell(env, tuple, flag_values);
+      }
     }
 
     name = make_binary(env, g_type_name(type));
