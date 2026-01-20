@@ -1548,7 +1548,7 @@ defmodule Vix.Vips.Image do
         !is_list(list) ->
           {:error, "argument is not a list"}
 
-        length(list) > 0 && is_list(hd(list)) ->
+        non_empty_list?(list) && is_list(hd(list)) ->
           height = length(list)
           width = length(hd(list))
 
@@ -1573,6 +1573,9 @@ defmodule Vix.Vips.Image do
       {:ok, {width, height, list}}
     end
   end
+
+  defp non_empty_list?([]), do: false
+  defp non_empty_list?(_list), do: true
 
   defp validate_list_dimension(width, height, list) do
     if length(list) == width * height do
