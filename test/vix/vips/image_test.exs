@@ -301,7 +301,7 @@ defmodule Vix.Vips.ImageTest do
   describe "new_from_enum" do
     test "new_from_enum" do
       {:ok, image} =
-        File.stream!(img_path("puppies.jpg"), [], 1024)
+        File.stream!(img_path("puppies.jpg"), 1024, [])
         |> Image.new_from_enum("")
 
       out_path = Briefly.create!(extname: ".png")
@@ -318,7 +318,7 @@ defmodule Vix.Vips.ImageTest do
 
     test "premature end of new_from_enum" do
       {:error, "Failed to create image from VipsSource"} =
-        File.stream!(img_path("puppies.jpg"), [], 100)
+        File.stream!(img_path("puppies.jpg"), 100, [])
         |> Stream.take(1)
         |> Image.new_from_enum("")
     end
@@ -327,7 +327,7 @@ defmodule Vix.Vips.ImageTest do
       {:ok, img1} = Image.new_from_file(img_path("puppies.jpg"))
 
       {:ok, img2} =
-        File.stream!(img_path("puppies.jpg"), [], 1024)
+        File.stream!(img_path("puppies.jpg"), 100, [])
         |> Image.new_from_enum(shrink: 2)
 
       assert Image.width(img1) == 2 * Image.width(img2)
@@ -337,7 +337,7 @@ defmodule Vix.Vips.ImageTest do
       {:ok, img1} = Image.new_from_file(img_path("puppies.jpg"))
 
       {:ok, img2} =
-        File.stream!(img_path("puppies.jpg"), [], 1024)
+        File.stream!(img_path("puppies.jpg"), 1024, [])
         |> Image.new_from_enum("[shrink=2]")
 
       assert Image.width(img1) == 2 * Image.width(img2)

@@ -15,8 +15,6 @@ defmodule Vix.Nif do
     # Singleton process to safely cleanup native resources
     alias __MODULE__
 
-    require Logger
-
     def start do
       GenServer.start(Janitor, nil, name: Janitor)
     end

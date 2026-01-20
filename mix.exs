@@ -65,12 +65,6 @@ defmodule Vix.MixProject do
 
       # Coverage
       test_coverage: [tool: ExCoveralls],
-      preferred_cli_env: [
-        coveralls: :test,
-        "coveralls.detail": :test,
-        "coveralls.post": :test,
-        "coveralls.html": :test
-      ],
 
       # Package
       package: package(),
@@ -93,6 +87,25 @@ defmodule Vix.MixProject do
         groups_for_extras: [
           Livebooks: Path.wildcard("livebooks/*.livemd")
         ]
+      ]
+    ] ++ maybe_add_preferred_cli(System.version())
+  end
+
+  def maybe_add_preferred_cli(version) do
+    if Version.compare(version, "1.14.0") == :lt do
+      cli()
+    else
+      []
+    end
+  end
+
+  def cli do
+    [
+      preferred_envs: [
+        coveralls: :test,
+        "coveralls.detail": :test,
+         "coveralls.post": :test,
+         "coveralls.html": :test
       ]
     ]
   end

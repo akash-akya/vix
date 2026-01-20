@@ -226,7 +226,7 @@ defmodule Vix.Vips.Image do
   defp fetch_range(image, %Range{first: first, last: last}) when first >= 0 and last < 0 do
     case bands(image) + last do
       last when last >= 0 -> fetch(image, first..last)
-      _other -> raise ArgumentError, "Resolved invalid band range #{first..last}}"
+      _other -> raise ArgumentError, "Resolved invalid band range #{first}..#{last}}"
     end
   end
 
@@ -237,7 +237,7 @@ defmodule Vix.Vips.Image do
     if last > 0 do
       fetch(image, (bands + first)..last)
     else
-      raise ArgumentError, "Resolved invalid range #{(bands + first)..last}"
+      raise ArgumentError, "Resolved invalid range #{bands + first}..#{last}"
     end
   end
 
@@ -1844,7 +1844,7 @@ defmodule Vix.Vips.Image do
         :VIPS_FORMAT_DOUBLE
 
       {_, _} = type ->
-        raise ArgumentError, "#{type} is not supported"
+        raise ArgumentError, "#{inspect type} is not supported"
     end
   end
 
