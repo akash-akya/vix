@@ -1844,7 +1844,7 @@ defmodule Vix.Vips.Image do
         :VIPS_FORMAT_DOUBLE
 
       {_, _} = type ->
-        raise ArgumentError, "#{inspect type} is not supported"
+        raise ArgumentError, "#{inspect(type)} is not supported"
     end
   end
 
