@@ -49,4 +49,7 @@ checksum.exs
 # C Dependency Files
 *.d
 
+# mise
+mise.toml
+
 /cache

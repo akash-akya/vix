@@ -226,7 +226,7 @@ defmodule Vix.Vips.Image do
   defp fetch_range(image, %Range{first: first, last: last}) when first >= 0 and last < 0 do
     case bands(image) + last do
       last when last >= 0 -> fetch(image, first..last)
-      _other -> raise ArgumentError, "Resolved invalid band range #{first..last}}"
+      _other -> raise ArgumentError, "Resolved invalid band range #{first}..#{last}}"
     end
   end
 
@@ -237,7 +237,7 @@ defmodule Vix.Vips.Image do
     if last > 0 do
       fetch(image, (bands + first)..last)
     else
-      raise ArgumentError, "Resolved invalid range #{(bands + first)..last}"
+      raise ArgumentError, "Resolved invalid range #{bands + first}..#{last}"
     end
   end
 
@@ -1548,7 +1548,7 @@ defmodule Vix.Vips.Image do
         !is_list(list) ->
           {:error, "argument is not a list"}
 
-        length(list) > 0 && is_list(hd(list)) ->
+        non_empty_list?(list) && is_list(hd(list)) ->
           height = length(list)
           width = length(hd(list))
 
@@ -1573,6 +1573,9 @@ defmodule Vix.Vips.Image do
       {:ok, {width, height, list}}
     end
   end
+
+  defp non_empty_list?([]), do: false
+  defp non_empty_list?(_list), do: true
 
   defp validate_list_dimension(width, height, list) do
     if length(list) == width * height do
@@ -1844,7 +1847,7 @@ defmodule Vix.Vips.Image do
         :VIPS_FORMAT_DOUBLE
 
       {_, _} = type ->
-        raise ArgumentError, "#{type} is not supported"
+        raise ArgumentError, "#{inspect(type)} is not supported"
     end
   end
 

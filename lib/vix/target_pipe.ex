@@ -1,6 +1,5 @@
 defmodule Vix.TargetPipe do
   use GenServer
-  require Logger
 
   alias Vix.Nif
   alias __MODULE__
@@ -62,7 +61,7 @@ defmodule Vix.TargetPipe do
     do_read(state)
   end
 
-  def handle_info({:EXIT, from, result}, %{task_pid: from} = state) do
+  def handle_info({:EXIT, from, result}, %TargetPipe{task_pid: from} = state) do
     do_read(%TargetPipe{state | task_result: result, task_pid: nil})
   end
 

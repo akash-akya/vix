@@ -1,6 +1,5 @@
 defmodule Vix.SourcePipe do
   use GenServer
-  require Logger
 
   alias Vix.Nif
   alias __MODULE__
@@ -73,13 +72,13 @@ defmodule Vix.SourcePipe do
     reply_action(state, :ok)
   end
 
-  defp do_write(%SourcePipe{pending: pending} = state) do
+  defp do_write(%SourcePipe{pending: %SourcePipe.Pending{} = pending} = state) do
     bin_size = byte_size(pending.bin)
 
     case Nif.nif_write(state.fd, pending.bin) do
       {:ok, size} when size < bin_size ->
         binary = binary_part(pending.bin, size, bin_size - size)
-        noreply_action(%{state | pending: %Pending{pending | bin: binary}})
+        noreply_action(%SourcePipe{state | pending: %Pending{pending | bin: binary}})
 
       {:ok, _size} ->
         reply_action(state, :ok)
