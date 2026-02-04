@@ -39,8 +39,8 @@ LDLIBS += -L "$(ERL_INTERFACE_LIB_DIR)"
 LDFLAGS += -shared
 
 ifeq ($(VIX_COMPILATION_MODE), PLATFORM_PROVIDED_LIBVIPS)
-	VIPS_CFLAGS := $(shell pkg-config vips --cflags 2>/dev/null)
-	VIPS_LIBS := $(shell pkg-config vips --libs 2>/dev/null)
+	VIPS_CFLAGS := $(shell --cflags pkg-config vips 2>/dev/null)
+	VIPS_LIBS := $(shell --libs pkg-config vips 2>/dev/null)
 	CFLAGS += $(VIPS_CFLAGS)
 	LDLIBS += $(VIPS_LIBS)
 	PKG_CONFIG_CHECK = check-pkg-config
