@@ -14,6 +14,7 @@ VIX_COMPILATION_MODE := $(shell echo "$(VIX_COMPILATION_MODE)" | tr '[:lower:]' 
 CC ?= gcc
 RM ?= rm -f
 MKDIR_P ?= mkdir -p
+PKG_CONFIG ?= pkg-config
 
 # System detection and platform-specific configuration
 UNAME_SYS := $(shell uname -s 2>/dev/null || echo Unknown)
@@ -39,8 +40,8 @@ LDLIBS += -L "$(ERL_INTERFACE_LIB_DIR)"
 LDFLAGS += -shared
 
 ifeq ($(VIX_COMPILATION_MODE), PLATFORM_PROVIDED_LIBVIPS)
-	VIPS_CFLAGS := $(shell pkg-config vips --cflags 2>/dev/null)
-	VIPS_LIBS := $(shell pkg-config vips --libs 2>/dev/null)
+	VIPS_CFLAGS := $(shell ${PKG_CONFIG} --cflags vips 2>/dev/null)
+	VIPS_LIBS := $(shell ${PKG_CONFIG} --libs vips 2>/dev/null)
 	CFLAGS += $(VIPS_CFLAGS)
 	LDLIBS += $(VIPS_LIBS)
 	PKG_CONFIG_CHECK = check-pkg-config
@@ -126,11 +127,11 @@ check-env:
 	fi
 
 check-pkg-config:
-	@if ! command -v pkg-config >/dev/null 2>&1; then \
-		echo "Error: pkg-config not found but required for PLATFORM_PROVIDED_LIBVIPS"; \
+	@if ! command -v ${PKG_CONFIG} >/dev/null 2>&1; then \
+		echo "Error: ${PKG_CONFIG} (PKG_CONFIG) not found but required for PLATFORM_PROVIDED_LIBVIPS"; \
 		exit 1; \
 	fi
-	@if ! pkg-config --exists vips; then \
+	@if ! ${PKG_CONFIG} --exists vips; then \
 		echo "Error: vips not found via pkg-config"; \
 		echo "Please install libvips development headers"; \
 		exit 1; \
@@ -198,6 +199,7 @@ debug:
 	@echo "CFLAGS: $(CFLAGS)"
 	@echo "LDFLAGS: $(LDFLAGS)"
 	@echo "LDLIBS: $(LDLIBS)"
+	@echo "PKG_CONFIG: $(PKG_CONFIG)"
 	@echo "SRC: $(SRC)"
 	@echo "OBJ: $(OBJ)"
 	@echo "PREFIX: $(PREFIX)"
