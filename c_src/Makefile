@@ -3,18 +3,36 @@ SHELL = /bin/sh
 
 # Build configuration
 MIX_APP_PATH ?= ..
+PROJECT_ROOT := $(abspath $(CURDIR)/..)
 PREFIX = $(MIX_APP_PATH)/priv
 VIX = $(PREFIX)/vix.so
 
 # Compilation mode configuration
 VIX_COMPILATION_MODE ?= PRECOMPILED_NIF_AND_LIBVIPS
 VIX_COMPILATION_MODE := $(shell echo "$(VIX_COMPILATION_MODE)" | tr '[:lower:]' '[:upper:]')
+VALID_COMPILATION_MODES := PRECOMPILED_NIF_AND_LIBVIPS PRECOMPILED_LIBVIPS PLATFORM_PROVIDED_LIBVIPS
+ifeq ($(filter $(VIX_COMPILATION_MODE),$(VALID_COMPILATION_MODES)),)
+$(error Invalid VIX_COMPILATION_MODE '$(VIX_COMPILATION_MODE)'. Valid modes: $(VALID_COMPILATION_MODES))
+endif
 
 # Build tools
 CC ?= gcc
 RM ?= rm -f
 MKDIR_P ?= mkdir -p
 PKG_CONFIG ?= pkg-config
+
+# Optional custom libvips prefix for PLATFORM_PROVIDED_LIBVIPS mode
+ifdef VIX_LIBVIPS_PREFIX
+	ifneq ($(filter /%,$(VIX_LIBVIPS_PREFIX)),)
+		VIX_LIBVIPS_PREFIX_ABS := $(VIX_LIBVIPS_PREFIX)
+	else
+		VIX_LIBVIPS_PREFIX_ABS := $(abspath $(PROJECT_ROOT)/$(VIX_LIBVIPS_PREFIX))
+	endif
+	VIPS_PKG_CONFIG_PATH := $(VIX_LIBVIPS_PREFIX_ABS)/lib/pkgconfig$(if $(PKG_CONFIG_PATH),:$(PKG_CONFIG_PATH))
+	VIPS_PKG_CONFIG := env PKG_CONFIG_PATH="$(VIPS_PKG_CONFIG_PATH)" $(PKG_CONFIG)
+else
+	VIPS_PKG_CONFIG := $(PKG_CONFIG)
+endif
 
 # System detection and platform-specific configuration
 UNAME_SYS := $(shell uname -s 2>/dev/null || echo Unknown)
@@ -40,11 +58,16 @@ LDLIBS += -L "$(ERL_INTERFACE_LIB_DIR)"
 LDFLAGS += -shared
 
 ifeq ($(VIX_COMPILATION_MODE), PLATFORM_PROVIDED_LIBVIPS)
-	VIPS_CFLAGS := $(shell ${PKG_CONFIG} --cflags vips 2>/dev/null)
-	VIPS_LIBS := $(shell ${PKG_CONFIG} --libs vips 2>/dev/null)
+	VIPS_CFLAGS := $(shell ${VIPS_PKG_CONFIG} --cflags vips 2>/dev/null)
+	VIPS_LIBS := $(shell ${VIPS_PKG_CONFIG} --libs vips 2>/dev/null)
+	VIPS_VERSION := $(shell ${VIPS_PKG_CONFIG} --modversion vips 2>/dev/null)
 	CFLAGS += $(VIPS_CFLAGS)
 	LDLIBS += $(VIPS_LIBS)
 	PKG_CONFIG_CHECK = check-pkg-config
+
+	ifdef VIX_LIBVIPS_PREFIX
+		LDFLAGS += -Wl,-rpath,$(VIX_LIBVIPS_PREFIX_ABS)/lib
+	endif
 else
 	PKG_CONFIG_CHECK =
 	PRECOMPILED_LIBVIPS_PATH = $(PREFIX)/precompiled_libvips
@@ -102,6 +125,41 @@ OBJ := $(SRC:.c=.o)
 # Dependency files for better incremental builds
 DEP := $(SRC:.c=.d)
 
+# Build configuration stamps to force rebuilds when relevant env changes
+COMPILE_CONFIG = $(PREFIX)/compile.config
+LINK_CONFIG = $(PREFIX)/link.config
+
+$(COMPILE_CONFIG): FORCE | $(PREFIX)
+	$(Q){ \
+		printf '%s\n' \
+			"CC=$(CC)" \
+			"VIX_COMPILATION_MODE=$(VIX_COMPILATION_MODE)" \
+			"VIX_LIBVIPS_PREFIX_ABS=$(VIX_LIBVIPS_PREFIX_ABS)" \
+			"VIPS_VERSION=$(VIPS_VERSION)" \
+			"CFLAGS=$(CFLAGS)"; \
+	} > "$@.tmp"
+	$(Q)if [ ! -f "$@" ] || ! cmp -s "$@.tmp" "$@"; then \
+		mv "$@.tmp" "$@"; \
+	else \
+		$(RM) "$@.tmp"; \
+	fi
+
+$(LINK_CONFIG): FORCE | $(PREFIX)
+	$(Q){ \
+		printf '%s\n' \
+			"CC=$(CC)" \
+			"VIX_COMPILATION_MODE=$(VIX_COMPILATION_MODE)" \
+			"VIX_LIBVIPS_PREFIX_ABS=$(VIX_LIBVIPS_PREFIX_ABS)" \
+			"VIPS_VERSION=$(VIPS_VERSION)" \
+			"LDFLAGS=$(LDFLAGS)" \
+			"LDLIBS=$(LDLIBS)"; \
+	} > "$@.tmp"
+	$(Q)if [ ! -f "$@" ] || ! cmp -s "$@.tmp" "$@"; then \
+		mv "$@.tmp" "$@"; \
+	else \
+		$(RM) "$@.tmp"; \
+	fi
+
 # Main targets
 all: check-env $(PKG_CONFIG_CHECK) $(VIX)
 	$(SAY) "Build complete: $(VIX)"
@@ -131,17 +189,36 @@ check-pkg-config:
 		echo "Error: ${PKG_CONFIG} (PKG_CONFIG) not found but required for PLATFORM_PROVIDED_LIBVIPS"; \
 		exit 1; \
 	fi
-	@if ! ${PKG_CONFIG} --exists vips; then \
+	@if ! ${VIPS_PKG_CONFIG} --exists vips; then \
 		echo "Error: vips not found via pkg-config"; \
+		if [ -n "$(VIX_LIBVIPS_PREFIX_ABS)" ]; then \
+			echo "Checked custom libvips prefix: $(VIX_LIBVIPS_PREFIX_ABS)"; \
+		fi; \
 		echo "Please install libvips development headers"; \
 		exit 1; \
+	fi
+	@if [ -n "$(VIX_LIBVIPS_PREFIX_ABS)" ]; then \
+		resolved_prefix=$$(${VIPS_PKG_CONFIG} --variable=prefix vips 2>/dev/null || true); \
+		if [ -z "$$resolved_prefix" ]; then \
+			echo "Error: failed to resolve the libvips prefix via pkg-config"; \
+			exit 1; \
+		fi; \
+		if [ "$$resolved_prefix" != "$(VIX_LIBVIPS_PREFIX_ABS)" ]; then \
+			if [ -d "$$resolved_prefix" ] && [ -d "$(VIX_LIBVIPS_PREFIX_ABS)" ] && [ "$$resolved_prefix" -ef "$(VIX_LIBVIPS_PREFIX_ABS)" ]; then \
+				:; \
+			else \
+				echo "Error: libvips resolved to '$$resolved_prefix' instead of '$(VIX_LIBVIPS_PREFIX_ABS)'"; \
+				echo "VIX_LIBVIPS_PREFIX must point to the libvips installation that should be used"; \
+				exit 1; \
+			fi; \
+		fi; \
 	fi
 
 # Create output directory
 $(PREFIX):
 	$(Q)$(MKDIR_P) "$@"
 
-$(OBJ): Makefile $(PRECOMPILED_LIBVIPS_PREREQUISITE)
+$(OBJ): Makefile $(COMPILE_CONFIG) $(PRECOMPILED_LIBVIPS_PREREQUISITE)
 
 # Dependency generation
 %.d: %.c
@@ -155,7 +232,7 @@ $(OBJ): Makefile $(PRECOMPILED_LIBVIPS_PREREQUISITE)
 	$(c_verbose)$(CC) -c $(CFLAGS) -MMD -MP -o $@ $<
 
 # Final linking
-$(VIX): $(PREFIX) $(OBJ)
+$(VIX): $(PREFIX) $(LINK_CONFIG) $(OBJ)
 	$(link_verbose)$(CC) $(OBJ) -o $@ $(LDFLAGS) $(LDLIBS)
 
 # Precompiled libvips setup
@@ -166,7 +243,7 @@ $(PRECOMPILED_LIBVIPS_PREREQUISITE):
 # Clean targets
 clean:
 	$(SAY) "Cleaning build artifacts..."
-	$(Q)$(RM) $(VIX) $(OBJ) $(DEP)
+	$(Q)$(RM) $(VIX) $(OBJ) $(DEP) $(COMPILE_CONFIG) $(LINK_CONFIG)
 
 clean_precompiled_libvips: clean
 	$(SAY) "Cleaning precompiled libvips..."
@@ -184,6 +261,7 @@ help:
 	@echo ""
 	@echo "Build configuration:"
 	@echo "  VIX_COMPILATION_MODE: $(VIX_COMPILATION_MODE)"
+	@echo "  VIX_LIBVIPS_PREFIX: $(VIX_LIBVIPS_PREFIX_ABS)"
 	@echo "  System: $(UNAME_SYS) $(UNAME_ARCH)"
 	@echo "  CC: $(CC)"
 	@echo ""
@@ -200,9 +278,13 @@ debug:
 	@echo "LDFLAGS: $(LDFLAGS)"
 	@echo "LDLIBS: $(LDLIBS)"
 	@echo "PKG_CONFIG: $(PKG_CONFIG)"
+	@echo "VIPS_PKG_CONFIG: $(VIPS_PKG_CONFIG)"
+	@echo "VIPS_VERSION: $(VIPS_VERSION)"
 	@echo "SRC: $(SRC)"
 	@echo "OBJ: $(OBJ)"
 	@echo "PREFIX: $(PREFIX)"
 	@echo "VIX: $(VIX)"
 
-.PHONY: all clean clean_precompiled_libvips calling_from_make install check-env check-pkg-config help debug
+FORCE:
+
+.PHONY: FORCE all clean clean_precompiled_libvips calling_from_make install check-env check-pkg-config help debug

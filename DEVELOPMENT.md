@@ -5,6 +5,7 @@ This document provides comprehensive guidance for Vix development, testing, and 
 ## Table of Contents
 
 - [Development Environment Setup](#development-environment-setup)
+- [Building libvips from Source](#building-libvips-from-source)
 - [Build System](#build-system)
 - [Toolchain Management](#toolchain-management)
 - [Testing and Quality Assurance](#testing-and-quality-assurance)
@@ -26,15 +27,47 @@ Vix supports three compilation modes controlled by the `VIX_COMPILATION_MODE` en
 
 1. **`PRECOMPILED_NIF_AND_LIBVIPS`** (default) - Use precompiled NIFs and libvips
 2. **`PRECOMPILED_LIBVIPS`** - Compile NIFs locally, use precompiled libvips
-3. **`PLATFORM_PROVIDED_LIBVIPS`** - Use system-provided libvips
+3. **`PLATFORM_PROVIDED_LIBVIPS`** - Use a libvips installation resolved via `pkg-config`
 
 ```bash
-# Use system libvips (requires libvips-dev package)
+# Use the system libvips installation (requires libvips-dev package)
 export VIX_COMPILATION_MODE=PLATFORM_PROVIDED_LIBVIPS
+
+# Use a specific libvips install prefix instead of the system default
+export VIX_COMPILATION_MODE=PLATFORM_PROVIDED_LIBVIPS
+export VIX_LIBVIPS_PREFIX=/path/to/libvips/prefix
 
 # Force precompiled libvips build
 export VIX_COMPILATION_MODE=PRECOMPILED_LIBVIPS
 ```
+
+`VIX_LIBVIPS_PREFIX` is the libvips install prefix Vix should use, for example the path passed to Meson with `--prefix`.
+
+## Building libvips from Source
+
+For development against a newer libvips without packaging a custom binary, developers can use `scripts/build_libvips.sh` as a starting point to build libvips.
+
+It builds a `libvips` source archive into a private prefix using the libraries available on the local machine.
+
+The helper script expects `curl`, `tar`, `meson`, `ninja`, `pkg-config`, and a working C/C++ compiler.
+
+```bash
+# Build a tagged release
+./scripts/build_libvips.sh --ref vX.X.X
+export VIX_LIBVIPS_PREFIX="$(pwd)/.libvips/vX.X.X"
+export VIX_COMPILATION_MODE=PLATFORM_PROVIDED_LIBVIPS
+
+mix test
+
+# Build the current upstream development branch
+./scripts/build_libvips.sh --ref master
+export VIX_LIBVIPS_PREFIX="$(pwd)/.libvips/master"
+export VIX_COMPILATION_MODE=PLATFORM_PROVIDED_LIBVIPS
+```
+
+If `--ref` is omitted, the script builds the latest upstream tagged release.
+
+`VIX_LIBVIPS_PREFIX` must point to the exact libvips install prefix you want Vix to use.
 
 ### Initial Setup
 
@@ -66,7 +99,7 @@ make deep_clean                     # Full clean including precompiled libvips
 make clean_precompiled_libvips      # Remove only precompiled libvips
 
 # Debug and verbose builds
-make debug                          # Show build configuration (from c_src/)
+make debug                          # Show the native build configuration
 make V=1 all                        # Verbose compilation output
 ```
 
@@ -75,9 +108,11 @@ make V=1 all                        # Verbose compilation output
 Build behavior is controlled by several environment variables:
 
 - `VIX_COMPILATION_MODE` - Compilation strategy
-- `LIBVIPS_VERSION` - Override default libvips version
+- `VIX_LIBVIPS_PREFIX` - Custom libvips install prefix for `PLATFORM_PROVIDED_LIBVIPS`
+- `LIBVIPS_VERSION` - Override default precompiled libvips version
 - `CC_PRECOMPILER_CURRENT_TARGET` - Override target platform
 - `ELIXIR_MAKE_CACHE_DIR` - Cache directory for precompiled binaries
+
 
 ## Toolchain Management
 
@@ -279,8 +314,8 @@ export VIX_COMPILATION_MODE=PRECOMPILED_LIBVIPS
 make deep_clean
 make all
 
-# Check build configuration
-cd c_src && make debug
+# Inspect the active native build configuration
+make debug
 ```
 
 **"Checksum verification failed"**
@@ -306,6 +341,7 @@ tar -xzf x86_64-linux-musl-cross.tgz
 
 - Use `ELIXIR_MAKE_CACHE_DIR="$(pwd)/cache"` to cache precompiled binaries locally
 - Set `VIX_COMPILATION_MODE=PLATFORM_PROVIDED_LIBVIPS` for faster iteration during development
-- Run `make debug` from `c_src/` directory to see detailed build configuration
+- Use `VIX_LIBVIPS_PREFIX` when testing a specific local libvips build
+- Run `make debug` to inspect the effective native build configuration
 - Use `mix test --trace` for verbose test output
 - Check GitHub Actions logs for CI build failures
