@@ -144,7 +144,18 @@ Want to use your system's libvips? Set before compilation:
 export VIX_COMPILATION_MODE=PLATFORM_PROVIDED_LIBVIPS
 ```
 
-See [libvips installation guide](https://www.libvips.org/install.html) for more details.
+Want to use a custom libvips install prefix instead of the system default? Set:
+
+```bash
+export VIX_COMPILATION_MODE=PLATFORM_PROVIDED_LIBVIPS
+export VIX_LIBVIPS_PREFIX=/path/to/libvips/prefix
+```
+
+`VIX_LIBVIPS_PREFIX` is the libvips install prefix Vix should use, for example the path passed to Meson with `--prefix`.
+
+From a Git checkout, developers can use `scripts/build_libvips.sh` as a starting point to build libvips.
+
+See [libvips installation guide](https://www.libvips.org/install.html) and [DEVELOPMENT.md](DEVELOPMENT.md) for more details.
 
 
 ## Documentation & Resources

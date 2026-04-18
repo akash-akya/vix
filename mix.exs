@@ -3,6 +3,11 @@ defmodule Vix.MixProject do
 
   @version "0.38.0"
   @scm_url "https://github.com/akash-akya/vix"
+  @valid_compilation_modes [
+    "PRECOMPILED_NIF_AND_LIBVIPS",
+    "PRECOMPILED_LIBVIPS",
+    "PLATFORM_PROVIDED_LIBVIPS"
+  ]
 
   def project do
     [
@@ -124,6 +129,8 @@ defmodule Vix.MixProject do
     [
       maintainers: ["Akash Hiremath"],
       licenses: ["MIT"],
+      # Keep the Hex package limited to runtime build inputs.
+      # Repository-only helpers such as scripts/ are intentionally excluded.
       files:
         ~w(lib build_scripts checksum.exs mix.exs README.md LICENSE Makefile c_src/Makefile c_src/*.{h,c} c_src/g_object/*.{h,c}),
       links: %{
@@ -180,7 +187,14 @@ defmodule Vix.MixProject do
   defp make_force_build, do: compilation_mode() == "PRECOMPILED_LIBVIPS"
 
   defp compilation_mode do
-    (System.get_env("VIX_COMPILATION_MODE") || "PRECOMPILED_NIF_AND_LIBVIPS")
-    |> String.upcase()
+    mode =
+      (System.get_env("VIX_COMPILATION_MODE") || "PRECOMPILED_NIF_AND_LIBVIPS")
+      |> String.upcase()
+
+    if mode in @valid_compilation_modes do
+      mode
+    else
+      raise "invalid VIX_COMPILATION_MODE #{inspect(mode)}. Valid modes: #{Enum.join(@valid_compilation_modes, ", ")}"
+    end
   end
 end

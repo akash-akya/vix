@@ -20,7 +20,7 @@ erl_crash.dump
 *.ez
 
 # Ignore package tarball (built via "mix hex.build").
-eips-*.tar
+vix-*.tar
 
 /.ccls-cache
 
@@ -51,5 +51,11 @@ checksum.exs
 
 # mise
 mise.toml
+
+# Local development artifacts
+/.libvips/
+/.tmux/
+/toolchains/
+/.dexter.*
 
 /cache
