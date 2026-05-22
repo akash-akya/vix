@@ -391,6 +391,8 @@ static void fd_rt_dtor(ErlNifEnv *env, void *obj) {
 
 static void fd_rt_stop(ErlNifEnv *env, void *obj, int fd, int is_direct_call) {
   debug("fd_rt_stop called %d", fd);
+  int *fd_r = (int *)obj;
+  close_fd(fd_r);
 }
 
 static void fd_rt_down(ErlNifEnv *env, void *obj, ErlNifPid *pid,
