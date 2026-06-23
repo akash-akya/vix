@@ -4,11 +4,15 @@ on:
   push:
     tags:
       - 'v*'
+permissions:
+  contents: read
 
 jobs:
   linux:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
+    permissions:
+      contents: write
     env:
       MIX_ENV: "prod"
     strategy:
@@ -19,14 +23,14 @@ jobs:
           - elixir: 1.19.x
             otp: 27.x
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: erlef/setup-beam@v1
         with:
           otp-version: ${{matrix.otp}}
           elixir-version: ${{matrix.elixir}}
       - name: Cache musl cross compilers
         id: cache-musl
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             x86_64-linux-musl-cross
@@ -53,7 +57,7 @@ jobs:
           export ELIXIR_MAKE_CACHE_DIR=$(pwd)/cache
           mkdir -p "${ELIXIR_MAKE_CACHE_DIR}"
           mix elixir_make.precompile
-      - uses: softprops/action-gh-release@v1
+      - uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
@@ -62,6 +66,8 @@ jobs:
   macos:
     runs-on: macos-14
     timeout-minutes: 60
+    permissions:
+      contents: write
     env:
       MIX_ENV: "prod"
     strategy:
@@ -72,13 +78,13 @@ jobs:
           - elixir: '1.19.0'
             otp: '27.0'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install asdf
-        uses: asdf-vm/actions/setup@v2
+        uses: asdf-vm/actions/setup@v4
 
       - name: Cache asdf
         id: asdf-cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.asdf
           key: asdf-${{ runner.os }}-build-${{ matrix.otp }}-${{ matrix.elixir }}
@@ -123,7 +129,7 @@ jobs:
           export ELIXIR_MAKE_CACHE_DIR=$(pwd)/cache
           mkdir -p "${ELIXIR_MAKE_CACHE_DIR}"
           mix elixir_make.precompile
-      - uses: softprops/action-gh-release@v1
+      - uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |

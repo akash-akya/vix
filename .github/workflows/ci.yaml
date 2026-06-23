@@ -4,6 +4,11 @@ on:
     branches: [master, dev]
   pull_request:
     branches: [master, dev]
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   linux:
     runs-on: ubuntu-24.04
@@ -34,7 +39,7 @@ jobs:
       - name: Install libvips build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install \
+          sudo apt-get install -y \
             meson pkg-config \
             libarchive-dev libcfitsio-dev libcgif-dev \
             libexif-dev libexpat1-dev libffi-dev \
@@ -64,7 +69,7 @@ jobs:
           set -e
           mkdir vips
           echo "Downloading libvips from: ${VIPS_LATEST_RELEASE}"
-          curl -s -L "${VIPS_LATEST_RELEASE}" | tar xJ -C ./vips --strip-components=1
+          curl -fsSL --retry 3 "${VIPS_LATEST_RELEASE}" | tar xJ -C ./vips --strip-components=1
           cd vips
           echo "Setting up meson build..."
           meson setup build -Ddeprecated=false -Dmagick=disabled \
@@ -161,7 +166,7 @@ jobs:
 
       - name: Remove Artifacts & Generate checksum.exs
         run: |
-          ELIXIR_MAKE_CACHE_DIR="$(pwd)/cache"
+          export ELIXIR_MAKE_CACHE_DIR="$(pwd)/cache"
           rm -rf priv/* _build/*/lib/vix "${ELIXIR_MAKE_CACHE_DIR}"
           mix elixir_make.checksum --only-local
 
@@ -202,7 +207,7 @@ jobs:
               mix local.rebar --force
               elixir --version
               mix deps.get
-              ELIXIR_MAKE_CACHE_DIR="$(pwd)/cache"
+              export ELIXIR_MAKE_CACHE_DIR="$(pwd)/cache"
               rm -rf priv/* _build/*/lib/vix "${ELIXIR_MAKE_CACHE_DIR}"
               mix elixir_make.checksum --only-local
               mix test --trace
@@ -212,11 +217,14 @@ jobs:
     runs-on: macos-14
     name: Test macOS
     timeout-minutes: 45
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - uses: DeterminateSystems/nix-installer-action@main
-      - uses: DeterminateSystems/flake-checker-action@main
+      - uses: DeterminateSystems/nix-installer-action@v22
+      - uses: DeterminateSystems/flake-checker-action@v12
       - run: nix develop --command mix deps.get
       - run: nix develop --command mix test --trace
 
@@ -226,11 +234,14 @@ jobs:
     timeout-minutes: 45
     env:
       VIX_COMPILATION_MODE: PRECOMPILED_LIBVIPS
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - uses: DeterminateSystems/nix-installer-action@main
-      - uses: DeterminateSystems/flake-checker-action@main
+      - uses: DeterminateSystems/nix-installer-action@v22
+      - uses: DeterminateSystems/flake-checker-action@v12
       - run: nix develop --command mix deps.get
       - run: nix develop --command mix test --trace
 
