@@ -53,7 +53,10 @@ jobs:
 
       - name: Get latest version of libvips
         run: |
-          VIPS_LATEST_RELEASE=$(curl -L -s https://api.github.com/repos/libvips/libvips/releases/latest | grep -o -E "https://(.*)/vips-(.*).tar.xz" | head -1)
+          VIPS_LATEST_TAG=$(curl -fsSL -o /dev/null -w '%{url_effective}' https://github.com/libvips/libvips/releases/latest)
+          VIPS_LATEST_TAG=${VIPS_LATEST_TAG##*/}
+          VIPS_LATEST_RELEASE="https://codeload.github.com/libvips/libvips/tar.gz/${VIPS_LATEST_TAG}"
+          echo "VIPS_LATEST_TAG=${VIPS_LATEST_TAG}" >> $GITHUB_ENV
           echo "VIPS_LATEST_RELEASE=${VIPS_LATEST_RELEASE}" >> $GITHUB_ENV
 
       - name: Cache libvips artifacts
@@ -67,9 +70,10 @@ jobs:
         if: steps.vips-cache.outputs.cache-hit != 'true'
         run: |
           set -e
+          rm -rf vips
           mkdir vips
-          echo "Downloading libvips from: ${VIPS_LATEST_RELEASE}"
-          curl -fsSL --retry 3 "${VIPS_LATEST_RELEASE}" | tar xJ -C ./vips --strip-components=1
+          echo "Downloading libvips ${VIPS_LATEST_TAG} from: ${VIPS_LATEST_RELEASE}"
+          curl -fsSL --retry 3 "${VIPS_LATEST_RELEASE}" | tar xz -C ./vips --strip-components=1
           cd vips
           echo "Setting up meson build..."
           meson setup build -Ddeprecated=false -Dmagick=disabled \

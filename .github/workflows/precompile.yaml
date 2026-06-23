@@ -60,6 +60,7 @@ jobs:
       - uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
+          overwrite_files: true
           files: |
             cache/*.tar.gz
 
@@ -96,11 +97,11 @@ jobs:
           OTP_VERSION: ${{ matrix.otp }}
         run: |
           set -e
-          asdf plugin-add erlang
+          asdf plugin add erlang
           asdf install erlang ${OTP_VERSION}
 
           ELIXIR_OTP_VERSION=$(echo $OTP_VERSION | cut -d. -f1)
-          asdf plugin-add elixir
+          asdf plugin add elixir
           asdf install elixir ${ELIXIR_VERSION}-otp-${ELIXIR_OTP_VERSION}
 
       - name: Setup Erlang & Elixir
@@ -109,9 +110,9 @@ jobs:
           OTP_VERSION: ${{ matrix.otp }}
         run: |
           set -e
-          asdf global erlang ${OTP_VERSION}
+          asdf set --home erlang ${OTP_VERSION}
           ELIXIR_OTP_VERSION=$(echo $OTP_VERSION | cut -d. -f1)
-          asdf global elixir ${ELIXIR_VERSION}-otp-${ELIXIR_OTP_VERSION}
+          asdf set --home elixir ${ELIXIR_VERSION}-otp-${ELIXIR_OTP_VERSION}
 
       - name: Install hex & rebar
         run: |
@@ -132,5 +133,6 @@ jobs:
       - uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
+          overwrite_files: true
           files: |
             cache/*.tar.gz
