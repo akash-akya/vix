@@ -81,6 +81,7 @@ defmodule Vix.MixProject do
         source_ref: "v#{@version}",
         extras: [
           "README.md",
+          "DEVELOPMENT.md",
           "LICENSE",
           "livebooks/introduction.livemd",
           "livebooks/picture-language.livemd",
@@ -130,7 +131,7 @@ defmodule Vix.MixProject do
       # Keep the Hex package limited to runtime build inputs.
       # Repository-only helpers such as scripts/ are intentionally excluded.
       files:
-        ~w(lib build_scripts checksum.exs mix.exs README.md LICENSE Makefile c_src/Makefile c_src/*.{h,c} c_src/g_object/*.{h,c}),
+        ~w(lib build_scripts checksum.exs mix.exs README.md DEVELOPMENT.md LICENSE Makefile c_src/Makefile c_src/*.{h,c} c_src/g_object/*.{h,c}),
       links: %{
         GitHub: @scm_url,
         libvips: "https://libvips.github.io/libvips"
