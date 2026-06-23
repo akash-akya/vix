@@ -27,10 +27,8 @@ defmodule Vix.MixProject do
       make_precompiler_url: "#{@scm_url}/releases/download/v#{@version}/@{artefact_filename}",
       make_precompiler_priv_paths: [
         "vix.*",
-        "precompiled_libvips/lib/libvips.dylib",
-        "precompiled_libvips/lib/libvips.*.dylib",
-        "precompiled_libvips/lib/libvips.so",
-        "precompiled_libvips/lib/libvips.so.*",
+        "precompiled_libvips/lib/libvips-cpp.*.dylib",
+        "precompiled_libvips/lib/libvips-cpp.so.*",
         "precompiled_libvips/lib/*.dll",
         "precompiled_libvips/lib/*.lib"
       ],
