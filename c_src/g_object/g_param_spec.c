@@ -20,7 +20,7 @@ static double clamp_double(double value) {
 }
 
 static ERL_NIF_TERM enum_details(ErlNifEnv *env, GParamSpec *pspec) {
-  GParamSpecEnum *pspec_enum = G_PARAM_SPEC_ENUM(pspec);
+  GParamSpecEnum *pspec_enum = (GParamSpecEnum *)pspec;
   GEnumClass *e_class;
   GEnumValue *e_value;
 
@@ -30,7 +30,7 @@ static ERL_NIF_TERM enum_details(ErlNifEnv *env, GParamSpec *pspec) {
 }
 
 static ERL_NIF_TERM flag_details(ErlNifEnv *env, GParamSpec *pspec) {
-  GParamSpecFlags *pspec_flags = G_PARAM_SPEC_FLAGS(pspec);
+  GParamSpecFlags *pspec_flags = (GParamSpecFlags *)pspec;
   GFlagsClass *f_class;
   ERL_NIF_TERM default_flags, flag;
   guint default_int;
@@ -52,7 +52,7 @@ static ERL_NIF_TERM flag_details(ErlNifEnv *env, GParamSpec *pspec) {
 }
 
 static ERL_NIF_TERM boolean_details(ErlNifEnv *env, GParamSpec *pspec) {
-  GParamSpecBoolean *pspec_bool = G_PARAM_SPEC_BOOLEAN(pspec);
+  GParamSpecBoolean *pspec_bool = (GParamSpecBoolean *)pspec;
 
   if (pspec_bool->default_value) {
     return make_atom(env, "true");
@@ -62,7 +62,7 @@ static ERL_NIF_TERM boolean_details(ErlNifEnv *env, GParamSpec *pspec) {
 }
 
 static ERL_NIF_TERM uint64_details(ErlNifEnv *env, GParamSpec *pspec) {
-  GParamSpecUInt64 *pspec_uint64 = G_PARAM_SPEC_UINT64(pspec);
+  GParamSpecUInt64 *pspec_uint64 = (GParamSpecUInt64 *)pspec;
 
   return enif_make_tuple3(env, enif_make_uint64(env, pspec_uint64->minimum),
                           enif_make_uint64(env, pspec_uint64->maximum),
@@ -70,7 +70,7 @@ static ERL_NIF_TERM uint64_details(ErlNifEnv *env, GParamSpec *pspec) {
 }
 
 static ERL_NIF_TERM double_details(ErlNifEnv *env, GParamSpec *pspec) {
-  GParamSpecDouble *pspec_double = G_PARAM_SPEC_DOUBLE(pspec);
+  GParamSpecDouble *pspec_double = (GParamSpecDouble *)pspec;
   return enif_make_tuple3(
       env, enif_make_double(env, clamp_double(pspec_double->minimum)),
       enif_make_double(env, clamp_double(pspec_double->maximum)),
@@ -78,28 +78,28 @@ static ERL_NIF_TERM double_details(ErlNifEnv *env, GParamSpec *pspec) {
 }
 
 static ERL_NIF_TERM int_details(ErlNifEnv *env, GParamSpec *pspec) {
-  GParamSpecInt *pspec_int = G_PARAM_SPEC_INT(pspec);
+  GParamSpecInt *pspec_int = (GParamSpecInt *)pspec;
   return enif_make_tuple3(env, enif_make_int(env, pspec_int->minimum),
                           enif_make_int(env, pspec_int->maximum),
                           enif_make_int(env, pspec_int->default_value));
 }
 
 static ERL_NIF_TERM uint_details(ErlNifEnv *env, GParamSpec *pspec) {
-  GParamSpecUInt *pspec_uint = G_PARAM_SPEC_UINT(pspec);
+  GParamSpecUInt *pspec_uint = (GParamSpecUInt *)pspec;
   return enif_make_tuple3(env, enif_make_uint(env, pspec_uint->minimum),
                           enif_make_uint(env, pspec_uint->maximum),
                           enif_make_uint(env, pspec_uint->default_value));
 }
 
 static ERL_NIF_TERM int64_details(ErlNifEnv *env, GParamSpec *pspec) {
-  GParamSpecInt64 *pspec_int64 = G_PARAM_SPEC_INT64(pspec);
+  GParamSpecInt64 *pspec_int64 = (GParamSpecInt64 *)pspec;
   return enif_make_tuple3(env, enif_make_int64(env, pspec_int64->minimum),
                           enif_make_int64(env, pspec_int64->maximum),
                           enif_make_int64(env, pspec_int64->default_value));
 }
 
 static ERL_NIF_TERM string_details(ErlNifEnv *env, GParamSpec *pspec) {
-  GParamSpecString *pspec_string = G_PARAM_SPEC_STRING(pspec);
+  GParamSpecString *pspec_string = (GParamSpecString *)pspec;
   if (pspec_string->default_value == NULL) {
     return ATOM_NIL;
   } else {
@@ -136,27 +136,27 @@ ERL_NIF_TERM g_param_spec_details(ErlNifEnv *env, GParamSpec *pspec) {
   value_type = make_binary(env, g_type_name(G_PARAM_SPEC_VALUE_TYPE(pspec)));
   desc = make_binary(env, g_param_spec_get_blurb(pspec));
 
-  if (G_IS_PARAM_SPEC_ENUM(pspec)) {
+  if (vix_param_spec_is_enum(pspec)) {
     term = enum_details(env, pspec);
-  } else if (G_IS_PARAM_SPEC_BOOLEAN(pspec)) {
+  } else if (vix_param_spec_is_boolean(pspec)) {
     term = boolean_details(env, pspec);
-  } else if (G_IS_PARAM_SPEC_UINT64(pspec)) {
+  } else if (vix_param_spec_is_uint64(pspec)) {
     term = uint64_details(env, pspec);
-  } else if (G_IS_PARAM_SPEC_DOUBLE(pspec)) {
+  } else if (vix_param_spec_is_double(pspec)) {
     term = double_details(env, pspec);
-  } else if (G_IS_PARAM_SPEC_INT(pspec)) {
+  } else if (vix_param_spec_is_int(pspec)) {
     term = int_details(env, pspec);
-  } else if (G_IS_PARAM_SPEC_UINT(pspec)) {
+  } else if (vix_param_spec_is_uint(pspec)) {
     term = uint_details(env, pspec);
-  } else if (G_IS_PARAM_SPEC_INT64(pspec)) {
+  } else if (vix_param_spec_is_int64(pspec)) {
     term = int64_details(env, pspec);
-  } else if (G_IS_PARAM_SPEC_STRING(pspec)) {
+  } else if (vix_param_spec_is_string(pspec)) {
     term = string_details(env, pspec);
-  } else if (G_IS_PARAM_SPEC_FLAGS(pspec)) {
+  } else if (vix_param_spec_is_flags(pspec)) {
     term = flag_details(env, pspec);
-  } else if (G_IS_PARAM_SPEC_BOXED(pspec)) {
+  } else if (vix_param_spec_is_boxed(pspec)) {
     term = ATOM_NIL; // TODO: handle default value
-  } else if (G_IS_PARAM_SPEC_OBJECT(pspec)) {
+  } else if (vix_param_spec_is_object(pspec)) {
     term = ATOM_NIL; // TODO: handle default value
   } else {
     error("Unknown GParamSpec: %s",

@@ -4,6 +4,7 @@
 
 #include "g_boxed.h"
 #include "g_object.h"
+#include "g_param_spec.h"
 #include "g_value.h"
 
 static VixResult set_enum(ErlNifEnv *env, ERL_NIF_TERM term, GValue *gvalue) {
@@ -180,27 +181,27 @@ VixResult set_g_value_from_erl_term(ErlNifEnv *env, GParamSpec *pspec,
 
   g_value_init(gvalue, G_PARAM_SPEC_VALUE_TYPE(pspec));
 
-  if (G_IS_PARAM_SPEC_ENUM(pspec))
+  if (vix_param_spec_is_enum(pspec))
     return set_enum(env, term, gvalue);
-  else if (G_IS_PARAM_SPEC_BOOLEAN(pspec))
+  else if (vix_param_spec_is_boolean(pspec))
     return set_boolean(env, term, gvalue);
-  else if (G_IS_PARAM_SPEC_UINT64(pspec))
+  else if (vix_param_spec_is_uint64(pspec))
     return set_uint64(env, term, gvalue);
-  else if (G_IS_PARAM_SPEC_DOUBLE(pspec))
+  else if (vix_param_spec_is_double(pspec))
     return set_double(env, term, gvalue);
-  else if (G_IS_PARAM_SPEC_INT(pspec))
+  else if (vix_param_spec_is_int(pspec))
     return set_int(env, term, gvalue);
-  else if (G_IS_PARAM_SPEC_UINT(pspec))
+  else if (vix_param_spec_is_uint(pspec))
     return set_uint(env, term, gvalue);
-  else if (G_IS_PARAM_SPEC_INT64(pspec))
+  else if (vix_param_spec_is_int64(pspec))
     return set_int64(env, term, gvalue);
-  else if (G_IS_PARAM_SPEC_STRING(pspec))
+  else if (vix_param_spec_is_string(pspec))
     return set_string(env, term, gvalue);
-  else if (G_IS_PARAM_SPEC_BOXED(pspec))
+  else if (vix_param_spec_is_boxed(pspec))
     return set_boxed(env, term, gvalue);
-  else if (G_IS_PARAM_SPEC_OBJECT(pspec))
+  else if (vix_param_spec_is_object(pspec))
     return set_g_object(env, term, gvalue);
-  else if (G_IS_PARAM_SPEC_FLAGS(pspec))
+  else if (vix_param_spec_is_flags(pspec))
     return set_flags(env, term, gvalue);
   else {
     SET_ERROR_RESULT(env, "unknown pspec", res);
@@ -391,27 +392,27 @@ VixResult get_erl_term_from_g_object_property(ErlNifEnv *env, GObject *obj,
   g_value_init(&gvalue, G_PARAM_SPEC_VALUE_TYPE(pspec));
   g_object_get_property(obj, name, &gvalue);
 
-  if (G_IS_PARAM_SPEC_ENUM(pspec))
+  if (vix_param_spec_is_enum(pspec))
     res = get_enum(env, &gvalue);
-  else if (G_IS_PARAM_SPEC_BOOLEAN(pspec))
+  else if (vix_param_spec_is_boolean(pspec))
     res = get_boolean(env, &gvalue);
-  else if (G_IS_PARAM_SPEC_UINT64(pspec))
+  else if (vix_param_spec_is_uint64(pspec))
     res = get_uint64(env, &gvalue);
-  else if (G_IS_PARAM_SPEC_DOUBLE(pspec))
+  else if (vix_param_spec_is_double(pspec))
     res = get_double(env, &gvalue);
-  else if (G_IS_PARAM_SPEC_INT(pspec))
+  else if (vix_param_spec_is_int(pspec))
     res = get_int(env, &gvalue);
-  else if (G_IS_PARAM_SPEC_UINT(pspec))
+  else if (vix_param_spec_is_uint(pspec))
     res = get_uint(env, &gvalue);
-  else if (G_IS_PARAM_SPEC_INT64(pspec))
+  else if (vix_param_spec_is_int64(pspec))
     res = get_int64(env, &gvalue);
-  else if (G_IS_PARAM_SPEC_STRING(pspec))
+  else if (vix_param_spec_is_string(pspec))
     res = get_string_as_binary(env, &gvalue);
-  else if (G_IS_PARAM_SPEC_BOXED(pspec))
+  else if (vix_param_spec_is_boxed(pspec))
     res = get_boxed(env, &gvalue);
-  else if (G_IS_PARAM_SPEC_OBJECT(pspec))
+  else if (vix_param_spec_is_object(pspec))
     res = get_g_object(env, &gvalue);
-  else if (G_IS_PARAM_SPEC_FLAGS(pspec))
+  else if (vix_param_spec_is_flags(pspec))
     res = get_flags(env, &gvalue);
   else
     SET_ERROR_RESULT(env, "unknown pspec", res);
