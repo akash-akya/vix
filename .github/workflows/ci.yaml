@@ -220,6 +220,20 @@ jobs:
       - run: nix develop --command mix deps.get
       - run: nix develop --command mix test --trace
 
+  macos-precompiled-libvips:
+    runs-on: macos-14
+    name: Test macOS Pre-compiled libvips
+    timeout-minutes: 45
+    env:
+      VIX_COMPILATION_MODE: PRECOMPILED_LIBVIPS
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/flake-checker-action@main
+      - run: nix develop --command mix deps.get
+      - run: nix develop --command mix test --trace
+
   lint:
     runs-on: ubuntu-24.04
     name: Lint & Type Check
