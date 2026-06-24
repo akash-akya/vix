@@ -54,7 +54,7 @@ alias Vix.Vips.{Image, Operation}
 {:ok, resized} = Operation.resize(img, 0.5)  # 50% of original size
 
 # Crop a section
-{:ok, cropped} = Operation.crop(img, 100, 100, 500, 500)
+{:ok, cropped} = Operation.extract_area(img, 100, 100, 500, 500)
 
 # Rotate with white background
 {:ok, rotated} = Operation.rotate(img, 90, background: [255, 255, 255])
