@@ -20,5 +20,6 @@ defmodule Vix.VipsTest do
 
     usage = Vips.tracked_get_mem_highwater()
     assert is_integer(usage) && usage > 0
+    assert usage >= Vips.tracked_get_mem()
   end
 end
