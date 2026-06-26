@@ -229,6 +229,10 @@ ERL_NIF_TERM nif_vips_operation_call(ErlNifEnv *env, int argc,
   }
 
   op = vips_operation_new(op_name);
+  if (!op) {
+    SET_RESULT_FROM_VIPS_ERROR(env, "failed to create operation", res);
+    goto exit;
+  }
 
   res = set_operation_properties(env, op, argv[1]);
   if (!res.is_success)
@@ -284,6 +288,12 @@ ERL_NIF_TERM nif_vips_operation_get_arguments(ErlNifEnv *env, int argc,
   }
 
   op = vips_operation_new(op_name);
+  if (!op) {
+    ERL_NIF_TERM reason = make_binary(env, "failed to create operation");
+    vips_error_clear();
+    result = enif_raise_exception(env, reason);
+    goto exit;
+  }
 
   if (get_vips_operation_args(op, &names, &flags, &n_args) != 0) {
     error("failed to get VipsObject arguments. error: %s", vips_error_buffer());
