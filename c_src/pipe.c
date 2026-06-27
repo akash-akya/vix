@@ -14,8 +14,21 @@
 
 static ErlNifResourceType *FD_RT;
 
-static int set_flag(int fd, int flags) {
-  return fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | flags);
+static int set_cloexec(int fd) {
+  int flags = fcntl(fd, F_GETFD);
+  if (flags == -1) return -1;
+  return fcntl(fd, F_SETFD, flags | FD_CLOEXEC);
+}
+
+static int set_nonblock(int fd) {
+  int flags = fcntl(fd, F_GETFL);
+  if (flags == -1) return -1;
+  return fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+}
+
+static int set_cloexec_nonblock(int fd) {
+  if (set_cloexec(fd) == -1) return -1;
+  return set_nonblock(fd);
 }
 
 static void close_pipes(int pipes[2]) {
@@ -71,8 +84,8 @@ ERL_NIF_TERM nif_source_new(ErlNifEnv *env, int argc,
     goto exit;
   }
 
-  if (set_flag(fds[0], O_CLOEXEC) < 0 ||
-      set_flag(fds[1], O_CLOEXEC | O_NONBLOCK) < 0) {
+  if (set_cloexec(fds[0]) < 0 ||
+      set_cloexec_nonblock(fds[1]) < 0) {
     ret = make_error(env, "failed to set flags to fd");
     goto close_fd_exit;
   }
@@ -127,8 +140,8 @@ ERL_NIF_TERM nif_target_new(ErlNifEnv *env, int argc,
     goto exit;
   }
 
-  if (set_flag(fds[0], O_CLOEXEC | O_NONBLOCK) < 0 ||
-      set_flag(fds[1], O_CLOEXEC) < 0) {
+  if (set_cloexec_nonblock(fds[0]) < 0 ||
+      set_cloexec(fds[1]) < 0) {
     ret = make_error(env, "failed to set flags to fd");
     goto close_fd_exit;
   }
@@ -187,8 +200,8 @@ ERL_NIF_TERM nif_pipe_open(ErlNifEnv *env, int argc,
   }
 
   if (strcmp(mode, "read") == 0) {
-    if (set_flag(fds[0], O_CLOEXEC | O_NONBLOCK) < 0 ||
-        set_flag(fds[1], O_CLOEXEC) < 0) {
+    if (set_cloexec_nonblock(fds[0]) < 0 ||
+        set_cloexec(fds[1]) < 0) {
       ret = make_error(env, "failed to set flags to fd");
       goto close_fd_exit;
     }
@@ -204,9 +217,8 @@ ERL_NIF_TERM nif_pipe_open(ErlNifEnv *env, int argc,
     write_fd_term = enif_make_int(env, fds[1]);
 
   } else {
-
-    if (set_flag(fds[0], O_CLOEXEC) < 0 ||
-        set_flag(fds[1], O_CLOEXEC | O_NONBLOCK) < 0) {
+    if (set_cloexec(fds[0]) < 0 ||
+        set_cloexec_nonblock(fds[1]) < 0) {
       ret = make_error(env, "failed to set flags to fd");
       goto close_fd_exit;
     }
