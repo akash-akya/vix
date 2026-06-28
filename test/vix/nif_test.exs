@@ -21,6 +21,23 @@ defmodule Vix.NifTest do
     assert IO.iodata_length(binary) == width * height * bands
   end
 
+  test "nif_read accepts large read sizes within the limit" do
+    {:ok, {read_fd, raw_write_fd}} = Nif.nif_pipe_open(:read)
+
+    with_raw_fd(raw_write_fd, [:write, :raw, :binary], fn write_fd ->
+      :ok = :prim_file.write(write_fd, "hello")
+      assert {:ok, "hello"} = Nif.nif_read(read_fd, 10_000_000)
+    end)
+  end
+
+  test "nif_read rejects excessive read sizes" do
+    {:ok, {read_fd, raw_write_fd}} = Nif.nif_pipe_open(:read)
+
+    with_raw_fd(raw_write_fd, [:write, :raw, :binary], fn _write_fd ->
+      assert {:error, "max_size must be <= 64 MiB"} = Nif.nif_read(read_fd, 100_000_000)
+    end)
+  end
+
   test "read fd closes at OS level when owner exits with pending select" do
     {owner, raw_write_fd} = owner_with_pending_select(:read)
 

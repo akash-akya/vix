@@ -14,6 +14,9 @@
 
 static ErlNifResourceType *FD_RT;
 
+/* TargetPipe reads are chunked; cap one read to avoid huge NIF allocations. */
+static const int MAX_READ_BUFFER_SIZE = 64 * 1024 * 1024;
+
 typedef struct {
   int fd;
   /*
@@ -426,7 +429,7 @@ ERL_NIF_TERM nif_read(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]) {
   bool select_ok = false;
   ERL_NIF_TERM bin_term = 0;
   ERL_NIF_TERM ret;
-  unsigned char *buf = NULL;
+  ErlNifBinary read_bin = {0};
 
   start = enif_monotonic_time(ERL_NIF_USEC);
 
@@ -445,8 +448,12 @@ ERL_NIF_TERM nif_read(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]) {
     goto exit;
   }
 
-  buf = enif_alloc(max_size);
-  if (!buf) {
+  if (max_size > MAX_READ_BUFFER_SIZE) {
+    ret = make_error(env, "max_size must be <= 64 MiB");
+    goto exit;
+  }
+
+  if (!enif_alloc_binary((size_t)max_size, &read_bin)) {
     ret = make_error(env, "failed to allocate read buffer");
     goto exit;
   }
@@ -464,7 +471,7 @@ ERL_NIF_TERM nif_read(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]) {
     goto exit;
   }
 
-  result = read(fd, buf, max_size);
+  result = read(fd, read_bin.data, read_bin.size);
   read_errno = errno;
 
   if (result < 0 && (read_errno == EAGAIN || read_errno == EWOULDBLOCK)) {
@@ -473,11 +480,23 @@ ERL_NIF_TERM nif_read(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]) {
   enif_mutex_unlock(fd_r->lock);
 
   if (result >= 0) {
-    /* no need to release this binary */
-    unsigned char *temp = enif_make_new_binary(env, result, &bin_term);
-    if (result > 0) {
-      memcpy(temp, buf, result);
+    size_t bytes_read = (size_t)result;
+
+    if (bytes_read == 0) {
+      enif_release_binary(&read_bin);
+      read_bin.data = NULL;
+      enif_make_new_binary(env, 0, &bin_term);
+    } else {
+      if (bytes_read < read_bin.size &&
+          !enif_realloc_binary(&read_bin, bytes_read)) {
+        ret = make_error(env, "failed to resize read buffer");
+        goto exit;
+      }
+
+      bin_term = enif_make_binary(env, &read_bin);
+      read_bin.data = NULL;
     }
+
     ret = make_ok(env, bin_term);
   } else if (read_errno == EAGAIN || read_errno == EWOULDBLOCK) { // busy
     if (select_ok) {
@@ -492,8 +511,8 @@ ERL_NIF_TERM nif_read(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]) {
   }
 
 exit:
-  if (buf) {
-    enif_free(buf);
+  if (read_bin.data) {
+    enif_release_binary(&read_bin);
   }
   notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
   return ret;
