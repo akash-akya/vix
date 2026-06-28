@@ -5,6 +5,9 @@ defmodule Vix.NifTest do
 
   import Vix.Support.Images
 
+  @precompiled_nif_mode (System.get_env("VIX_COMPILATION_MODE") ||
+                           "PRECOMPILED_NIF_AND_LIBVIPS") == "PRECOMPILED_NIF_AND_LIBVIPS"
+
   test "nif_image_new_from_file" do
     path = img_path("puppies.jpg")
     {:ok, im} = Nif.nif_image_new_from_file(path)
@@ -21,6 +24,10 @@ defmodule Vix.NifTest do
     assert IO.iodata_length(binary) == width * height * bands
   end
 
+  if @precompiled_nif_mode do
+    @tag skip: "requires NIF compiled from current source"
+  end
+
   test "nif_read accepts large read sizes within the limit" do
     {:ok, {read_fd, raw_write_fd}} = Nif.nif_pipe_open(:read)
 
@@ -28,6 +35,10 @@ defmodule Vix.NifTest do
       :ok = :prim_file.write(write_fd, "hello")
       assert {:ok, "hello"} = Nif.nif_read(read_fd, 10_000_000)
     end)
+  end
+
+  if @precompiled_nif_mode do
+    @tag skip: "requires NIF compiled from current source"
   end
 
   test "nif_read rejects excessive read sizes" do
