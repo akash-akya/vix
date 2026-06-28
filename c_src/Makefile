@@ -224,8 +224,12 @@ $(OBJ): Makefile $(COMPILE_CONFIG) $(PRECOMPILED_LIBVIPS_PREREQUISITE)
 %.d: %.c
 	$(Q)$(CC) $(CFLAGS) -MM -MT $(@:.d=.o) $< > $@
 
-# Include dependency files if they exist
+# Include dependency files only for build goals. Regenerating them needs the
+# Erlang include paths, which are not available for direct clean/help targets.
+NO_DEP_GOALS := clean clean_precompiled_libvips help debug
+ifneq ($(filter-out $(NO_DEP_GOALS),$(or $(MAKECMDGOALS),all)),)
 -include $(DEP)
+endif
 
 # Object file compilation with dependency tracking
 %.o: %.c
