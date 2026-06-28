@@ -1,7 +1,7 @@
 defmodule Vix.MixProject do
   use Mix.Project
 
-  @version "0.39.0"
+  @version "0.40.0"
   @scm_url "https://github.com/akash-akya/vix"
   @valid_compilation_modes [
     "PRECOMPILED_NIF_AND_LIBVIPS",
