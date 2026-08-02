@@ -3,6 +3,7 @@ defmodule Vix.Vips.MutableImageTest do
 
   alias Vix.Vips.Image
   alias Vix.Vips.MutableImage
+  alias Vix.Vips.MutableOperation
 
   import Vix.Support.Images
 
@@ -80,6 +81,13 @@ defmodule Vix.Vips.MutableImageTest do
 
     assert {:error, "No such field"} ==
              Image.mutate(i, fn m -> MutableImage.update(m, "no-such-field", 0) end)
+  end
+
+  test "operation with invalid argument" do
+    {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
+    {:ok, mim} = MutableImage.new(im)
+
+    assert {:error, "value must be >= 0"} == MutableOperation.draw_flood(mim, [255], -1, 0)
   end
 
   test "mutate raises on unsupported callback return" do
