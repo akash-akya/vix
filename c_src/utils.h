@@ -49,13 +49,21 @@ extern guint VIX_LOG_LEVEL;
     error(reason);                                                             \
   } while (0)
 
+/* vips_error_buffer() returns a raw pointer into libvips' shared static error
+ * buffer *after* dropping the global lock, so the strlen/memcpy in
+ * make_binary() races with any other thread appending to or clearing that
+ * buffer. vips_error_buffer_copy() (libvips >= 8.9) g_strdup()s the text and
+ * rewinds the buffer while still holding the lock, which removes the torn read
+ * and also closes the read-then-clear window this macro used to leave open.
+ */
 #define SET_RESULT_FROM_VIPS_ERROR(env, label, res)                            \
   do {                                                                         \
+    char *vix_error_message = vips_error_buffer_copy();                        \
     res.is_success = false;                                                    \
     res.result = enif_make_tuple2(env, make_binary(env, label),                \
-                                  make_binary(env, vips_error_buffer()));      \
-    error("%s: %s", label, vips_error_buffer());                               \
-    vips_error_clear();                                                        \
+                                  make_binary(env, vix_error_message));        \
+    error("%s: %s", label, vix_error_message);                                 \
+    g_free(vix_error_message);                                                 \
   } while (0)
 
 #define SET_VIX_RESULT(res, term)                                              \
