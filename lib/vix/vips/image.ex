@@ -1288,9 +1288,12 @@ defmodule Vix.Vips.Image do
 
   * The mutated image passed to the callback or
   * `:ok` or
-  * `{:ok, some_result}`
+  * `{:ok, some_result}` or
+  * `{:error, reason}`
 
-  Call returns updated image.
+  Call returns updated image. If the callback returns `{:error, reason}` the
+  mutated image is discarded and `{:error, reason}` is returned. Any other
+  return value raises `ArgumentError`.
 
   Example
 
@@ -1318,8 +1321,17 @@ defmodule Vix.Vips.Image do
           MutableImage.to_image(mut_image)
 
         {:ok, result} ->
-          {:ok, image} = MutableImage.to_image(mut_image)
-          {:ok, {image, result}}
+          with {:ok, image} <- MutableImage.to_image(mut_image) do
+            {:ok, {image, result}}
+          end
+
+        {:error, reason} ->
+          {:error, reason}
+
+        other ->
+          raise ArgumentError,
+                "mutate callback must return the mutated image, `:ok`, " <>
+                  "`{:ok, result}` or `{:error, reason}`, got: #{inspect(other)}"
       end
     after
       MutableImage.stop(mut_image)

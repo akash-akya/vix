@@ -52,33 +52,31 @@ defmodule Vix.Vips.MutableOperation do
       # operations without optional arguments
       def unquote(func_name)(unquote_splicing(req_params)) do
         [mutable_image | rest_params] = unquote(req_params)
+        op_spec = unquote(Macro.escape(spec))
 
-        operation_cb = fn image ->
-          operation_call(
-            unquote(name),
-            [image | rest_params],
-            [],
-            unquote(Macro.escape(spec))
-          )
+        # cast before sending, so invalid arguments never reach the image process
+        with {:ok, arg_terms} <- cast_mutable_args(rest_params, [], op_spec) do
+          operation_cb = fn image ->
+            mutable_operation_call(unquote(name), image, arg_terms, op_spec)
+          end
+
+          GenServer.call(mutable_image.pid, {:operation, operation_cb})
         end
-
-        GenServer.call(mutable_image.pid, {:operation, operation_cb})
       end
     else
       # operations with optional arguments
       def unquote(func_name)(unquote_splicing(req_params), optional \\ []) do
         [mutable_image | rest_params] = unquote(req_params)
+        op_spec = unquote(Macro.escape(spec))
 
-        operation_cb = fn image ->
-          operation_call(
-            unquote(name),
-            [image | rest_params],
-            optional,
-            unquote(Macro.escape(spec))
-          )
+        # cast before sending, so invalid arguments never reach the image process
+        with {:ok, arg_terms} <- cast_mutable_args(rest_params, optional, op_spec) do
+          operation_cb = fn image ->
+            mutable_operation_call(unquote(name), image, arg_terms, op_spec)
+          end
+
+          GenServer.call(mutable_image.pid, {:operation, operation_cb})
         end
-
-        GenServer.call(mutable_image.pid, {:operation, operation_cb})
       end
     end
 
