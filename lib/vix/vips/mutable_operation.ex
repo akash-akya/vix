@@ -5,7 +5,20 @@ defmodule Vix.Vips.MutableOperation do
 
   import Vix.Vips.Operation.Helper
 
+  alias Vix.Vips.MutableImage
   alias Vix.Vips.Operation.Error
+  alias Vix.Vips.Operation.Helper
+
+  defp run_mutable_operation(name, %MutableImage{} = mutable_image, args, opts, spec) do
+    %{in_req_spec: [_image_spec | args_spec]} = spec
+    arg_terms = Helper.cast_arguments_to_nif_terms(args, opts, args_spec, spec.in_opt_spec)
+
+    operation = fn image ->
+      Helper.mutable_operation_call(name, image, arg_terms, spec)
+    end
+
+    MutableImage.run_operation(mutable_image, operation)
+  end
 
   # define typespec for enums
   Enum.map(vips_enum_list(), fn {name, enum} ->
@@ -51,32 +64,28 @@ defmodule Vix.Vips.MutableOperation do
     if in_opt_spec == [] do
       # operations without optional arguments
       def unquote(func_name)(unquote_splicing(req_params)) do
-        [mutable_image | rest_params] = unquote(req_params)
-        op_spec = unquote(Macro.escape(spec))
+        [mutable_image | args] = unquote(req_params)
 
-        # cast before sending, so invalid arguments never reach the image process
-        with {:ok, arg_terms} <- cast_mutable_args(rest_params, [], op_spec) do
-          operation_cb = fn image ->
-            mutable_operation_call(unquote(name), image, arg_terms, op_spec)
-          end
-
-          GenServer.call(mutable_image.pid, {:operation, operation_cb})
-        end
+        run_mutable_operation(
+          unquote(name),
+          mutable_image,
+          args,
+          [],
+          unquote(Macro.escape(spec))
+        )
       end
     else
       # operations with optional arguments
       def unquote(func_name)(unquote_splicing(req_params), optional \\ []) do
-        [mutable_image | rest_params] = unquote(req_params)
-        op_spec = unquote(Macro.escape(spec))
+        [mutable_image | args] = unquote(req_params)
 
-        # cast before sending, so invalid arguments never reach the image process
-        with {:ok, arg_terms} <- cast_mutable_args(rest_params, optional, op_spec) do
-          operation_cb = fn image ->
-            mutable_operation_call(unquote(name), image, arg_terms, op_spec)
-          end
-
-          GenServer.call(mutable_image.pid, {:operation, operation_cb})
-        end
+        run_mutable_operation(
+          unquote(name),
+          mutable_image,
+          args,
+          optional,
+          unquote(Macro.escape(spec))
+        )
       end
     end
 

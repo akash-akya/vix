@@ -136,6 +136,12 @@ defmodule Vix.Vips.MutableImage do
   end
 
   @doc false
+  @spec run_operation(t(), (Image.t() -> term())) :: term()
+  def run_operation(%MutableImage{pid: pid}, operation) when is_function(operation, 1) do
+    GenServer.call(pid, {:operation, operation})
+  end
+
+  @doc false
   def to_image(%MutableImage{pid: pid}) do
     GenServer.call(pid, :to_image)
   end
