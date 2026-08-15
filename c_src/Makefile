@@ -44,7 +44,7 @@ BASE_CFLAGS = -O2 -Wall -Werror -Wextra -Wno-unused-parameter -Wmissing-prototyp
 # Platform-specific flags
 ifeq ($(UNAME_SYS), Darwin)
 	CFLAGS += $(BASE_CFLAGS)
-	LDFLAGS += -flat_namespace -undefined suppress
+	LDFLAGS += -undefined dynamic_lookup
 else ifeq ($(UNAME_SYS), Linux)
 	CFLAGS += $(BASE_CFLAGS)
 endif
