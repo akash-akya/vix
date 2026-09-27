@@ -45,8 +45,8 @@ Vix downloads precompiled libvips from
 
 Current configuration:
 
-- sharp-libvips release tag: `v8.18.3-rc1`
-- upstream libvips version: `8.18.3`
+- sharp-libvips release tag: `v8.18.7-rc1`
+- upstream libvips version: `8.18.7`
 - Vix config: `@release_tag` in `build_scripts/precompiler.exs`
 - asset pattern: `sharp-libvips-<platform>.tar.gz`
 
@@ -228,7 +228,7 @@ Use this when Vix should consume a new sharp-libvips release.
 
    ```bash
    curl -fsSL \
-     https://api.github.com/repos/akash-akya/sharp-libvips/releases/tags/v8.18.3-rc1 \
+     https://api.github.com/repos/akash-akya/sharp-libvips/releases/tags/v8.18.7-rc1 \
      | jq -r '.assets[].name' \
      | sort
    ```
@@ -266,7 +266,7 @@ Check the configured tag and asset URL:
 grep '@release_tag' build_scripts/precompiler.exs
 
 curl -I \
-  https://github.com/akash-akya/sharp-libvips/releases/download/v8.18.3-rc1/sharp-libvips-linux-x64.tar.gz
+  https://github.com/akash-akya/sharp-libvips/releases/download/v8.18.7-rc1/sharp-libvips-linux-x64.tar.gz
 ```
 
 If Erlang reports a crypto or SSL error before downloading, fix the local
