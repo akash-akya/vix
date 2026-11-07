@@ -45,6 +45,12 @@ static void *vips_object_find_args(VipsObject *object, GParamSpec *pspec,
   return (NULL);
 }
 
+/* The returned `names` and `flags` arrays are owned by the caller and must be
+ * released with `g_free`. They are deliberately not tied to `op` (eg. with
+ * `VIPS_ARRAY(op, ...)`): when `op` comes from the libvips operation cache it
+ * is long-lived and shared, so memory attached to it would accumulate on
+ * every cache hit until the entry is evicted, which never happens for hot
+ * entries. */
 static int get_vips_operation_args(VipsOperation *op, const char ***names,
                                    int **flags, int *n_args) {
   VipsObject *object;
@@ -57,18 +63,22 @@ static int get_vips_operation_args(VipsOperation *op, const char ***names,
   object_class = VIPS_OBJECT_GET_CLASS(object);
   n = g_slist_length(object_class->argument_table_traverse);
 
-  pair.names = VIPS_ARRAY(object, n, const char *);
-  pair.flags = VIPS_ARRAY(object, n, int);
-  if (!pair.names || !pair.flags)
-    return (-1);
+  pair.names = g_new0(const char *, n);
+  pair.flags = g_new0(int, n);
 
   i = 0;
   (void)vips_argument_map(object, vips_object_find_args, &pair, &i);
 
   if (names)
     *names = pair.names;
+  else
+    g_free(pair.names);
+
   if (flags)
     *flags = pair.flags;
+  else
+    g_free(pair.flags);
+
   if (n_args)
     *n_args = n;
 
@@ -110,8 +120,8 @@ static ERL_NIF_TERM vips_argument_flags_to_erl_terms(ErlNifEnv *env,
 
 static VixResult get_operation_properties(ErlNifEnv *env, VipsOperation *op) {
 
-  const char **names;
-  int *flags;
+  const char **names = NULL;
+  int *flags = NULL;
   int n_args = 0;
 
   ERL_NIF_TERM list, name, entry;
@@ -122,7 +132,7 @@ static VixResult get_operation_properties(ErlNifEnv *env, VipsOperation *op) {
 
   if (get_vips_operation_args(op, &names, &flags, &n_args)) {
     SET_RESULT_FROM_VIPS_ERROR(env, "failed to get output fields", res);
-    return res;
+    goto exit;
   }
 
   list = enif_make_list(env, 0);
@@ -135,14 +145,14 @@ static VixResult get_operation_properties(ErlNifEnv *env, VipsOperation *op) {
         SET_RESULT_FROM_VIPS_ERROR(env, names[i], res);
         // early exit is fine, for already reffed output GObjects
         // since `g_object_dtor` takes care of unreffing
-        return res;
+        goto exit;
       }
 
       res = get_erl_term_from_g_object_property(env, G_OBJECT(op), names[i],
                                                 pspec);
 
       if (!res.is_success)
-        return res;
+        goto exit;
 
       name = make_binary(env, names[i]);
       entry = enif_make_tuple2(env, name, res.result);
@@ -151,6 +161,10 @@ static VixResult get_operation_properties(ErlNifEnv *env, VipsOperation *op) {
   }
 
   SET_VIX_RESULT(res, list);
+
+exit:
+  g_free(names);
+  g_free(flags);
   return res;
 }
 
@@ -271,8 +285,8 @@ ERL_NIF_TERM nif_vips_operation_get_arguments(ErlNifEnv *env, int argc,
 
   VipsOperation *op;
   char op_name[200] = {0};
-  const char **names;
-  int *flags;
+  const char **names = NULL;
+  int *flags = NULL;
   int n_args = 0;
   ERL_NIF_TERM list, erl_flags, name, priority, tup, description, result;
   GParamSpec *pspec;
@@ -328,6 +342,8 @@ ERL_NIF_TERM nif_vips_operation_get_arguments(ErlNifEnv *env, int argc,
   result = enif_make_tuple2(env, description, list);
 
 free_and_exit:
+  g_free(names);
+  g_free(flags);
   vips_object_unref_outputs(VIPS_OBJECT(op));
   g_object_unref(op);
 
@@ -661,11 +677,11 @@ exit:
 }
 
 static void *load_operation(GType type, void *a) {
-  const char **names;
+  const char **names = NULL;
   gpointer g_class;
   VipsObjectClass *class;
   VipsOperation *op;
-  int *flags;
+  int *flags = NULL;
   bool *err;
   int n_args = 0;
 
@@ -694,6 +710,8 @@ static void *load_operation(GType type, void *a) {
     *err = true;
   }
 
+  g_free(names);
+  g_free(flags);
   vips_object_unref_outputs(VIPS_OBJECT(op));
   g_object_unref(op);
 
