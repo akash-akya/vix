@@ -45,12 +45,6 @@ static void *vips_object_find_args(VipsObject *object, GParamSpec *pspec,
   return (NULL);
 }
 
-/* The returned `names` and `flags` arrays are owned by the caller and must be
- * released with `g_free`. They are deliberately not tied to `op` (eg. with
- * `VIPS_ARRAY(op, ...)`): when `op` comes from the libvips operation cache it
- * is long-lived and shared, so memory attached to it would accumulate on
- * every cache hit until the entry is evicted, which never happens for hot
- * entries. */
 static int get_vips_operation_args(VipsOperation *op, const char ***names,
                                    int **flags, int *n_args) {
   VipsObject *object;
@@ -63,6 +57,8 @@ static int get_vips_operation_args(VipsOperation *op, const char ***names,
   object_class = VIPS_OBJECT_GET_CLASS(object);
   n = g_slist_length(object_class->argument_table_traverse);
 
+  // caller frees these. `op` may be a long-lived cached operation, so
+  // allocating them on it with `VIPS_ARRAY(op, ...)` leaks on every cache hit
   pair.names = g_new0(const char *, n);
   pair.flags = g_new0(int, n);
 
@@ -73,12 +69,10 @@ static int get_vips_operation_args(VipsOperation *op, const char ***names,
     *names = pair.names;
   else
     g_free(pair.names);
-
   if (flags)
     *flags = pair.flags;
   else
     g_free(pair.flags);
-
   if (n_args)
     *n_args = n;
 
@@ -132,7 +126,7 @@ static VixResult get_operation_properties(ErlNifEnv *env, VipsOperation *op) {
 
   if (get_vips_operation_args(op, &names, &flags, &n_args)) {
     SET_RESULT_FROM_VIPS_ERROR(env, "failed to get output fields", res);
-    goto exit;
+    goto free_and_exit;
   }
 
   list = enif_make_list(env, 0);
@@ -145,14 +139,14 @@ static VixResult get_operation_properties(ErlNifEnv *env, VipsOperation *op) {
         SET_RESULT_FROM_VIPS_ERROR(env, names[i], res);
         // early exit is fine, for already reffed output GObjects
         // since `g_object_dtor` takes care of unreffing
-        goto exit;
+        goto free_and_exit;
       }
 
       res = get_erl_term_from_g_object_property(env, G_OBJECT(op), names[i],
                                                 pspec);
 
       if (!res.is_success)
-        goto exit;
+        goto free_and_exit;
 
       name = make_binary(env, names[i]);
       entry = enif_make_tuple2(env, name, res.result);
@@ -162,7 +156,7 @@ static VixResult get_operation_properties(ErlNifEnv *env, VipsOperation *op) {
 
   SET_VIX_RESULT(res, list);
 
-exit:
+free_and_exit:
   g_free(names);
   g_free(flags);
   return res;
