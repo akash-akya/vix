@@ -21,6 +21,10 @@ defmodule Vix.MixProject do
       make_clean: ["clean"],
       deps: deps(),
       aliases: aliases(),
+      dialyzer: [
+        plt_local_path: "priv/plts",
+        plt_core_path: "priv/plts"
+      ],
 
       # elixir_make config
       make_precompiler: make_precompiler(),
