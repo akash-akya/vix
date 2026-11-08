@@ -238,6 +238,19 @@ defmodule Vix.Vips.ImageTest do
     assert {:ok, <<_::binary>>} = Image.header_value(im, "exif-data")
   end
 
+  test "get_header image" do
+    {:ok, im} = Image.build_image(4, 4, [0])
+    {:ok, gainmap} = Image.build_image(2, 2, [1])
+
+    {:ok, im} =
+      Image.mutate(im, fn mut_img ->
+        MutableImage.set(mut_img, "gainmap", :VipsImage, gainmap)
+      end)
+
+    assert {:ok, %Image{} = value} = Image.header_value(im, "gainmap")
+    assert {2, 2, 1} == Image.shape(value)
+  end
+
   test "get_as_string" do
     {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
 
