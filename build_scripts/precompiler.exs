@@ -81,7 +81,8 @@ defmodule Vix.LibvipsPrecompiled do
         :get,
         {String.to_charlist(url), []},
         https_opts(hostname),
-        stream: String.to_charlist(path)
+        stream: String.to_charlist(path),
+        max_header_size: 32_768
       )
 
     {:ok, path}
