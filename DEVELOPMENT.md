@@ -96,16 +96,29 @@ Use `--overwrite` to replace an existing local prefix.
 
 ## Toolchains
 
-`precompile.yaml` uses musl cross-compilers for musl NIF targets. The scripts
-mirror the required musl.cc archives on Vix GitHub releases:
+`precompile.yaml` uses [Bootlin](https://toolchains.bootlin.com) musl
+cross-compilers for musl NIF targets. They need binutils 2.38 or later,
+because the sharp-libvips `linuxmusl-x64` build uses `DT_RELR`
+(`-z pack-relative-relocs`).
 
 ```bash
 ./scripts/download_toolchains.sh
-./scripts/mirror_toolchains.sh
 ```
 
-The current mirrored version is `11.2.1`; update `TOOLCHAIN_VERSION` in both
-scripts if the mirror changes.
+The script keeps the archives in `toolchains/`, verifies them against pinned
+SHA-256 values on every run, and extracts them. CI caches `toolchains/`.
+To mirror, upload `toolchains/*.tar.xz` to the
+`toolchains-bootlin-<VERSION>` release; the script falls back to Bootlin when
+the mirror is missing.
+
+To update, change `VERSION` and the hashes in the script. Cross-check the
+hashes with Buildroot's
+`toolchain/toolchain-external/toolchain-external-bootlin/toolchain-external-bootlin.hash`.
+The CI cache key follows the script contents.
+
+The `linuxmusl` libvips bundles need musl 1.2.5+ (`statx`) and libstdc++
+from GCC 13+ at runtime, i.e. Alpine 3.20 or later. This predates `DT_RELR`,
+which only needs musl 1.2.4+.
 
 ## CI
 

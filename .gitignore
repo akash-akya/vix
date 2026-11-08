@@ -56,6 +56,8 @@ mise.toml
 /.libvips/
 /.tmux/
 /toolchains/
+/x86_64-linux-musl-cross/
+/aarch64-linux-musl-cross/
 /.dexter.*
 
 /cache
