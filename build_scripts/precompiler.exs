@@ -76,16 +76,24 @@ defmodule Vix.LibvipsPrecompiled do
     _ = File.rm(path)
     File.mkdir_p!(Path.dirname(path))
 
-    {:ok, :saved_to_file} =
-      :httpc.request(
-        :get,
-        {String.to_charlist(url), []},
-        https_opts(hostname),
-        stream: String.to_charlist(path),
-        max_header_size: 32_768
-      )
+    case :httpc.request(
+           :get,
+           {String.to_charlist(url), []},
+           https_opts(hostname),
+           stream: String.to_charlist(path),
+           max_header_size: 32_768
+         ) do
+      {:ok, :saved_to_file} ->
+        {:ok, path}
 
-    {:ok, path}
+      {:ok, {{_, status, reason}, _headers, _body}} ->
+        _ = File.rm(path)
+        raise "Failed to download precompiled libvips from #{url}: HTTP #{status} #{reason}"
+
+      {:error, reason} ->
+        _ = File.rm(path)
+        raise "Failed to download precompiled libvips from #{url}: #{inspect(reason)}"
+    end
   end
 
   defp https_opts(hostname) do

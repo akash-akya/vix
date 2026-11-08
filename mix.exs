@@ -142,7 +142,7 @@ defmodule Vix.MixProject do
   defp deps do
     maybe_kino() ++
       [
-        {:elixir_make, "~> 0.8 or ~> 0.7.3", runtime: false},
+        {:elixir_make, "~> 0.10.1", runtime: false},
         {:cc_precompiler, "~> 0.2 or ~> 0.1.4", runtime: false},
 
         # development & test

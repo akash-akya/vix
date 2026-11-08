@@ -34,7 +34,7 @@ jobs:
           elixir-version: ${{matrix.elixir}}
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install libvips build dependencies
         run: |
@@ -60,7 +60,7 @@ jobs:
           echo "VIPS_LATEST_RELEASE=${VIPS_LATEST_RELEASE}" >> $GITHUB_ENV
 
       - name: Cache libvips artifacts
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: vips-cache
         with:
           path: vips
@@ -90,7 +90,7 @@ jobs:
 
       - name: Cache Dependencies
         id: mix-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             deps
@@ -120,11 +120,11 @@ jobs:
           elixir-version: ${{matrix.elixir}}
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Cache Dependencies
         id: mix-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           # _build contains compiled files. So we should not cache them
           path: |
@@ -153,11 +153,11 @@ jobs:
           elixir-version: ${{matrix.elixir}}
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Cache Dependencies
         id: mix-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           # _build contains compiled files. So we should not cache them
           path: |
@@ -182,7 +182,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -218,7 +218,7 @@ jobs:
             "
 
   macos-precompiled:
-    runs-on: macos-14
+    runs-on: macos-15
     name: Test macOS
     timeout-minutes: 45
     permissions:
@@ -226,14 +226,14 @@ jobs:
       id-token: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - uses: DeterminateSystems/nix-installer-action@v22
       - uses: DeterminateSystems/flake-checker-action@v12
       - run: nix develop --command mix deps.get
       - run: nix develop --command mix test --trace
 
   macos-precompiled-libvips:
-    runs-on: macos-14
+    runs-on: macos-15
     name: Test macOS Pre-compiled libvips
     timeout-minutes: 45
     env:
@@ -243,7 +243,7 @@ jobs:
       id-token: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - uses: DeterminateSystems/nix-installer-action@v22
       - uses: DeterminateSystems/flake-checker-action@v12
       - run: nix develop --command mix deps.get
@@ -265,11 +265,11 @@ jobs:
           elixir-version: ${{matrix.elixir}}
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Cache Dependencies
         id: mix-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             deps
