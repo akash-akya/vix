@@ -25,56 +25,6 @@ typedef struct _GTypeList {
   unsigned int count;
 } GTypeList;
 
-typedef struct _VipsNameFlagsPair {
-  const char **names;
-  int *flags;
-} VipsNameFlagsPair;
-
-static void *vips_object_find_args(VipsObject *object, GParamSpec *pspec,
-                                   VipsArgumentClass *argument_class,
-                                   VipsArgumentInstance *argument_instance,
-                                   void *a, void *b) {
-  VipsNameFlagsPair *pair = (VipsNameFlagsPair *)a;
-  int *i = (int *)b;
-
-  pair->names[*i] = g_param_spec_get_name(pspec);
-  pair->flags[*i] = (int)argument_class->flags;
-
-  *i += 1;
-
-  return (NULL);
-}
-
-static int get_vips_operation_args(VipsOperation *op, const char ***names,
-                                   int **flags, int *n_args) {
-  VipsObject *object;
-  VipsObjectClass *object_class;
-  VipsNameFlagsPair pair;
-  int n, i;
-
-  object = VIPS_OBJECT(op);
-
-  object_class = VIPS_OBJECT_GET_CLASS(object);
-  n = g_slist_length(object_class->argument_table_traverse);
-
-  pair.names = VIPS_ARRAY(object, n, const char *);
-  pair.flags = VIPS_ARRAY(object, n, int);
-  if (!pair.names || !pair.flags)
-    return (-1);
-
-  i = 0;
-  (void)vips_argument_map(object, vips_object_find_args, &pair, &i);
-
-  if (names)
-    *names = pair.names;
-  if (flags)
-    *flags = pair.flags;
-  if (n_args)
-    *n_args = n;
-
-  return (0);
-}
-
 static ERL_NIF_TERM vips_argument_flags_to_erl_terms(ErlNifEnv *env,
                                                      int flags) {
   ERL_NIF_TERM list;
@@ -108,49 +58,54 @@ static ERL_NIF_TERM vips_argument_flags_to_erl_terms(ErlNifEnv *env,
   return list;
 }
 
-static VixResult get_operation_properties(ErlNifEnv *env, VipsOperation *op) {
+typedef struct _OutputCollector {
+  ErlNifEnv *env;
+  ERL_NIF_TERM list;
+  VixResult error;
+} OutputCollector;
 
-  const char **names;
-  int *flags;
-  int n_args = 0;
-
-  ERL_NIF_TERM list, name, entry;
-  GParamSpec *pspec;
-  VipsArgumentClass *arg_class;
-  VipsArgumentInstance *arg_instance;
+static void *collect_output_property(VipsObject *object, GParamSpec *pspec,
+                                     VipsArgumentClass *argument_class,
+                                     VipsArgumentInstance *argument_instance,
+                                     void *a, void *b) {
+  OutputCollector *collector = (OutputCollector *)a;
+  ErlNifEnv *env = collector->env;
+  const char *name;
+  ERL_NIF_TERM entry;
   VixResult res;
 
-  if (get_vips_operation_args(op, &names, &flags, &n_args)) {
-    SET_RESULT_FROM_VIPS_ERROR(env, "failed to get output fields", res);
-    return res;
+  if (!(argument_class->flags & VIPS_ARGUMENT_OUTPUT))
+    return (NULL);
+
+  name = g_param_spec_get_name(pspec);
+  res = get_erl_term_from_g_object_property(env, G_OBJECT(object), name, pspec);
+
+  if (!res.is_success) {
+    collector->error = res;
+    // stop the map. Outputs converted so far are unreffed by `g_object_dtor`
+    return (object);
   }
 
-  list = enif_make_list(env, 0);
+  entry = enif_make_tuple2(env, make_binary(env, name), res.result);
+  collector->list = enif_make_list_cell(env, entry, collector->list);
 
-  for (int i = 0; i < n_args; i++) {
-    if (flags[i] & VIPS_ARGUMENT_OUTPUT) {
-      if (vips_object_get_argument(VIPS_OBJECT(op), names[i], &pspec,
-                                   &arg_class, &arg_instance)) {
-        error("failed to get argument: %s", names[i]);
-        SET_RESULT_FROM_VIPS_ERROR(env, names[i], res);
-        // early exit is fine, for already reffed output GObjects
-        // since `g_object_dtor` takes care of unreffing
-        return res;
-      }
+  return (NULL);
+}
 
-      res = get_erl_term_from_g_object_property(env, G_OBJECT(op), names[i],
-                                                pspec);
+// `op` may be a shared operation returned from the libvips operation
+// cache, so read the outputs without attaching anything to it
+static VixResult get_operation_properties(ErlNifEnv *env, VipsOperation *op) {
+  OutputCollector collector;
+  VixResult res;
 
-      if (!res.is_success)
-        return res;
+  collector.env = env;
+  collector.list = enif_make_list(env, 0);
 
-      name = make_binary(env, names[i]);
-      entry = enif_make_tuple2(env, name, res.result);
-      list = enif_make_list_cell(env, entry, list);
-    }
-  }
+  if (vips_argument_map(VIPS_OBJECT(op), collect_output_property, &collector,
+                        NULL))
+    return collector.error;
 
-  SET_VIX_RESULT(res, list);
+  SET_VIX_RESULT(res, collector.list);
   return res;
 }
 
@@ -264,6 +219,30 @@ exit:
     return enif_make_tuple2(env, ATOM_ERROR, res.result);
 }
 
+typedef struct _ArgumentCollector {
+  ErlNifEnv *env;
+  ERL_NIF_TERM list;
+} ArgumentCollector;
+
+static void *collect_argument(VipsObject *object, GParamSpec *pspec,
+                              VipsArgumentClass *argument_class,
+                              VipsArgumentInstance *argument_instance, void *a,
+                              void *b) {
+  ArgumentCollector *collector = (ArgumentCollector *)a;
+  ErlNifEnv *env = collector->env;
+  ERL_NIF_TERM name, details, priority, flags, entry;
+
+  name = make_binary(env, g_param_spec_get_name(pspec));
+  details = g_param_spec_details(env, pspec);
+  priority = enif_make_int(env, argument_class->priority);
+  flags = vips_argument_flags_to_erl_terms(env, argument_class->flags);
+
+  entry = enif_make_tuple4(env, name, details, priority, flags);
+  collector->list = enif_make_list_cell(env, entry, collector->list);
+
+  return (NULL);
+}
+
 ERL_NIF_TERM nif_vips_operation_get_arguments(ErlNifEnv *env, int argc,
                                               const ERL_NIF_TERM argv[]) {
 
@@ -271,13 +250,8 @@ ERL_NIF_TERM nif_vips_operation_get_arguments(ErlNifEnv *env, int argc,
 
   VipsOperation *op;
   char op_name[200] = {0};
-  const char **names;
-  int *flags;
-  int n_args = 0;
-  ERL_NIF_TERM list, erl_flags, name, priority, tup, description, result;
-  GParamSpec *pspec;
-  VipsArgumentClass *arg_class;
-  VipsArgumentInstance *arg_instance;
+  ArgumentCollector collector;
+  ERL_NIF_TERM description, result;
   ErlNifTime start;
 
   start = enif_monotonic_time(ERL_NIF_USEC);
@@ -295,39 +269,14 @@ ERL_NIF_TERM nif_vips_operation_get_arguments(ErlNifEnv *env, int argc,
     goto exit;
   }
 
-  if (get_vips_operation_args(op, &names, &flags, &n_args) != 0) {
-    error("failed to get VipsObject arguments. error: %s", vips_error_buffer());
-    vips_error_clear();
-    result = raise_exception(env, "failed to get VipsObject arguments");
-    goto free_and_exit;
-  }
-
   description = make_binary(env, vips_object_get_description(VIPS_OBJECT(op)));
 
-  list = enif_make_list(env, 0);
+  collector.env = env;
+  collector.list = enif_make_list(env, 0);
+  (void)vips_argument_map(VIPS_OBJECT(op), collect_argument, &collector, NULL);
 
-  for (int i = 0; i < n_args; i++) {
-    name = make_binary(env, names[i]);
-    erl_flags = vips_argument_flags_to_erl_terms(env, flags[i]);
+  result = enif_make_tuple2(env, description, collector.list);
 
-    if (vips_object_get_argument(VIPS_OBJECT(op), names[i], &pspec, &arg_class,
-                                 &arg_instance)) {
-      error("failed to get VipsObject argument. error: %s",
-            vips_error_buffer());
-      vips_error_clear();
-      result = raise_exception(env, "failed to get VipsObject argument");
-      goto free_and_exit;
-    }
-
-    priority = enif_make_int(env, arg_class->priority);
-    tup = enif_make_tuple4(env, name, g_param_spec_details(env, pspec),
-                           priority, erl_flags);
-    list = enif_make_list_cell(env, tup, list);
-  }
-
-  result = enif_make_tuple2(env, description, list);
-
-free_and_exit:
   vips_object_unref_outputs(VIPS_OBJECT(op));
   g_object_unref(op);
 
@@ -660,16 +609,12 @@ exit:
   return ret;
 }
 
+// Instantiate the operation once so its class is initialized before
+// anything introspects it
 static void *load_operation(GType type, void *a) {
-  const char **names;
   gpointer g_class;
   VipsObjectClass *class;
   VipsOperation *op;
-  int *flags;
-  bool *err;
-  int n_args = 0;
-
-  err = (bool *)a;
 
   g_class = g_type_class_ref(type);
   class = VIPS_OBJECT_CLASS(g_class);
@@ -688,28 +633,17 @@ static void *load_operation(GType type, void *a) {
     goto unref_class_exit;
   }
 
-  if (get_vips_operation_args(op, &names, &flags, &n_args) != 0) {
-    error("failed to get VipsObject arguments. error: %s", vips_error_buffer());
-    vips_error_clear();
-    *err = true;
-  }
-
   vips_object_unref_outputs(VIPS_OBJECT(op));
   g_object_unref(op);
 
 unref_class_exit:
   g_type_class_unref(g_class);
-
-  if (*err)
-    return err;
-  else
-    return (NULL);
+  return (NULL);
 }
 
 static int load_vips_types(ErlNifEnv *env) {
-  bool error = false;
-  vips_type_map_all(VIPS_TYPE_OPERATION, load_operation, &error);
-  return error ? 1 : 0;
+  vips_type_map_all(VIPS_TYPE_OPERATION, load_operation, NULL);
+  return 0;
 }
 
 int nif_vips_operation_init(ErlNifEnv *env) {
