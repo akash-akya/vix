@@ -285,6 +285,17 @@ defmodule Vix.Vips.Operation.Helper do
     nif_operation_call(name, nif_args, spec)
   end
 
+  # Runs the operation on a thread, which sends `{ref, result}` to the caller.
+  # For calls that wait on an Elixir process, such as a streaming save.
+  def async_operation_call(ref, name, args, opts) do
+    spec = operation_args_spec(name)
+    nif_args = cast_arguments_to_nif_terms(args, opts, spec.in_req_spec, spec.in_opt_spec)
+    Vix.Nif.nif_vips_operation_call_async(ref, name, nif_args)
+  end
+
+  def operation_error({label, error}), do: String.trim("#{label}: #{error}")
+  def operation_error(reason), do: reason
+
   def mutable_operation_call(name, image, arg_terms, %{in_req_spec: [image_spec | _]} = spec) do
     image_term = Type.to_nif_term(image_spec.type, image, image_spec.data)
     nif_args = [{image_spec.param_name, image_term} | arg_terms]
@@ -300,11 +311,8 @@ defmodule Vix.Vips.Operation.Helper do
           Map.new(spec.out_opt_spec, &{&1.param_name, &1})
         )
 
-      {:error, {label, error}} ->
-        {:error, String.trim("#{label}: #{error}")}
-
-      {:error, term} ->
-        {:error, term}
+      {:error, reason} ->
+        {:error, operation_error(reason)}
     end
   end
 

@@ -27,7 +27,7 @@ defmodule Vix.Vips.Target do
         ref
 
       value ->
-        raise ArgumentError, message: "expected Vix.Vips.Source given: #{inspect(value)}"
+        raise ArgumentError, message: "expected Vix.Vips.Target given: #{inspect(value)}"
     end
   end
 

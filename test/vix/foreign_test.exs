@@ -22,13 +22,10 @@ defmodule Vix.Vips.ForeignTest do
   end
 
   test "find_load_source" do
-    bin = File.read!(img_path("puppies.jpg"))
+    {:ok, ref} = Vix.Nif.nif_source_new_from_binary(File.read!(img_path("puppies.jpg")))
 
-    assert {pipe, source} = Vix.SourcePipe.new()
-    assert :ok = Vix.SourcePipe.write(pipe, bin)
-    assert :ok = Vix.SourcePipe.stop(pipe)
-
-    assert {:ok, "VipsForeignLoadJpegSource"} = Foreign.find_load_source(source)
+    assert {:ok, "VipsForeignLoadJpegSource"} =
+             Foreign.find_load_source(%Vix.Vips.Source{ref: ref})
   end
 
   test "find_save_target" do

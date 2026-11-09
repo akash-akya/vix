@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <vips/vips.h>
 
+#include "async.h"
 #include "cleanup.h"
 #include "utils.h"
 
@@ -63,12 +64,18 @@ static int on_load(ErlNifEnv *env, void **priv, ERL_NIF_TERM load_info) {
   if (nif_pipe_init(env))
     return 1;
 
+  if (vix_async_init(env))
+    return 1;
+
   // last, so a failed load never leaves the threads running
   return vix_cleanup_start();
 }
 
 // The threads run code from this library, so stop them before it is unloaded
-static void on_unload(ErlNifEnv *env, void *priv) { vix_cleanup_stop(); }
+static void on_unload(ErlNifEnv *env, void *priv) {
+  vix_async_stop();
+  vix_cleanup_stop();
+}
 
 static ErlNifFunc nif_funcs[] = {
     /* GObject */
@@ -101,9 +108,10 @@ static ErlNifFunc nif_funcs[] = {
     {"nif_image_get_header", 2, nif_image_get_header, 0},
     {"nif_image_get_as_string", 2, nif_image_get_as_string, 0},
     {"nif_image_hasalpha", 1, nif_image_hasalpha, 0},
+    {"nif_source_new_from_binary", 1, nif_source_new_from_binary, 0},
     {"nif_image_new_from_source", 2, nif_image_new_from_source,
      ERL_NIF_DIRTY_JOB_IO_BOUND},
-    {"nif_image_to_target", 3, nif_image_to_target, ERL_NIF_DIRTY_JOB_IO_BOUND},
+    {"nif_image_to_target_async", 4, nif_image_to_target_async, 0},
     {"nif_image_new_from_binary", 5, nif_image_new_from_binary,
      ERL_NIF_DIRTY_JOB_IO_BOUND},
     {"nif_image_write_to_binary", 1, nif_image_write_to_binary,
@@ -120,6 +128,7 @@ static ErlNifFunc nif_funcs[] = {
     /* should these be ERL_NIF_DIRTY_JOB_IO_BOUND? */
     {"nif_vips_operation_call", 2, nif_vips_operation_call,
      ERL_NIF_DIRTY_JOB_IO_BOUND},
+    {"nif_vips_operation_call_async", 3, nif_vips_operation_call_async, 0},
     {"nif_vips_operation_get_arguments", 1, nif_vips_operation_get_arguments,
      ERL_NIF_DIRTY_JOB_CPU_BOUND},
     {"nif_vips_operation_list", 0, nif_vips_operation_list,
@@ -177,11 +186,8 @@ static ErlNifFunc nif_funcs[] = {
     {"nif_foreign_get_loader_suffixes", 0, nif_foreign_get_loader_suffixes, 0},
     {"nif_foreign_get_loaders", 0, nif_foreign_get_loaders, 0},
 
-    /* Syscalls */
-    {"nif_pipe_open", 1, nif_pipe_open, 0},
-    {"nif_write", 2, nif_write, ERL_NIF_DIRTY_JOB_CPU_BOUND},
-    {"nif_read", 2, nif_read, ERL_NIF_DIRTY_JOB_CPU_BOUND},
-    {"nif_source_new", 0, nif_source_new, ERL_NIF_DIRTY_JOB_CPU_BOUND},
-    {"nif_target_new", 0, nif_target_new, ERL_NIF_DIRTY_JOB_CPU_BOUND}};
+    /* Streaming output */
+    {"nif_target_new", 0, nif_target_new, 0},
+    {"nif_read", 2, nif_read, 0}};
 
 ERL_NIF_INIT(Elixir.Vix.Nif, nif_funcs, &on_load, NULL, NULL, &on_unload)

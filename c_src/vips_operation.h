@@ -6,6 +6,9 @@
 ERL_NIF_TERM nif_vips_operation_call(ErlNifEnv *env, int argc,
                                      const ERL_NIF_TERM argv[]);
 
+ERL_NIF_TERM nif_vips_operation_call_async(ErlNifEnv *env, int argc,
+                                           const ERL_NIF_TERM argv[]);
+
 ERL_NIF_TERM nif_vips_operation_get_arguments(ErlNifEnv *env, int argc,
                                               const ERL_NIF_TERM argv[]);
 

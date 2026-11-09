@@ -14,4 +14,7 @@ void vix_cleanup_object(GObject *object);
 
 void vix_cleanup_boxed(GType type, gpointer boxed);
 
+/* Joins a thread that is about to exit. Takes a reference */
+void vix_cleanup_thread(GThread *thread);
+
 #endif

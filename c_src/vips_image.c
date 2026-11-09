@@ -1,6 +1,7 @@
 #include <glib-object.h>
 #include <vips/vips.h>
 
+#include "async.h"
 #include "g_object/g_object.h"
 #include "g_object/g_value.h"
 #include "utils.h"
@@ -766,6 +767,35 @@ exit:
   return ret;
 }
 
+ERL_NIF_TERM nif_source_new_from_binary(ErlNifEnv *env, int argc,
+                                        const ERL_NIF_TERM argv[]) {
+  ASSERT_ARGC(argc, 1);
+
+  ErlNifEnv *bin_env;
+  ErlNifBinary bin;
+  VipsSource *source;
+
+  // keep the binary alive in its own env instead of copying it
+  bin_env = enif_alloc_env();
+  if (!enif_inspect_binary(bin_env, enif_make_copy(bin_env, argv[0]), &bin)) {
+    enif_free_env(bin_env);
+    return make_error(env, "Failed to get binary");
+  }
+
+  source = vips_source_new_from_memory(bin.data, bin.size);
+  if (!source) {
+    error("Failed to create VipsSource. error: %s", vips_error_buffer());
+    vips_error_clear();
+    enif_free_env(bin_env);
+    return make_error(env, "Failed to create VipsSource");
+  }
+
+  g_object_set_data_full(G_OBJECT(source), "vix-binary", bin_env,
+                         (GDestroyNotify)enif_free_env);
+
+  return make_ok(env, g_object_to_erl_term(env, (GObject *)source));
+}
+
 ERL_NIF_TERM nif_image_new_from_source(ErlNifEnv *env, int argc,
                                        const ERL_NIF_TERM argv[]) {
   ASSERT_ARGC(argc, 2);
@@ -790,7 +820,8 @@ ERL_NIF_TERM nif_image_new_from_source(ErlNifEnv *env, int argc,
 
   image = vips_image_new_from_source(source, opts, NULL);
   if (!image) {
-    error("Failed to create image from fd. error: %s", vips_error_buffer());
+    error("Failed to create image from source. error: %s",
+          vips_error_buffer());
     vips_error_clear();
     ret = make_error(env, "Failed to create image from VipsSource");
     goto exit;
@@ -803,7 +834,7 @@ exit:
   return ret;
 }
 
-ERL_NIF_TERM nif_image_to_target(ErlNifEnv *env, int argc,
+static ERL_NIF_TERM nif_image_to_target(ErlNifEnv *env, int argc,
                                  const ERL_NIF_TERM argv[]) {
   ASSERT_ARGC(argc, 3);
 
@@ -831,7 +862,7 @@ ERL_NIF_TERM nif_image_to_target(ErlNifEnv *env, int argc,
   }
 
   if (vips_image_write_to_target(image, suffix, target, NULL)) {
-    error("Failed to create image from fd. error: %s", vips_error_buffer());
+    error("Failed to write to target. error: %s", vips_error_buffer());
     vips_error_clear();
     ret = make_error(env, "Failed to write to target");
     goto exit;
@@ -854,6 +885,11 @@ ERL_NIF_TERM nif_image_to_target(ErlNifEnv *env, int argc,
 exit:
   notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
   return ret;
+}
+
+ERL_NIF_TERM nif_image_to_target_async(ErlNifEnv *env, int argc,
+                                       const ERL_NIF_TERM argv[]) {
+  return vix_async(env, nif_image_to_target, argc, argv);
 }
 
 ERL_NIF_TERM nif_image_write_to_binary(ErlNifEnv *env, int argc,

@@ -15,7 +15,7 @@ defmodule Vix.ResourceCleanupTest do
   end
 
   test "frees an image when the last reference is dropped" do
-    baseline = Vips.tracked_get_mem()
+    baseline = settled_mem()
     parent = self()
 
     {pid, ref} =
@@ -30,6 +30,13 @@ defmodule Vix.ResourceCleanupTest do
 
     assert_receive {:DOWN, ^ref, :process, ^pid, :normal}
     assert eventually(fn -> Vips.tracked_get_mem() <= baseline end)
+  end
+
+  # images from earlier tests may still be getting freed in the background
+  defp settled_mem do
+    mem = Vips.tracked_get_mem()
+    Process.sleep(50)
+    if Vips.tracked_get_mem() == mem, do: mem, else: settled_mem()
   end
 
   defp eventually(fun, attempts \\ 100) do

@@ -335,7 +335,8 @@ defmodule Vix.Vips.ImageTest do
 
     @tag capture_log: true
     test "new_from_enum invalid data write" do
-      {:error, "Failed to find loader for the source"} = Image.new_from_enum(1..100)
+      {:error, "argument must be stream of iodata"} = Image.new_from_enum(1..100)
+      {:error, "Failed to find loader for the source"} = Image.new_from_enum(["not an image"])
     end
 
     test "premature end of new_from_enum" do
@@ -379,6 +380,82 @@ defmodule Vix.Vips.ImageTest do
 
       stat = File.stat!(out_path)
       assert stat.size > 0 and stat.type == :regular
+    end
+
+    test "more concurrent streams to files than dirty IO schedulers" do
+      {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
+      # file writes need dirty IO schedulers, so waiting saves must not hold them
+      concurrency = 3 * :erlang.system_info(:dirty_io_schedulers)
+
+      1..concurrency
+      |> Task.async_stream(
+        fn _ ->
+          Image.write_to_stream(im, ".png", compression: 0)
+          |> Stream.into(File.stream!(Briefly.create!(extname: ".png")))
+          |> Stream.run()
+        end,
+        max_concurrency: concurrency,
+        timeout: 10_000
+      )
+      |> Enum.each(fn result -> assert {:ok, :ok} = result end)
+    end
+
+    test "stalled readers do not hold up other streams" do
+      {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
+      stream = Image.write_to_stream(im, ".png", compression: 0)
+      parent = self()
+
+      # more than the saves that can run at once
+      stalled =
+        for _ <- 1..20 do
+          spawn(fn ->
+            Enum.each(stream, fn _chunk ->
+              send(parent, :stalled)
+              Process.sleep(:infinity)
+            end)
+          end)
+        end
+
+      for _ <- stalled, do: assert_receive(:stalled, 5_000)
+
+      assert Task.async(fn -> Enum.count(stream) end) |> Task.await(5_000) > 1
+
+      Enum.each(stalled, &Process.exit(&1, :kill))
+    end
+
+    test "stream stops when the reader exits normally without closing it" do
+      {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
+      stream = Image.write_to_stream(im, ".png", compression: 0)
+      parent = self()
+
+      spawn(fn ->
+        {:suspended, _, _} =
+          Enumerable.reduce(stream, {:cont, nil}, fn _, _ -> {:suspend, nil} end)
+
+        {:links, [pipe]} = Process.info(self(), :links)
+        send(parent, {:pipe, pipe})
+      end)
+
+      assert_receive {:pipe, pipe}
+      ref = Process.monitor(pipe)
+      assert_receive {:DOWN, ^ref, :process, ^pipe, _}
+    end
+
+    test "raises when the save fails after the stream is closed" do
+      {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
+
+      # the TIFF saver needs to seek, and closes the stream before it fails
+      assert_raise Image.Error, fn ->
+        Image.write_to_stream(im, ".tif") |> Stream.run()
+      end
+    end
+
+    test "raises on an option value of the wrong type" do
+      {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
+
+      assert_raise Image.Error, fn ->
+        Image.write_to_stream(im, ".jpg", background: :x) |> Stream.run()
+      end
     end
 
     test "write_to_stream with invalid suffix" do

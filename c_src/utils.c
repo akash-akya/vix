@@ -1,14 +1,10 @@
 #include "utils.h"
-#include <errno.h>
 #include <glib-object.h>
 #include <stdbool.h>
-#include <unistd.h>
 
 ErlNifResourceType *VIX_BINARY_RT;
 
 int MAX_G_TYPE_NAME_LENGTH = 1024;
-
-const int VIX_FD_CLOSED = -1;
 
 ERL_NIF_TERM ATOM_OK;
 ERL_NIF_TERM ATOM_ERROR;
@@ -151,25 +147,13 @@ int utils_init(ErlNifEnv *env, const char *log_level) {
   return 0;
 }
 
-int close_fd(int *fd) {
-  int ret = 0;
-
-  if (*fd != VIX_FD_CLOSED) {
-    ret = close(*fd);
-
-    if (ret != 0) {
-      error("failed to close fd: %d, error: %s", *fd, strerror(errno));
-    } else {
-      *fd = VIX_FD_CLOSED;
-    }
-  }
-
-  return ret;
-}
-
 void notify_consumed_timeslice(ErlNifEnv *env, ErlNifTime start,
                                ErlNifTime stop) {
   ErlNifTime pct;
+
+  // only scheduler threads have a timeslice
+  if (enif_thread_type() == ERL_NIF_THR_UNDEFINED)
+    return;
 
   pct = (ErlNifTime)((stop - start) / 10);
   if (pct > 100)

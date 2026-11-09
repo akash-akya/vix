@@ -81,8 +81,6 @@ defmodule Vix.Vips.Image do
   alias Vix.Vips.MutableImage
   alias Vix.Vips.Operation
 
-  require Logger
-
   defmodule Error do
     defexception [:message]
   end
@@ -660,32 +658,32 @@ defmodule Vix.Vips.Image do
   end
 
   @doc """
-  Creates a new image by lazily reading from an Enumerable source.
+  Creates a new image from an Enumerable of encoded image data, such as
+  JPEG or PNG bytes.
 
-  This function is ideal for processing large images without loading the entire file into memory.
-  It detects the image format from the initial bytes and reads remaining data on-demand.
+  > #### Input is not streamed {: .warning}
+  >
+  > The enumerable is read completely before the image is loaded, and the
+  > encoded data stays in memory while the image is in use. Pixels are still
+  > decoded lazily. For a file on disk, use `new_from_file/2`.
 
   ## Parameters
 
-  * `enum` - An Enumerable producing image data (e.g., File.stream!, HTTP chunks)
+  * `enum` - An Enumerable producing image data (e.g., HTTP chunks)
   * `opts` - Optional keyword list of format-specific options. To be backward compatible it also accepts options
   as a string in "[name=value,...]" format for the time being.
 
   ## Examples
 
-  Reading from a file stream:
+  Reading from an HTTP response:
 
-      {:ok, image} =
-        File.stream!("large_photo.jpg", [], 65_536)
-        |> Image.new_from_enum()
+      {:ok, image} = Image.new_from_enum(response_chunks)
 
-  Reading from a file with options:
+  Reading with options:
 
-      {:ok, image} =
-        File.stream!("large_photo.jpg", [], 65_536)
-        |> Image.new_from_enum(shrink: 2)
+      {:ok, image} = Image.new_from_enum(response_chunks, shrink: 2)
 
-  Processing S3 stream:
+  Reading from S3:
 
       {:ok, image} =
         ExAws.S3.download_file("bucket", "image.jpg")
@@ -699,50 +697,48 @@ defmodule Vix.Vips.Image do
   """
   @spec new_from_enum(Enumerable.t(), String.t() | keyword) :: {:ok, t()} | {:error, term()}
   def new_from_enum(enum, opts \\ []) do
-    parent = self()
+    with {:ok, bin} <- enum_to_binary(enum),
+         {:ok, ref} <- Nif.nif_source_new_from_binary(bin) do
+      new_from_source(%Vix.Vips.Source{ref: ref}, opts)
+    end
+  end
 
-    pid =
-      spawn_link(fn ->
-        {pipe, source} = Vix.SourcePipe.new()
-        send(parent, {self(), source})
+  # appends chunk by chunk, since collecting the chunks first holds the data twice
+  defp enum_to_binary(enum) do
+    Enum.reduce_while(enum, {:ok, <<>>}, fn chunk, {:ok, acc} ->
+      case chunk_to_binary(chunk) do
+        {:ok, bin} -> {:cont, {:ok, <<acc::binary, bin::binary>>}}
+        error -> {:halt, error}
+      end
+    end)
+  end
 
-        Enum.each(enum, fn iodata ->
-          bin =
-            try do
-              IO.iodata_to_binary(iodata)
-            rescue
-              ArgumentError ->
-                log_warn("argument must be stream of iodata")
-                Vix.SourcePipe.stop(pipe)
-                exit(:normal)
-            end
+  defp chunk_to_binary(chunk) do
+    {:ok, IO.iodata_to_binary(chunk)}
+  rescue
+    ArgumentError -> {:error, "argument must be stream of iodata"}
+  end
 
-          :ok = Vix.SourcePipe.write(pipe, bin)
-        end)
+  # for backward compatibility
+  defp new_from_source(source, opts) when is_binary(opts) do
+    Nif.nif_image_new_from_source(source.ref, opts)
+    |> wrap_type()
+  end
 
-        Vix.SourcePipe.stop(pipe)
-      end)
-
-    receive do
-      # for backward compatibility
-      {^pid, source} when is_binary(opts) ->
-        Nif.nif_image_new_from_source(source.ref, opts)
-        |> wrap_type()
-
-      {^pid, source} ->
-        with :ok <- validate_options(opts),
-             {:ok, loader} <- Vix.Vips.Foreign.find_load_source(source),
-             {:ok, {ref, _optional}} <- Operation.Helper.operation_call(loader, [source], opts) do
-          {:ok, wrap_type(ref)}
-        end
+  defp new_from_source(source, opts) do
+    with :ok <- validate_options(opts),
+         {:ok, loader} <- Vix.Vips.Foreign.find_load_source(source),
+         {:ok, {ref, _optional}} <- Operation.Helper.operation_call(loader, [source], opts) do
+      {:ok, wrap_type(ref)}
     end
   end
 
   @doc """
   Creates a Stream that lazily writes image data in the specified format.
 
-  This function is particularly useful for handling large images or when streaming
-  directly to storage/network without intermediate files.
+  The image is encoded as the stream is consumed, so the whole output is never
+  held in memory. Useful for large images, or for sending the output to storage
+  or the network.
 
   ## Parameters
 
@@ -1748,12 +1744,6 @@ defmodule Vix.Vips.Image do
 
   defp binary_to_list(binary, :VIPS_FORMAT_DOUBLE) do
     for <<band::native-float-64 <- binary>>, do: band
-  end
-
-  if Kernel.macro_exported?(Logger, :warning, 1) do
-    defp log_warn(msg), do: Logger.warning(msg)
-  else
-    defp log_warn(msg), do: Logger.warn(msg)
   end
 
   @spec normalize_path(String.t()) :: {:ok, String.t()} | {:error, :invalid_path}
