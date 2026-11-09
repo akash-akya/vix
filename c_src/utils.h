@@ -132,7 +132,4 @@ void notify_consumed_timeslice(ErlNifEnv *env, ErlNifTime start,
 
 ERL_NIF_TERM to_binary_term(ErlNifEnv *env, void *data, size_t size);
 
-void send_to_janitor(ErlNifEnv *env, ERL_NIF_TERM label,
-                     ERL_NIF_TERM resource_term);
-
 #endif
