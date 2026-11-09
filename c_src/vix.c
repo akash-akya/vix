@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <vips/vips.h>
 
+#include "cleanup.h"
 #include "utils.h"
 
 #include "g_object/g_boxed.h"
@@ -62,13 +63,16 @@ static int on_load(ErlNifEnv *env, void **priv, ERL_NIF_TERM load_info) {
   if (nif_pipe_init(env))
     return 1;
 
-  return 0;
+  // last, so a failed load never leaves the threads running
+  return vix_cleanup_start();
 }
+
+// The threads run code from this library, so stop them before it is unloaded
+static void on_unload(ErlNifEnv *env, void *priv) { vix_cleanup_stop(); }
 
 static ErlNifFunc nif_funcs[] = {
     /* GObject */
     {"nif_g_object_type_name", 1, nif_g_object_type_name, 0},
-    {"nif_g_object_unref", 1, nif_g_object_unref, ERL_NIF_DIRTY_JOB_CPU_BOUND},
 
     /* GType */
     {"nif_g_type_from_instance", 1, nif_g_type_from_instance, 0},
@@ -152,7 +156,6 @@ static ErlNifFunc nif_funcs[] = {
     {"nif_vips_blob_to_erl_binary", 1, nif_vips_blob_to_erl_binary, 0},
     {"nif_vips_ref_string_to_erl_binary", 1, nif_vips_ref_string_to_erl_binary,
      0},
-    {"nif_g_boxed_unref", 1, nif_g_boxed_unref, ERL_NIF_DIRTY_JOB_CPU_BOUND},
 
     /* VipsForeign */
     {"nif_foreign_find_load", 1, nif_foreign_find_load, 0},
@@ -174,4 +177,4 @@ static ErlNifFunc nif_funcs[] = {
     {"nif_source_new", 0, nif_source_new, ERL_NIF_DIRTY_JOB_CPU_BOUND},
     {"nif_target_new", 0, nif_target_new, ERL_NIF_DIRTY_JOB_CPU_BOUND}};
 
-ERL_NIF_INIT(Elixir.Vix.Nif, nif_funcs, &on_load, NULL, NULL, NULL)
+ERL_NIF_INIT(Elixir.Vix.Nif, nif_funcs, &on_load, NULL, NULL, &on_unload)
