@@ -41,6 +41,7 @@ defmodule Vix.Vips.Operation.Helper do
 
   def vips_operation_list do
     Nif.nif_vips_operation_list()
+    |> Enum.map(fn {name, _flags} -> name end)
     |> Enum.uniq()
     |> Enum.reject(&unsupported_operation?/1)
   end
@@ -86,9 +87,9 @@ defmodule Vix.Vips.Operation.Helper do
     end
   end
 
-  def prepare_doc(desc, required_in, optional_in, required_out, optional_out) do
+  def prepare_doc(name, desc, required_in, optional_in, required_out, optional_out) do
     """
-    #{String.capitalize(to_string(desc))}
+    #{String.capitalize(to_string(desc))}#{untrusted_doc(name)}
 
     ## Arguments
     #{required_in_doc(required_in)}
@@ -97,6 +98,23 @@ defmodule Vix.Vips.Operation.Helper do
 
     #{output_values_doc(required_out, optional_out)}
     """
+  end
+
+  @untrusted_doc """
+  > #### Untrusted {: .warning}
+  >
+  > Not tested against malicious input. Avoid it for untrusted images,
+  > or block it with `Vix.Vips.block_untrusted_set/1`.
+  """
+
+  defp untrusted_doc(name) do
+    {_name, flags} = List.keyfind(Nif.nif_vips_operation_list(), name, 0)
+
+    if :untrusted in flags do
+      "\n\n" <> String.trim_trailing(@untrusted_doc)
+    else
+      ""
+    end
   end
 
   def operation_args_spec(name) do

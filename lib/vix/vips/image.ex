@@ -884,6 +884,30 @@ defmodule Vix.Vips.Image do
   def supported_loader_suffixes, do: Vix.Vips.Foreign.get_loader_suffixes()
 
   @doc """
+  Stops any running evaluation that uses `image`, such as a save in another
+  process. The evaluation returns an error.
+
+  If nothing is evaluating `image`, its next evaluation is stopped instead.
+
+  For example, to save with a timeout:
+
+      task = Task.async(fn -> Image.write_to_file(image, "out.png") end)
+
+      case Task.yield(task, 5_000) do
+        {:ok, result} ->
+          result
+
+        nil ->
+          :ok = Image.kill(image)
+          Task.await(task)
+      end
+  """
+  @spec kill(t()) :: :ok
+  def kill(%Image{ref: vips_image}) do
+    Nif.nif_image_kill(vips_image)
+  end
+
+  @doc """
   Copies an image to a memory buffer.
 
   This function ensures that an image is fully loaded into memory, which is

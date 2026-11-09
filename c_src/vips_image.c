@@ -116,6 +116,19 @@ exit:
   return ret;
 }
 
+ERL_NIF_TERM nif_image_kill(ErlNifEnv *env, int argc,
+                            const ERL_NIF_TERM argv[]) {
+  ASSERT_ARGC(argc, 1);
+
+  VipsImage *image;
+
+  if (!erl_term_to_g_object(env, argv[0], (GObject **)&image))
+    return make_error(env, "Failed to get VipsImage");
+
+  vips_image_set_kill(image, TRUE);
+  return ATOM_OK;
+}
+
 ERL_NIF_TERM nif_image_copy_memory(ErlNifEnv *env, int argc,
                                    const ERL_NIF_TERM argv[]) {
   ASSERT_ARGC(argc, 1);

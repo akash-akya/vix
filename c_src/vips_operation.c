@@ -310,6 +310,28 @@ skip:
   return (NULL);
 }
 
+#if (VIPS_MAJOR_VERSION > 8) ||                                                \
+    (VIPS_MAJOR_VERSION == 8 && VIPS_MINOR_VERSION >= 13)
+#define VIX_HAS_OPERATION_BLOCK 1
+#endif
+
+static ERL_NIF_TERM operation_flags(ErlNifEnv *env, GType type) {
+  ERL_NIF_TERM list = enif_make_list(env, 0);
+
+#ifdef VIX_HAS_OPERATION_BLOCK
+  VipsOperationClass *class = VIPS_OPERATION_CLASS(g_type_class_ref(type));
+
+  if (class->flags & VIPS_OPERATION_UNTRUSTED)
+    list = enif_make_list_cell(env, make_atom(env, "untrusted"), list);
+  if (class->flags & VIPS_OPERATION_BLOCKED)
+    list = enif_make_list_cell(env, make_atom(env, "blocked"), list);
+
+  g_type_class_unref(class);
+#endif
+
+  return list;
+}
+
 ERL_NIF_TERM nif_vips_operation_list(ErlNifEnv *env, int argc,
                                      const ERL_NIF_TERM argv[]) {
 
@@ -332,7 +354,8 @@ ERL_NIF_TERM nif_vips_operation_list(ErlNifEnv *env, int argc,
   for (guint i = 0; i < type_list.count; i++) {
     type = type_list.types[i];
     name = make_binary(env, vips_nickname_find(type));
-    list = enif_make_list_cell(env, name, list);
+    list = enif_make_list_cell(
+        env, enif_make_tuple2(env, name, operation_flags(env, type)), list);
   }
 
   g_free(type_list.types);
@@ -465,6 +488,12 @@ ERL_NIF_TERM nif_vips_cache_get_max(ErlNifEnv *env, int argc,
   return enif_make_int(env, vips_cache_get_max());
 }
 
+ERL_NIF_TERM nif_vips_cache_get_size(ErlNifEnv *env, int argc,
+                                     const ERL_NIF_TERM argv[]) {
+  ASSERT_ARGC(argc, 0);
+  return enif_make_int(env, vips_cache_get_size());
+}
+
 ERL_NIF_TERM nif_vips_concurrency_set(ErlNifEnv *env, int argc,
                                       const ERL_NIF_TERM argv[]) {
   ASSERT_ARGC(argc, 1);
@@ -554,6 +583,58 @@ ERL_NIF_TERM nif_vips_tracked_get_mem_highwater(ErlNifEnv *env, int argc,
                                                 const ERL_NIF_TERM argv[]) {
   ASSERT_ARGC(argc, 0);
   return enif_make_uint64(env, vips_tracked_get_mem_highwater());
+}
+
+ERL_NIF_TERM nif_vips_tracked_get_allocs(ErlNifEnv *env, int argc,
+                                         const ERL_NIF_TERM argv[]) {
+  ASSERT_ARGC(argc, 0);
+  return enif_make_int(env, vips_tracked_get_allocs());
+}
+
+ERL_NIF_TERM nif_vips_tracked_get_files(ErlNifEnv *env, int argc,
+                                        const ERL_NIF_TERM argv[]) {
+  ASSERT_ARGC(argc, 0);
+  return enif_make_int(env, vips_tracked_get_files());
+}
+
+ERL_NIF_TERM nif_vips_block_untrusted_set(ErlNifEnv *env, int argc,
+                                          const ERL_NIF_TERM argv[]) {
+  ASSERT_ARGC(argc, 1);
+
+#ifdef VIX_HAS_OPERATION_BLOCK
+  vips_block_untrusted_set(enif_is_identical(argv[0], ATOM_TRUE));
+  return ATOM_OK;
+#else
+  return make_error(env, "requires libvips 8.13 or later");
+#endif
+}
+
+ERL_NIF_TERM nif_vips_operation_block_set(ErlNifEnv *env, int argc,
+                                          const ERL_NIF_TERM argv[]) {
+  ASSERT_ARGC(argc, 2);
+
+#ifdef VIX_HAS_OPERATION_BLOCK
+  char name[MAX_G_TYPE_NAME_LENGTH];
+  GType type;
+
+  if (!get_binary(env, argv[0], name, MAX_G_TYPE_NAME_LENGTH))
+    return make_error(env, "Failed to get operation name");
+
+  // vips_type_find() skips abstract classes such as VipsForeignLoad
+  type = g_type_from_name(name);
+  if (!type)
+    type = vips_type_find("VipsOperation", name);
+
+  // vips_operation_block_set() ignores unknown names
+  if (!g_type_is_a(type, VIPS_TYPE_OPERATION))
+    return make_error(env, "Unknown operation");
+
+  vips_operation_block_set(g_type_name(type),
+                           enif_is_identical(argv[1], ATOM_TRUE));
+  return ATOM_OK;
+#else
+  return make_error(env, "requires libvips 8.13 or later");
+#endif
 }
 
 ERL_NIF_TERM nif_vips_shutdown(ErlNifEnv *env, int argc,

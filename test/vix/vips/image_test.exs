@@ -311,6 +311,15 @@ defmodule Vix.Vips.ImageTest do
     assert Image.has_alpha?(im)
   end
 
+  test "kill/1 stops the next evaluation" do
+    {:ok, im} = Image.new_from_file(img_path("puppies.jpg"))
+    {:ok, im} = Vix.Vips.Operation.invert(im)
+
+    :ok = Image.kill(im)
+    assert {:error, _} = Image.write_to_buffer(im, ".png")
+    assert {:ok, _} = Image.write_to_buffer(im, ".png")
+  end
+
   describe "new_from_enum" do
     test "new_from_enum" do
       {:ok, image} =

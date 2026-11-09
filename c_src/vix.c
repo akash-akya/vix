@@ -86,6 +86,7 @@ static ErlNifFunc nif_funcs[] = {
      ERL_NIF_DIRTY_JOB_IO_BOUND},
     {"nif_image_new_from_image", 2, nif_image_new_from_image,
      ERL_NIF_DIRTY_JOB_IO_BOUND},
+    {"nif_image_kill", 1, nif_image_kill, 0},
     {"nif_image_copy_memory", 1, nif_image_copy_memory,
      ERL_NIF_DIRTY_JOB_IO_BOUND},
     {"nif_image_write_to_file", 2, nif_image_write_to_file,
@@ -129,6 +130,7 @@ static ErlNifFunc nif_funcs[] = {
     /* Vips */
     {"nif_vips_cache_set_max", 1, nif_vips_cache_set_max, 0},
     {"nif_vips_cache_get_max", 0, nif_vips_cache_get_max, 0},
+    {"nif_vips_cache_get_size", 0, nif_vips_cache_get_size, 0},
     {"nif_vips_concurrency_set", 1, nif_vips_concurrency_set, 0},
     {"nif_vips_concurrency_get", 0, nif_vips_concurrency_get, 0},
     {"nif_vips_cache_set_max_files", 1, nif_vips_cache_set_max_files, 0},
@@ -138,6 +140,10 @@ static ErlNifFunc nif_funcs[] = {
     {"nif_vips_leak_set", 1, nif_vips_leak_set, 0},
     {"nif_vips_tracked_get_mem", 0, nif_vips_tracked_get_mem, 0},
     {"nif_vips_tracked_get_mem_highwater", 0, nif_vips_tracked_get_mem_highwater, 0},
+    {"nif_vips_tracked_get_allocs", 0, nif_vips_tracked_get_allocs, 0},
+    {"nif_vips_tracked_get_files", 0, nif_vips_tracked_get_files, 0},
+    {"nif_vips_block_untrusted_set", 1, nif_vips_block_untrusted_set, 0},
+    {"nif_vips_operation_block_set", 2, nif_vips_operation_block_set, 0},
     {"nif_vips_version", 0, nif_vips_version, 0},
     {"nif_vips_shutdown", 0, nif_vips_shutdown, 0},
     {"nif_vips_nickname_find", 1, nif_vips_nickname_find, 0},
@@ -169,6 +175,7 @@ static ErlNifFunc nif_funcs[] = {
     {"nif_foreign_find_save_target", 1, nif_foreign_find_save_target, 0},
     {"nif_foreign_get_suffixes", 0, nif_foreign_get_suffixes, 0},
     {"nif_foreign_get_loader_suffixes", 0, nif_foreign_get_loader_suffixes, 0},
+    {"nif_foreign_get_loaders", 0, nif_foreign_get_loaders, 0},
 
     /* Syscalls */
     {"nif_pipe_open", 1, nif_pipe_open, 0},

@@ -348,3 +348,37 @@ exit:
   notify_consumed_timeslice(env, start, enif_monotonic_time(ERL_NIF_USEC));
   return ret;
 }
+
+typedef struct {
+  ErlNifEnv *env;
+  ERL_NIF_TERM list;
+} Loaders;
+
+static void *add_loader(VipsObjectClass *class, void *a) {
+  Loaders *loaders = (Loaders *)a;
+  ErlNifEnv *env = loaders->env;
+  const char **suffs = VIPS_FOREIGN_CLASS(class)->suffs;
+  ERL_NIF_TERM suffixes = enif_make_list(env, 0);
+
+  if (suffs)
+    for (int i = 0; suffs[i]; i++)
+      suffixes = enif_make_list_cell(env, make_binary(env, suffs[i]), suffixes);
+
+  loaders->list = enif_make_list_cell(
+      env, enif_make_tuple2(env, make_binary(env, class->nickname), suffixes),
+      loaders->list);
+
+  return NULL;
+}
+
+ERL_NIF_TERM nif_foreign_get_loaders(ErlNifEnv *env, int argc,
+                                     const ERL_NIF_TERM argv[]) {
+  ASSERT_ARGC(argc, 0);
+
+  Loaders loaders = {env, enif_make_list(env, 0)};
+
+  // not vips_foreign_map(), which skips blocked loaders
+  vips_class_map_all(g_type_from_name("VipsForeignLoad"), add_loader, &loaders);
+
+  return loaders.list;
+}
