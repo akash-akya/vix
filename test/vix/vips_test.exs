@@ -22,4 +22,13 @@ defmodule Vix.VipsTest do
     assert is_integer(usage) && usage > 0
     assert usage >= Vips.tracked_get_mem()
   end
+
+  test "tracked_get_allocs/0 and tracked_get_files/0" do
+    assert is_integer(Vips.tracked_get_allocs())
+    assert is_integer(Vips.tracked_get_files())
+  end
+
+  test "cache_get_size/0" do
+    assert is_integer(Vips.cache_get_size())
+  end
 end

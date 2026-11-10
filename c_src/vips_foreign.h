@@ -27,4 +27,7 @@ ERL_NIF_TERM nif_foreign_get_suffixes(ErlNifEnv *env, int argc,
 ERL_NIF_TERM nif_foreign_get_loader_suffixes(ErlNifEnv *env, int argc,
                                              const ERL_NIF_TERM argv[]);
 
+ERL_NIF_TERM nif_foreign_get_loaders(ErlNifEnv *env, int argc,
+                                     const ERL_NIF_TERM argv[]);
+
 #endif

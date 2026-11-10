@@ -29,6 +29,9 @@ defmodule Vix.Nif do
   def nif_image_new_from_image(_vips_image, _value),
     do: :erlang.nif_error(:nif_library_not_loaded)
 
+  def nif_image_kill(_vips_image),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
   def nif_image_copy_memory(_vips_image),
     do: :erlang.nif_error(:nif_library_not_loaded)
 
@@ -106,6 +109,9 @@ defmodule Vix.Nif do
   def nif_vips_cache_get_max,
     do: :erlang.nif_error(:nif_library_not_loaded)
 
+  def nif_vips_cache_get_size,
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
   def nif_vips_concurrency_set(_concurrency),
     do: :erlang.nif_error(:nif_library_not_loaded)
 
@@ -131,6 +137,18 @@ defmodule Vix.Nif do
     do: :erlang.nif_error(:nif_library_not_loaded)
 
   def nif_vips_tracked_get_mem_highwater,
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
+  def nif_vips_tracked_get_allocs,
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
+  def nif_vips_tracked_get_files,
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
+  def nif_vips_block_untrusted_set(_state),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
+  def nif_vips_operation_block_set(_name, _state),
     do: :erlang.nif_error(:nif_library_not_loaded)
 
   def nif_vips_version,
@@ -196,6 +214,9 @@ defmodule Vix.Nif do
     do: :erlang.nif_error(:nif_library_not_loaded)
 
   def nif_foreign_get_loader_suffixes,
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
+  def nif_foreign_get_loaders,
     do: :erlang.nif_error(:nif_library_not_loaded)
 
   # OS Specific

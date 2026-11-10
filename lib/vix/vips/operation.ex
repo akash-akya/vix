@@ -128,7 +128,7 @@ defmodule Vix.Vips.Operation do
       end)
 
     @doc """
-    #{prepare_doc(desc, in_req_spec, in_opt_spec, out_req_spec, out_opt_spec)}
+    #{prepare_doc(name, desc, in_req_spec, in_opt_spec, out_req_spec, out_opt_spec)}
     """
     @spec unquote(func_typespec(func_name, in_req_spec, in_opt_spec, out_req_spec, out_opt_spec))
     if in_opt_spec == [] do
@@ -146,7 +146,7 @@ defmodule Vix.Vips.Operation do
     bang_func_name = function_name(String.to_atom(name <> "!"))
 
     @doc """
-    #{prepare_doc(desc, in_req_spec, in_opt_spec, out_req_spec, out_opt_spec)}
+    #{prepare_doc(name, desc, in_req_spec, in_opt_spec, out_req_spec, out_opt_spec)}
     """
     @spec unquote(
             bang_func_typespec(
