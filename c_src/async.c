@@ -10,9 +10,10 @@
  * writes do). So the save runs on a thread, and the caller waits for a
  * message.
  *
- * Each job gets its own thread. `slots` limits the jobs running at once. A
- * job gives up its slot while it waits on its reader, so slow readers never
- * keep other jobs from running.
+ * Each job gets its own thread and needs a slot to run. New jobs queue in
+ * `pending` until a slot is free. A job gives up its slot while it waits on
+ * its reader, so slow readers never keep other jobs from running, and gets a
+ * slot back before any pending job.
  */
 
 #define MAX_ARGC 3
@@ -34,8 +35,8 @@ static GCond slot_free;
 static GCond no_jobs;
 static GQueue pending = G_QUEUE_INIT;
 static int slots = MAX_RUNNING_JOBS;
-static int resuming; // jobs waiting for a slot after a wait
-static int jobs;     // queued or running
+static int resuming; // jobs that want their slot back
+static int jobs;     // pending or running
 
 static ERL_NIF_TERM ATOM_VIX_RAISE;
 
@@ -125,14 +126,10 @@ static void start_job(ErlNifEnv *caller_env, Job *job) {
   release_slot(caller_env);
 }
 
-ERL_NIF_TERM vix_async(ErlNifEnv *env, VixNif nif, int argc,
-                       const ERL_NIF_TERM argv[]) {
-  Job *job;
+static Job *new_job(ErlNifEnv *env, VixNif nif, int argc,
+                    const ERL_NIF_TERM argv[]) {
+  Job *job = g_new(Job, 1);
 
-  if (argc < 1 || argc > MAX_ARGC + 1)
-    return enif_make_badarg(env);
-
-  job = g_new(Job, 1);
   job->env = enif_alloc_env();
   job->nif = nif;
   job->ref = enif_make_copy(job->env, argv[0]);
@@ -140,6 +137,17 @@ ERL_NIF_TERM vix_async(ErlNifEnv *env, VixNif nif, int argc,
   for (int i = 0; i < job->argc; i++)
     job->argv[i] = enif_make_copy(job->env, argv[i + 1]);
   enif_self(env, &job->caller);
+  return job;
+}
+
+ERL_NIF_TERM vix_async(ErlNifEnv *env, VixNif nif, int argc,
+                       const ERL_NIF_TERM argv[]) {
+  Job *job;
+
+  if (argc < 1 || argc > MAX_ARGC + 1)
+    return enif_make_badarg(env);
+
+  job = new_job(env, nif, argc, argv);
 
   g_mutex_lock(&lock);
   jobs++;
