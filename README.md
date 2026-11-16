@@ -99,10 +99,9 @@ alias Vix.Vips.{Image, Operation}
   crop: :VIPS_INTERESTING_ATTENTION
 )
 
-# Process image stream on the fly
-{:ok, image} =
-  File.stream!("large_photo.jpg", [], 65_536)
-  |> Image.new_from_enum()
+# Load an image from a stream of chunks, such as an HTTP response.
+# The chunks are collected in memory first
+{:ok, image} = Image.new_from_enum(response_chunks)
 # use `image` for further operations...
 
 # Stream image to S3

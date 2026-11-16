@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <vips/vips.h>
 
+#include "async.h"
 #include "g_object/g_boxed.h"
 #include "g_object/g_object.h"
 #include "g_object/g_param_spec.h"
@@ -217,6 +218,11 @@ exit:
     return make_ok(env, res.result);
   else
     return enif_make_tuple2(env, ATOM_ERROR, res.result);
+}
+
+ERL_NIF_TERM nif_vips_operation_call_async(ErlNifEnv *env, int argc,
+                                           const ERL_NIF_TERM argv[]) {
+  return vix_async(env, nif_vips_operation_call, argc, argv);
 }
 
 typedef struct _ArgumentCollector {

@@ -62,10 +62,14 @@ defmodule Vix.Nif do
   def nif_image_hasalpha(_vips_image),
     do: :erlang.nif_error(:nif_library_not_loaded)
 
+  def nif_source_new_from_binary(_binary),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
   def nif_image_new_from_source(_vips_source, _opts),
     do: :erlang.nif_error(:nif_library_not_loaded)
 
-  def nif_image_to_target(_vips_image, _vips_target, _suffix),
+  # the `_async` NIFs run on a thread, which sends `{ref, result}` to the caller
+  def nif_image_to_target_async(_ref, _vips_image, _vips_target, _suffix),
     do: :erlang.nif_error(:nif_library_not_loaded)
 
   def nif_image_new_from_binary(_binary, _width, _height, _bands, _band_format),
@@ -89,6 +93,9 @@ defmodule Vix.Nif do
 
   # VipsOperation
   def nif_vips_operation_call(_vips_operation_name, _input),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
+  def nif_vips_operation_call_async(_ref, _vips_operation_name, _input),
     do: :erlang.nif_error(:nif_library_not_loaded)
 
   def nif_vips_operation_get_arguments(_operation_name),
@@ -220,19 +227,10 @@ defmodule Vix.Nif do
     do: :erlang.nif_error(:nif_library_not_loaded)
 
   # OS Specific
-  def nif_pipe_open(_mode),
-    do: :erlang.nif_error(:nif_library_not_loaded)
-
-  def nif_write(_fd, _bin),
-    do: :erlang.nif_error(:nif_library_not_loaded)
-
-  def nif_read(_fd, _max_size),
-    do: :erlang.nif_error(:nif_library_not_loaded)
-
-  def nif_source_new,
-    do: :erlang.nif_error(:nif_library_not_loaded)
-
   def nif_target_new,
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
+  def nif_read(_pipe, _max_size),
     do: :erlang.nif_error(:nif_library_not_loaded)
 
   @spec load_config :: map
